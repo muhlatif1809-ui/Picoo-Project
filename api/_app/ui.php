@@ -2,7 +2,11 @@
 <?php
 // ui.php : kerangka halaman (layout), navigasi, dan potongan HTML yang dipakai berulang.
 
-const LAY = ['dine_in' => 'Dine in', 'take_away' => 'Take Away'];
+const LAY = [
+    'dine_in' => 'Dine in',
+    'take_away' => 'Take Away'
+];
+
 const STATUS_LABEL = [
     'menunggu_bayar' => 'Menunggu bayar',
     'baru' => 'Pesanan baru',
@@ -16,17 +20,26 @@ const STATUS_LABEL = [
  * Membungkus isi halaman dengan HTML, CSS, dan JS.
  * $o: css, wrap, live (ms untuk auto-refresh).
  */
-function layout(string $title, string $body, array $o = []): void {
+function layout(string $title, string $body, array $o = []): void
+{
     $css = $o['css'] ?? 'app';
     $wrap = $o['wrap'] ?? 'app';
     $fl = take_flash();
 
     // Menentukan alamat dasar aplikasi saat dijalankan di XAMPP atau hosting.
-    $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    $scriptPath = str_replace(
+        '\\',
+        '/',
+        $_SERVER['SCRIPT_NAME'] ?? ''
+    );
+
     $base = str_contains($scriptPath, '/PICO/') ? '/PICO' : '';
 
-    header('Content-Type: text/html; charset=utf-8');
-    header('Cache-Control: no-store');
+    // Pastikan header dikirim sebelum output HTML.
+    if (!headers_sent()) {
+        header('Content-Type: text/html; charset=utf-8');
+        header('Cache-Control: no-store');
+    }
 
     echo '<!DOCTYPE html><html lang="id"><head>'
        . '<meta charset="utf-8">'
@@ -45,7 +58,11 @@ function layout(string $title, string $body, array $o = []): void {
        . '</body></html>';
 }
 
-function ico(string $k): string {
+/**
+ * Membuat ikon SVG.
+ */
+function ico(string $k): string
+{
     static $IC = [
         'home' => 'M3 11l9-8 9 8v10H3zM9 21v-6h6v6',
         'cart' => 'M3 4h2l2.5 11h10l2-8H6.5M9 20h.01M17 20h.01',
@@ -59,7 +76,11 @@ function ico(string $k): string {
     return '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="' . $path . '"/></svg>';
 }
 
-function nav(array $items, string $on): string {
+/**
+ * Membuat navigasi berdasarkan daftar menu.
+ */
+function nav(array $items, string $on): string
+{
     $h = '<nav class="nav">';
 
     foreach ($items as [$href, $icon, $label]) {
@@ -70,7 +91,11 @@ function nav(array $items, string $on): string {
     return $h . '</nav>';
 }
 
-function nav_pel(string $on): string {
+/**
+ * Navigasi pembeli.
+ */
+function nav_pel(string $on): string
+{
     return nav([
         ['/home', 'home', 'Home'],
         ['/keranjang', 'cart', 'Keranjang'],
@@ -79,7 +104,11 @@ function nav_pel(string $on): string {
     ], $on);
 }
 
-function nav_pen(string $on): string {
+/**
+ * Navigasi penjual.
+ */
+function nav_pen(string $on): string
+{
     return nav([
         ['/penjual', 'home', 'Pesanan'],
         ['/penjual/menu', 'list', 'Menu'],
@@ -87,8 +116,12 @@ function nav_pen(string $on): string {
     ], $on);
 }
 
-/** Header biru. $sub boleh berisi HTML yang sudah di-escape oleh pemanggil. */
-function hd(string $t, string $sub = '', string $back = ''): string {
+/**
+ * Header biru.
+ * $sub boleh berisi HTML yang sudah di-escape oleh pemanggil.
+ */
+function hd(string $t, string $sub = '', string $back = ''): string
+{
     return '<header class="hd">'
         . ($back ? '<a class="back" href="' . $back . '">← Kembali</a>' : '')
         . '<h1>' . $t . '</h1>'
@@ -96,18 +129,30 @@ function hd(string $t, string $sub = '', string $back = ''): string {
         . '</header>';
 }
 
-function img(?string $u): string {
+/**
+ * Menampilkan gambar atau placeholder.
+ */
+function img(?string $u): string
+{
     return $u
         ? '<img src="' . e($u) . '" alt="" loading="lazy">'
         : '<span class="ph">🍽️</span>';
 }
 
-function tag(string $status): string {
+/**
+ * Menampilkan label status pesanan.
+ */
+function tag(string $status): string
+{
     return '<span class="tag s-' . e($status) . '">'
         . e(STATUS_LABEL[$status] ?? $status)
         . '</span>';
 }
 
-function empty_box(string $t): string {
+/**
+ * Menampilkan pesan saat data kosong.
+ */
+function empty_box(string $t): string
+{
     return '<div class="empty">' . e($t) . '</div>';
 }
