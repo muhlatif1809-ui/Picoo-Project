@@ -17,6 +17,19 @@ if (is_file($envFile)) {
     }
 }
 
+// Cadangan: kalau hosting tidak menyediakan environment variable, baca config.server.php.
+// File itu berupa kode PHP, jadi kalau diminta lewat browser hasilnya halaman kosong (isinya tidak terbaca).
+// Nilai yang sudah ada dari environment hosting atau .env TIDAK ditimpa.
+$cfgFile = __DIR__ . '/config.server.php';
+if (is_file($cfgFile)) {
+    $cfg = require $cfgFile;
+    if (is_array($cfg)) {
+        foreach ($cfg as $k => $v) {
+            if (getenv((string)$k) === false) putenv($k . '=' . $v);
+        }
+    }
+}
+
 function env(string $k): string { $v = getenv($k); return $v === false ? '' : (string)$v; }
 function e($s): string { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 function rp($n): string { return 'Rp' . number_format((float)$n, 0, ',', '.'); }
