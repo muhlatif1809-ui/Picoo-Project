@@ -25,7 +25,7 @@ if (is_file($cfgFile)) {
     $cfg = require $cfgFile;
     if (is_array($cfg)) {
         foreach ($cfg as $k => $v) {
-            if (getenv((string)$k) === false) putenv($k . '=' . $v);
+            if ((string)getenv((string)$k) === '') putenv($k . '=' . $v);
         }
     }
 }
