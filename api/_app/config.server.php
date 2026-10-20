@@ -10,4 +10,5 @@ return [
     'DB_DATABASE'   => 'db_pico',
     'DB_USERNAME'   => 'latif',
     'DB_PASSWORD'   => ';7v_N',
+    'APP_DEBUG'     => '1',
 ];

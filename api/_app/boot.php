@@ -118,6 +118,8 @@ function pg_run(string $sql, array $par = []): PDOStatement {
             throw new SbError(trim((string)preg_replace('/^ERROR:\s*/', '', (string)($info[2] ?? ''))), 400);
         }
         error_log('DB error: ' . $x->getMessage());
+        // Hanya untuk mencari masalah: isi 'APP_DEBUG' => '1' di config.server.php, lalu hapus lagi setelah beres.
+        if (env('APP_DEBUG') === '1') throw new SbError('DB: ' . $x->getMessage(), 500);
         throw new SbError('Terjadi kesalahan pada database.', 500);
     }
 }
