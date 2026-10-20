@@ -1,4 +1,3 @@
-
 <?php
 // =====================================================================
 // boot.php : pengaturan dasar, koneksi PostgreSQL (PDO), dan sesi login.
