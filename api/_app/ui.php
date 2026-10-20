@@ -1,4 +1,3 @@
-
 <?php
 // ui.php : kerangka halaman (layout), navigasi, dan potongan HTML yang dipakai berulang.
 
