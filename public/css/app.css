@@ -1,0 +1,799 @@
+/* ==================================================================
+   app.css : tampilan untuk PELANGGAN dan PENJUAL (ukuran layar HP)
+
+   Cara membaca:
+   - Tiap blok bentuknya:  .nama-kelas { sifat: nilai; }
+   - ".nama" = kelas di HTML (class="nama"), "a b" = b yang ada di dalam a
+   - Warna dipakai lewat var(--nama). Mau ganti warna? Ubah di bagian :root.
+   - Urutan blok jangan ditukar: blok di bawah menimpa blok di atasnya.
+   ================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ============================================================
+   1. DASAR: font, warna, dan pengaturan awal
+   ============================================================ */
+/* Daftar warna. Dipakai di bawah dengan var(--nama) */
+:root {
+  --navy: #1b2a4a;
+  --org: #f28c28;
+  --cream: #fde7cc;
+  --bg: #f4f6fb;
+  --ink: #14192b;
+  --mut: #6b7488;
+  --ok: #1f9d55;
+  --line: #e1e5ee;
+  --card: #eceef3;
+  --r: 16px;
+}
+/* Hilangkan jarak bawaan browser; lebar elemen sudah termasuk padding */
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+body {
+  font-family: Inter,system-ui,sans-serif;
+  background: #e6e9f1;
+  color: var(--ink);
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+:focus-visible {
+  outline: 3px solid var(--org);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   2. BINGKAI APLIKASI (lebar HP di tengah layar)
+   ============================================================ */
+/* Kotak utama aplikasi. Maksimal 480px agar terlihat seperti HP */
+.app {
+  max-width: 480px;
+  min-height: 100vh;
+  margin: auto;
+  background: #fff;
+  position: relative;
+  padding-bottom: 88px;
+}
+/* Di layar lebar (laptop): bingkai diberi sudut bulat & bayangan */
+@media (min-width:700px) {
+  .app {
+    margin: 24px auto;
+    min-height: calc(100vh - 48px);
+    border-radius: 30px;
+    box-shadow: 0 12px 40px #1b2a4a2e;
+    overflow: hidden;
+  }
+}
+
+/* ============================================================
+   3. HEADER BIRU (judul halaman di bagian atas)
+   ============================================================ */
+/* Header biru tua dengan sudut bawah membulat */
+.hd {
+  background: var(--navy);
+  color: #fff;
+  padding: 22px 20px 26px;
+  border-radius: 0 0 26px 26px;
+}
+.hd small {
+  color: #c5cde0;
+  display: block;
+}
+.hd h1 {
+  font-size: 1.15rem;
+  margin: 2px 0;
+}
+.hd p {
+  font-size: .95rem;
+}
+.hd .back {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: .9rem;
+}
+
+/* ============================================================
+   4. ISI HALAMAN & TEKS UMUM
+   ============================================================ */
+.bd {
+  padding: 16px 18px;
+}
+.mut {
+  color: var(--mut);
+}
+.org {
+  color: var(--org);
+  font-weight: 600;
+}
+.c {
+  text-align: center;
+}
+h3 {
+  font-size: 1rem;
+  margin: 4px 0 12px;
+}
+
+/* ============================================================
+   5. KOTAK PENCARIAN
+   ============================================================ */
+.search {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: #fff;
+  border-radius: 14px;
+  padding: 11px 14px;
+  margin-top: 14px;
+  color: var(--mut);
+}
+.search input {
+  border: 0;
+  outline: 0;
+  flex: 1;
+  font: inherit;
+  color: var(--ink);
+  min-width: 0;
+}
+
+/* ============================================================
+   6. GAMBAR / FOTO (thumb = kotak foto kecil)
+   ============================================================ */
+.ph {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg,#f6dcc0,#e8eaf2);
+  font-size: 1.6rem;
+}
+.thumb {
+  width: 64px;
+  height: 56px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex: none;
+}
+.thumb img,
+.pc .im img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ============================================================
+   7. KARTU STAND di halaman Home
+   ============================================================ */
+/* Satu kartu stand (foto, nama, kios) */
+.stand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: var(--card);
+  border-radius: var(--r);
+  padding: 12px;
+  margin-bottom: 12px;
+  position: relative;
+}
+.stand b {
+  display: block;
+}
+.stand small {
+  display: block;
+  color: var(--mut);
+}
+/* Stand tutup: dibuat pudar dan tidak bisa diklik */
+.stand.off {
+  opacity: .55;
+  pointer-events: none;
+}
+/* Label hijau "Buka" di pojok kanan atas kartu stand */
+.badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: .72rem;
+  font-weight: 600;
+  padding: 3px 11px;
+  border-radius: 99px;
+  background: #d6f3e1;
+  color: #146c3b;
+}
+.badge.off {
+  background: #fff;
+  color: var(--mut);
+}
+
+/* ============================================================
+   8. KARTU MENU (2 kolom) & tombol + tambah
+   ============================================================ */
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+/* Kartu satu menu (foto, nama, harga) */
+.pc {
+  background: var(--card);
+  border-radius: var(--r);
+  padding: 8px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pc .im {
+  height: 96px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.pc b {
+  font-size: .9rem;
+}
+.pc .pr {
+  color: var(--org);
+  font-weight: 700;
+  font-size: .9rem;
+}
+/* Menu stok habis: dibuat pudar */
+.pc.out {
+  opacity: .6;
+}
+.pill {
+  font-size: .7rem;
+  background: #fde1e1;
+  color: #b42318;
+  border-radius: 99px;
+  padding: 3px 10px;
+  align-self: center;
+  font-weight: 600;
+}
+/* Tombol bulat oranye "+" di kartu menu */
+.plus {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--org);
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* ============================================================
+   9. BARIS, ITEM KERANJANG, DAN TOMBOL JUMLAH (- 1 +)
+   ============================================================ */
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: var(--bg);
+  border-radius: 14px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.item .t {
+  flex: 1;
+}
+.item b {
+  display: block;
+}
+.item small {
+  color: var(--mut);
+}
+.qty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.qty button {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 0;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 1rem;
+  box-shadow: 0 0 0 1px var(--line);
+}
+.qty button.p {
+  background: var(--org);
+  color: #fff;
+  box-shadow: none;
+}
+
+/* ============================================================
+   10. BAR BAWAH: tombol besar, tombol, dan menu navigasi
+   ============================================================ */
+/* Bar putih menempel di bawah layar (berisi tombol Checkout/Bayar) */
+.foot {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(480px,100%);
+  background: #fff;
+  border-top: 1px solid var(--line);
+  padding: 12px 18px 14px;
+  z-index: 6;
+}
+/* Tombol oranye utama */
+.btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--org);
+  color: #fff;
+  font: 600 1rem Inter,sans-serif;
+  cursor: pointer;
+  text-align: center;
+}
+/* Tombol putih (sekunder), contoh: Kembali */
+.btn.sec {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 0 0 1px var(--line);
+}
+.btn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+.btns {
+  display: flex;
+  gap: 12px;
+}
+.btns>* {
+  flex: 1;
+}
+/* Menu navigasi bawah (Home, Keranjang, Riwayat, Profil) */
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(480px,100%);
+  background: #fff;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0 10px;
+  z-index: 5;
+}
+.nav a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: .72rem;
+  color: #7a8296;
+  padding: 2px 10px;
+}
+/* Menu yang sedang dibuka: oranye */
+.nav a.on {
+  color: var(--org);
+  font-weight: 600;
+}
+
+/* ============================================================
+   11. HALAMAN LOGIN / DAFTAR & FORMULIR
+   ============================================================ */
+.auth {
+  padding: 56px 24px 24px;
+}
+.auth h1 {
+  font-size: 1.9rem;
+  margin: 18px 0 4px;
+}
+.auth form {
+  margin: 22px 0;
+}
+/* Kotak logo "P" di halaman login */
+.logo {
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+  background: #0b57b0;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 2.2rem;
+  font-weight: 700;
+}
+/* Pembungkus satu kolom isian */
+.fld {
+  position: relative;
+  margin-bottom: 14px;
+}
+.fld input {
+  width: 100%;
+  padding: 15px 44px 15px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  font: inherit;
+  background: #fff;
+  box-shadow: 0 3px 0 #d3d6e0;
+}
+.eye {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+/* Teks pesan error (merah) */
+.er {
+  color: #b42318;
+  font-size: .85rem;
+  min-height: 1.2em;
+  margin-bottom: 6px;
+}
+/* Kotak info biru */
+.note {
+  background: #e8f0fe;
+  color: #1d3a8a;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: .88rem;
+  margin-top: 14px;
+}
+
+/* ============================================================
+   12. RINGKASAN PESANAN, KOTAK, DAN PILIHAN (radio)
+   ============================================================ */
+.sum {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: .9rem;
+}
+.sum.t {
+  font-weight: 700;
+  border-top: 1px solid var(--line);
+  margin-top: 8px;
+  padding-top: 10px;
+}
+.box {
+  background: var(--bg);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+/* Kartu pilihan (Dine in / Take Away / QRIS) */
+.opt {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  border: 2px solid var(--line);
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+/* Pilihan yang dipilih: bingkai oranye */
+.opt:has(input:checked) {
+  border-color: var(--org);
+  background: #fff3e3;
+}
+.opt input {
+  accent-color: var(--org);
+  width: 18px;
+  height: 18px;
+}
+.opt small {
+  display: block;
+  color: var(--mut);
+}
+
+/* ============================================================
+   13. HALAMAN QRIS & STATUS PESANAN
+   ============================================================ */
+/* Kotak gambar QR (21 x 21 kotak kecil) */
+.qr {
+  display: grid;
+  grid-template-columns: repeat(21,1fr);
+  width: 210px;
+  height: 210px;
+  margin: 14px auto;
+  background: #fff;
+  padding: 10px;
+  border-radius: 14px;
+}
+.qr i {
+  background: #111;
+}
+.qr i.w {
+  background: #fff;
+}
+/* Label hitung mundur pembayaran */
+.timer {
+  display: inline-block;
+  background: var(--cream);
+  color: #8a4b00;
+  font-weight: 700;
+  padding: 6px 18px;
+  border-radius: 99px;
+}
+.steps {
+  list-style: none;
+  padding: 0;
+}
+.steps li {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  color: var(--mut);
+}
+/* Bulatan penanda tiap langkah status */
+.steps li::before {
+  content: "";
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--card);
+  flex: none;
+}
+/* Langkah sudah selesai: hijau */
+.steps li.d::before {
+  background: var(--ok);
+}
+/* Langkah yang sedang berjalan: oranye */
+.steps li.a::before {
+  background: var(--org);
+}
+.steps li.d,
+.steps li.a {
+  color: var(--ink);
+}
+.steps b {
+  display: block;
+}
+.steps small {
+  color: var(--mut);
+}
+
+/* ============================================================
+   14. POP-UP TAMBAH MENU, KOLOM CATATAN, PESAN KOSONG, NOTIFIKASI
+   ============================================================ */
+/* Pop-up dari bawah layar */
+dialog {
+  border: 0;
+  padding: 0;
+  width: min(480px,100%);
+  margin: auto auto 0;
+  border-radius: 22px 22px 0 0;
+  max-height: 90vh;
+}
+dialog::backdrop {
+  background: rgba(27,42,74,.55);
+}
+.sheet {
+  padding: 18px;
+}
+textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  font: inherit;
+  min-height: 56px;
+  margin: 10px 0;
+}
+.empty {
+  text-align: center;
+  color: var(--mut);
+  padding: 40px 12px;
+}
+/* Pesan kecil sementara (mis. "Masuk keranjang") */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 100px;
+  transform: translateX(-50%);
+  background: var(--navy);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 99px;
+  font-size: .85rem;
+  z-index: 30;
+}
+/* Label status kecil berbentuk pil */
+.tag {
+  font-size: .72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: var(--cream);
+}
+
+/* ============================================================
+   15. TAMBAHAN untuk halaman PENJUAL & label status
+   (blok ini menimpa/menambah blok di atasnya)
+   ============================================================ */
+.btn.sm {
+  padding: 10px 14px;
+  font-size: .88rem;
+  border-radius: 12px;
+}
+.btn.ok {
+  background: #d6f3e1;
+  color: #146c3b;
+}
+a.btn {
+  text-decoration: none;
+}
+/* Tab "Pesanan aktif / Selesai" (penjual) */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.tabs a {
+  flex: 1;
+  text-align: center;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--card);
+  font-weight: 600;
+  font-size: .9rem;
+  color: var(--mut);
+}
+.tabs a.on {
+  background: var(--org);
+  color: #fff;
+}
+/* Daftar menu dalam satu kartu pesanan penjual */
+.ocard .lines {
+  margin: 10px 0 10px 18px;
+  padding: 0;
+}
+.ocard .lines li {
+  margin-bottom: 4px;
+}
+.tag.s-baru {
+  background: #e8f0fe;
+  color: #1d3a8a;
+}
+.tag.s-diproses {
+  background: var(--cream);
+  color: #8a4b00;
+}
+.tag.s-siap {
+  background: #d6f3e1;
+  color: #146c3b;
+}
+.tag.s-selesai {
+  background: #e3e6ee;
+  color: var(--mut);
+}
+.tag.s-batal {
+  background: #fde1e1;
+  color: #b42318;
+}
+.tag.s-menunggu_bayar {
+  background: #fff3cd;
+  color: #7a5b00;
+}
+/* Formulir vertikal (tambah/ubah menu) */
+.frm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+.frm input,
+.frm select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font: inherit;
+  background: #fff;
+}
+.frm label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: .8rem;
+  color: var(--mut);
+}
+.frm label.chk {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: .9rem;
+}
+.frm label.chk input {
+  width: auto;
+}
+details>summary {
+  cursor: pointer;
+  list-style: none;
+}
+details>summary::-webkit-details-marker {
+  display: none;
+}
+.hd form {
+  margin: 0;
+}
+.hd .btn.sec {
+  background: #ffffff1f;
+  color: #fff;
+  box-shadow: none;
+}
+.hd form.q {
+  margin-top: 0;
+}
+.qty form,
+form.qty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ============================================================
+   16. HALAMAN AWAL: pilihan "Saya Pembeli" / "Saya Penjual"
+   ============================================================ */
+/* Pembungkus dua kartu pilihan */
+.pilih {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 28px 0;
+}
+/* Satu kartu pilihan (ikon + judul + keterangan) */
+.pilih a {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  background: var(--card);
+  border: 2px solid transparent;
+  border-radius: var(--r);
+  padding: 18px;
+}
+/* Saat kartu disentuh/dipilih: bingkai oranye */
+.pilih a:hover,
+.pilih a:focus-visible {
+  border-color: var(--org);
+  background: #fff3e3;
+}
+/* Kotak ikon di kiri kartu */
+.pilih .ic {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border-radius: 14px;
+  font-size: 1.8rem;
+}
+.pilih b {
+  display: block;
+  font-size: 1.05rem;
+}
+.pilih small {
+  color: var(--mut);
+}

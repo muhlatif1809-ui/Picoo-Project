@@ -1,0 +1,23 @@
+
+Options -Indexes
+RewriteEngine On
+RewriteBase /PICO/
+
+# Lindungi file sensitif
+<FilesMatch "^(\.env|\.gitignore|Dockerfile|README\.md|vercel\.json|router\.php)$">
+    Require all denied
+</FilesMatch>
+
+# Blokir akses langsung ke file internal
+RewriteRule ^(sql|api/_app)(/|$) - [F,L,NC]
+
+# Layani aset CSS dan JavaScript
+RewriteRule ^css/(.*)$ public/css/$1 [L,NC]
+RewriteRule ^js/(.*)$ public/js/$1 [L,NC]
+
+# Jika file atau folder publik tersedia, layani langsung
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# Semua URL aplikasi diarahkan ke router utama
+RewriteRule ^ api/index.php [QSA,L]

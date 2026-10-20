@@ -1,0 +1,299 @@
+/* ==================================================================
+   admin.css : tampilan untuk ADMIN (layar lebar, ada tabel)
+
+   Cara membaca: sama seperti app.css.
+   Warna ada di bagian :root (var(--nama)).
+   ================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ============================================================
+   1. DASAR: font, warna, dan pengaturan awal
+   ============================================================ */
+/* Daftar warna. Dipakai di bawah dengan var(--nama) */
+:root {
+  --navy: #1b2a4a;
+  --org: #f28c28;
+  --cream: #fde7cc;
+  --bg: #f4f6fb;
+  --ink: #14192b;
+  --mut: #6b7488;
+  --line: #e1e5ee;
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+body {
+  font-family: Inter,system-ui,sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ============================================================
+   2. BAR ATAS (logo + menu Dashboard, Stand, Pengguna, Pesanan)
+   ============================================================ */
+/* Bar biru tua di atas */
+.top {
+  background: var(--navy);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 24px;
+  flex-wrap: wrap;
+}
+.brand {
+  padding: 16px 0;
+  font-size: 1.1rem;
+}
+.top nav {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+.top nav a {
+  padding: 16px 14px;
+  color: #c5cde0;
+  font-size: .92rem;
+}
+/* Menu yang sedang dibuka: garis oranye di bawahnya */
+.top nav a.on {
+  color: #fff;
+  box-shadow: inset 0 -3px var(--org);
+}
+/* Tombol Keluar didorong ke kanan */
+.top nav a.out {
+  margin-left: auto;
+}
+
+/* ============================================================
+   3. ISI HALAMAN & JUDUL
+   ============================================================ */
+/* Isi halaman: lebar maksimal 1100px dan di tengah */
+main {
+  max-width: 1100px;
+  margin: auto;
+  padding: 26px 20px 60px;
+}
+h1 {
+  font-size: 1.5rem;
+  margin-bottom: 18px;
+}
+h2 {
+  font-size: 1.1rem;
+  margin: 28px 0 12px;
+}
+.mut {
+  color: var(--mut);
+}
+.org {
+  color: var(--org);
+}
+
+/* ============================================================
+   4. KARTU RINGKASAN di Dashboard
+   ============================================================ */
+/* Kartu otomatis menyesuaikan lebar layar */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(190px,1fr));
+  gap: 14px;
+}
+/* Satu kartu angka (mis. Pesanan hari ini) */
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 1px 3px #1b2a4a14;
+}
+.card small {
+  color: var(--mut);
+  display: block;
+  margin-bottom: 6px;
+}
+.card b {
+  font-size: 1.4rem;
+}
+
+/* ============================================================
+   5. TABEL (tw = pembungkus tabel agar bisa digeser di HP)
+   ============================================================ */
+/* Pembungkus tabel: putih, sudut bulat, bisa digeser ke samping */
+.tw {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px #1b2a4a14;
+  overflow-x: auto;
+  margin-top: 14px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .9rem;
+}
+/* Sel tabel */
+th,
+td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+/* Judul kolom tabel */
+th {
+  background: #f8f9fc;
+  color: var(--mut);
+  font-weight: 600;
+  font-size: .8rem;
+}
+tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ============================================================
+   6. PANEL & FORMULIR (tambah stand, buat akun penjual)
+   ============================================================ */
+.panel {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 1px 3px #1b2a4a14;
+}
+details>summary {
+  cursor: pointer;
+  list-style: none;
+  color: var(--org);
+  font-weight: 600;
+}
+details>summary::-webkit-details-marker {
+  display: none;
+}
+.frm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  min-width: 230px;
+}
+.frm input {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font: inherit;
+}
+
+/* ============================================================
+   7. TOMBOL
+   ============================================================ */
+.btn {
+  border: 0;
+  border-radius: 10px;
+  background: var(--org);
+  color: #fff;
+  font: 600 .95rem Inter,sans-serif;
+  padding: 11px 16px;
+  cursor: pointer;
+}
+.btn.sm {
+  padding: 8px 12px;
+  font-size: .85rem;
+}
+
+/* ============================================================
+   8. LABEL STATUS & PERAN (warna beda per status)
+   ============================================================ */
+.tag {
+  font-size: .72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: var(--cream);
+  white-space: nowrap;
+}
+/* Warna label per status/peran */
+.tag.s-baru {
+  background: #e8f0fe;
+  color: #1d3a8a;
+}
+.tag.s-siap,
+.tag.r-penjual {
+  background: #d6f3e1;
+  color: #146c3b;
+}
+.tag.s-selesai {
+  background: #e3e6ee;
+  color: var(--mut);
+}
+.tag.s-batal {
+  background: #fde1e1;
+  color: #b42318;
+}
+.tag.r-admin {
+  background: #fde1e1;
+  color: #b42318;
+}
+
+/* ============================================================
+   9. TOMBOL FILTER (chips) di halaman Pesanan
+   ============================================================ */
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.chips a {
+  padding: 7px 14px;
+  border-radius: 99px;
+  background: #fff;
+  font-size: .85rem;
+  box-shadow: 0 0 0 1px var(--line);
+}
+.chips a.on {
+  background: var(--org);
+  color: #fff;
+  box-shadow: none;
+}
+
+/* ============================================================
+   10. NOTIFIKASI & PESAN KOSONG
+   ============================================================ */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  background: var(--navy);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 99px;
+  font-size: .88rem;
+}
+.empty {
+  text-align: center;
+  color: var(--mut);
+  padding: 40px;
+}
+
+/* ============================================================
+   11. TOMBOL PUTIH & TAMPILAN HP (layar kecil)
+   ============================================================ */
+.btn.sec {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 0 0 1px var(--line);
+}
+/* Di layar HP: jarak dikecilkan */
+@media (max-width:640px) {
+  .top {
+    padding: 0 12px;
+  }
+  main {
+    padding: 18px 12px 50px;
+  }
+}
