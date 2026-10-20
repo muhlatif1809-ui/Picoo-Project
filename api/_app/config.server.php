@@ -4,10 +4,10 @@
 // File ini berisi rahasia: repo harus PRIVATE. Jangan bagikan isinya.
 // Kalau password mengandung tanda ' atau \, tambahkan \ di depannya.
 return [
-    'DB_CONNECTION' => pgsql,
-    'DB_HOST'       => nivor-postgres,
-    'DB_PORT'       => 5432,
-    'DB_DATABASE'   => db_pico,
-    'DB_USERNAME'   => latif,
-    'DB_PASSWORD'   => r-ou9,
+    'DB_CONNECTION' => 'pgsql',
+    'DB_HOST'       => 'nivor-postgres',
+    'DB_PORT'       => '5432',
+    'DB_DATABASE'   => 'db_pico',
+    'DB_USERNAME'   => 'latif',
+    'DB_PASSWORD'   => ';7v_N',
 ];
