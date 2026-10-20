@@ -9,6 +9,6 @@ return [
     'DB_PORT'       => '5432',
     'DB_DATABASE'   => 'db_pico',
     'DB_USERNAME'   => 'latif',
-    'DB_PASSWORD'   => ';7v_N',
+    'DB_PASSWORD'   => 'w1U:f',
     'APP_DEBUG'     => '1',
 ];
