@@ -6,7 +6,39 @@
 
 date_default_timezone_set('Asia/Jakarta');
 
-// Membaca file .env lokal.
+// =====================================================================
+// SESI LOGIN — HARUS SEBELUM MEMBACA FILE KONFIGURASI
+// =====================================================================
+
+if (session_status() === PHP_SESSION_NONE) {
+    if (!headers_sent($file, $line)) {
+        session_name('pico_sid');
+
+        session_set_cookie_params([
+            'lifetime' => 604800,
+            'path' => '/',
+            'secure' => (
+                (!empty($_SERVER['HTTPS']) &&
+                 strtolower((string) $_SERVER['HTTPS']) !== 'off')
+                || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+            ),
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+
+        session_start();
+    } else {
+        error_log(
+            'PICO: Sesi tidak dapat dimulai. Output lebih awal dari '
+            . $file . ':' . $line
+        );
+    }
+}
+
+// =====================================================================
+// MEMBACA FILE .ENV LOKAL
+// =====================================================================
+
 $envFile = dirname(__DIR__, 2) . '/.env';
 
 if (is_file($envFile)) {
@@ -36,6 +68,10 @@ if (is_file($cfgFile)) {
         }
     }
 }
+
+// =====================================================================
+// FUNGSI UMUM
+// =====================================================================
 
 function env(string $k): string
 {
@@ -80,9 +116,10 @@ function redirect(string $to): void
 
 function is_https(): bool
 {
-    return !empty($_SERVER['HTTPS']) &&
+    return (
+        !empty($_SERVER['HTTPS']) &&
         strtolower((string) $_SERVER['HTTPS']) !== 'off'
-        || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
+    ) || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 }
 
 function cookie_set(string $n, string $v, int $ttl = 0): void
@@ -151,24 +188,6 @@ function check_origin(): void
         http_response_code(403);
         exit('Permintaan ditolak.');
     }
-}
-
-// =====================================================================
-// SESI LOGIN
-// =====================================================================
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_name('pico_sid');
-
-    session_set_cookie_params([
-        'lifetime' => 604800,
-        'path' => '/',
-        'secure' => is_https(),
-        'httponly' => true,
-        'samesite' => 'Lax',
-    ]);
-
-    session_start();
 }
 
 // =====================================================================
@@ -659,7 +678,7 @@ function auth_signup(
 
 /**
  * Login menggunakan username, email, nomor HP, atau NIM.
- * Mendukung hash dari PHP password_hash() dan PostgreSQL crypt().
+ * Mendukung hash PHP password_hash() dan PostgreSQL crypt().
  */
 function auth_login(string $identifier, string $pw): array
 {
