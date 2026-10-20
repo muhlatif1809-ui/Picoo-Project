@@ -71,11 +71,12 @@ function r_daftar_post(): void {
     $n = trim($_POST['n'] ?? ''); $h = trim($_POST['h'] ?? ''); $em = trim($_POST['e'] ?? '');
     $p = (string)($_POST['p'] ?? ''); $k = (string)($_POST['k'] ?? '');
     if ($n === '' || $em === '' || $p === '') { flash('Lengkapi semua data.'); redirect('/daftar'); }
+    if (!filter_var($em, FILTER_VALIDATE_EMAIL)) { flash('Email tidak valid.'); redirect('/daftar'); }
+    if (strlen($p) < 6) { flash('Password minimal 6 karakter.'); redirect('/daftar'); }
     if ($p !== $k) { flash('Password dan konfirmasi belum sama.'); redirect('/daftar'); }
-    try { $r = auth_signup($em, $p, $n, $h); }
+    try { save_session(auth_signup($em, $p, $n, $h)); }
     catch (SbError $x) { flash($x->getMessage()); redirect('/daftar'); }
-    if (!empty($r['access_token'])) { save_session($r); redirect('/home'); }
-    flash('Akun dibuat. Cek email untuk verifikasi, lalu masuk.'); redirect('/login?sebagai=pembeli');
+    redirect('/home');
 }
 
 function r_keluar(): void { clear_session(); cookie_del('pico_cart'); redirect('/'); }
@@ -84,7 +85,8 @@ function r_keluar(): void { clear_session(); cookie_del('pico_cart'); redirect('
 function r_home(): void {
     $m = need('pelanggan');
     $cari = trim($_GET['cari'] ?? '');
-    $stands = db_get('stands?select=id,nama,kios,buka,foto_url,menu(count)&order=kios');
+    $stands = db_sql('SELECT s.id, s.nama, s.kios, s.buka, s.foto_url, (SELECT count(*) FROM menu m WHERE m.stand_id = s.id) AS jml_menu
+                      FROM stands s ORDER BY s.kios');
     if ($cari !== '') {
         $t = lc($cari);
         $safe = str_replace(['*', '(', ')', ',', '%'], '', $cari);
@@ -97,7 +99,7 @@ function r_home(): void {
 <div class="bd"><h3>Stand</h3>
 <?php foreach ($stands as $s): $buka = $s['buka']; ?>
   <a class="stand <?= $buka ? '' : 'off' ?>" href="/menu?stand=<?= (int)$s['id'] ?>"><div class="thumb"><?= img($s['foto_url']) ?></div>
-    <div><b><?= e($s['nama']) ?></b><small>Kios <?= e($s['kios']) ?></small><small><?= $buka ? (int)($s['menu'][0]['count'] ?? 0) . ' Menu' : 'sedang tutup' ?></small></div>
+    <div><b><?= e($s['nama']) ?></b><small>Kios <?= e($s['kios']) ?></small><small><?= $buka ? (int)$s['jml_menu'] . ' Menu' : 'sedang tutup' ?></small></div>
     <span class="badge <?= $buka ? '' : 'off' ?>"><?= $buka ? 'Buka' : 'Tutup' ?></span></a>
 <?php endforeach; if (!$stands) echo empty_box('Stand tidak ditemukan.'); ?>
 </div><?= nav_pel('/home') ?>
@@ -224,10 +226,9 @@ function r_bayar_post(): void {
 }
 
 // ---------------------------------------------------------------- QRIS & status
-const PESANAN_SEL = 'pesanan?select=id,kode,status,layanan,total,created_at,stands(nama,kios),pesanan_item(nama,jumlah,harga,catatan)';
-
+/** Satu pesanan milik pelanggan ini (lengkap dengan stand dan item), atau null. */
 function ambil_pesanan(array $m, int $id): ?array {
-    return db_get(PESANAN_SEL . '&id=eq.' . $id . '&pelanggan_id=eq.' . rawurlencode($m['id']))[0] ?? null;
+    return pesanan_muat('p.id = :id AND p.pelanggan_id = :u', [':id' => $id, ':u' => $m['id']])[0] ?? null;
 }
 
 function r_qris(): void {
@@ -290,7 +291,7 @@ function r_status(): void {
 function r_riwayat(): void {
     $m = need('pelanggan');
     try { db_rpc('bersihkan_kadaluarsa'); } catch (SbError $x) {}
-    $l = db_get(PESANAN_SEL . '&pelanggan_id=eq.' . rawurlencode($m['id']) . '&order=created_at.desc&limit=30');
+    $l = pesanan_muat('p.pelanggan_id = :u', [':u' => $m['id']], 'ORDER BY p.created_at DESC LIMIT 30');
     ob_start();
     echo hd('Riwayat', 'Pesanan 30 hari terakhir'); ?>
 <div class="bd">

@@ -1,5 +1,5 @@
 <?php
-// admin.php : halaman admin. Membuat akun penjual memakai service_role key (hanya di server).
+// admin.php : halaman admin. Akun penjual dibuat langsung di tabel profiles (password di-hash).
 
 function adm_layout(string $title, string $body, string $on): void {
     $links = ['/admin' => 'Dashboard', '/admin/stand' => 'Stand & Penjual', '/admin/pengguna' => 'Pengguna', '/admin/pesanan' => 'Pesanan'];
@@ -11,10 +11,13 @@ function adm_layout(string $title, string $body, string $on): void {
 
 function r_adm_home(): void {
     need('admin');
-    $orders = db_get('pesanan?select=id,total,status,created_at,stand_id,stands(nama)&status=in.(baru,diproses,siap,selesai)&order=created_at.desc&limit=2000');
+    $orders = db_sql("SELECT p.id, p.total, p.status, p.created_at, p.stand_id, s.nama AS stand_nama
+                      FROM pesanan p LEFT JOIN stands s ON s.id = p.stand_id
+                      WHERE p.status IN ('baru','diproses','siap','selesai')
+                      ORDER BY p.created_at DESC LIMIT 2000");
     $hari = date('Y-m-d'); $today = 0; $incomeToday = 0; $incomeAll = 0; $per = [];
     foreach ($orders as $o) {
-        $nama = $o['stands']['nama'] ?? '-';
+        $nama = $o['stand_nama'] ?? '-';
         $per[$nama] = $per[$nama] ?? ['n' => 0, 'rp' => 0]; $per[$nama]['n']++; $per[$nama]['rp'] += $o['total']; $incomeAll += $o['total'];
         if (date('Y-m-d', strtotime($o['created_at'])) === $hari) { $today++; $incomeToday += $o['total']; }
     }
@@ -39,14 +42,16 @@ function r_adm_home(): void {
 
 function r_adm_stand(): void {
     need('admin');
-    $stands = db_get('stands?select=id,nama,kios,lokasi,buka,penjual_id,profiles(nama,username)&order=kios');
+    $stands = db_sql('SELECT s.id, s.nama, s.kios, s.lokasi, s.buka, s.penjual_id, p.nama AS penjual_nama, p.username AS penjual_username
+                      FROM stands s LEFT JOIN profiles p ON p.id = s.penjual_id
+                      ORDER BY s.kios');
     ob_start(); ?>
 <h1>Stand & Penjual</h1>
 <details class="panel"><summary><b>+ Tambah stand baru</b></summary>
   <form method="post" action="/admin/stand/tambah" class="frm"><input name="nama" placeholder="Nama stand" required><input name="kios" type="number" min="1" placeholder="No. kios" required><input name="lokasi" placeholder="Lokasi (opsional)"><button class="btn">Simpan stand</button></form></details>
 <div class="tw"><table><tr><th>Kios</th><th>Stand</th><th>Status</th><th>Penjual</th><th>Aksi</th></tr>
 <?php foreach ($stands as $s): ?><tr><td><?= e($s['kios']) ?></td><td><?= e($s['nama']) ?></td><td><?= $s['buka'] ? 'Buka' : 'Tutup' ?></td>
-  <td><?php if ($s['penjual_id']): ?><?= e($s['profiles']['nama'] ?? '') ?><br><small class="mut"><?= e($s['profiles']['username'] ?? '') ?></small><?php else: ?><span class="mut">Belum ada</span><?php endif; ?></td>
+  <td><?php if ($s['penjual_id']): ?><?= e($s['penjual_nama'] ?? '') ?><br><small class="mut"><?= e($s['penjual_username'] ?? '') ?></small><?php else: ?><span class="mut">Belum ada</span><?php endif; ?></td>
   <td><details><summary><?= $s['penjual_id'] ? 'Reset password' : 'Buat akun penjual' ?></summary>
     <?php if ($s['penjual_id']): ?>
     <form method="post" action="/admin/stand/reset" class="frm"><input type="hidden" name="stand" value="<?= (int)$s['id'] ?>"><input name="password" type="password" minlength="6" placeholder="Password baru" required><button class="btn sm">Ganti</button></form>
@@ -67,11 +72,24 @@ function r_adm_stand_tambah(): void {
 function r_adm_stand_penjual(): void {
     need('admin'); $sid = (int)($_POST['stand'] ?? 0);
     try {
-        // 1) buat akun login (server memakai service_role key), 2) naikkan role jadi penjual, 3) hubungkan ke stand
-        $u = sb('POST', '/auth/v1/admin/users', ['email' => trim($_POST['email'] ?? ''), 'password' => (string)($_POST['password'] ?? ''), 'email_confirm' => true,
-            'user_metadata' => ['nama' => trim($_POST['nama'] ?? 'Penjual')]], null, true);
-        db_write('PATCH', 'profiles?id=eq.' . rawurlencode($u['id']), ['role' => 'penjual'], true);
-        db_write('PATCH', 'stands?id=eq.' . $sid, ['penjual_id' => $u['id']], true);
+        $email = lc(trim($_POST['email'] ?? ''));
+        $pw = (string)($_POST['password'] ?? '');
+        $nama = trim($_POST['nama'] ?? '') ?: 'Penjual';
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) throw new SbError('Email tidak valid.');
+        if (strlen($pw) < 6) throw new SbError('Password minimal 6 karakter.');
+        if (db_get('profiles?select=id&email=eq.' . rawurlencode($email))) throw new SbError('Email sudah terdaftar.');
+
+        // Satu paket: buat akun penjual + hubungkan ke stand. Gagal di tengah = dibatalkan semua.
+        pdo()->beginTransaction();
+        try {
+            $u = db_write('POST', 'profiles', ['email' => $email, 'password_hash' => password_hash($pw, PASSWORD_DEFAULT), 'nama' => $nama, 'role' => 'penjual']);
+            $ok = db_write('PATCH', 'stands?id=eq.' . $sid . '&penjual_id=is.null', ['penjual_id' => $u[0]['id']]);
+            if (!$ok) throw new SbError('Stand tidak ditemukan atau sudah punya penjual.');
+            pdo()->commit();
+        } catch (Throwable $t) {
+            if (pdo()->inTransaction()) pdo()->rollBack();
+            throw $t;
+        }
         flash('Akun penjual dibuat');
     } catch (SbError $x) { flash($x->getMessage()); }
     redirect('/admin/stand');
@@ -80,9 +98,11 @@ function r_adm_stand_penjual(): void {
 function r_adm_stand_reset(): void {
     need('admin');
     try {
+        $pw = (string)($_POST['password'] ?? '');
+        if (strlen($pw) < 6) throw new SbError('Password minimal 6 karakter.');
         $s = db_get('stands?select=penjual_id&id=eq.' . (int)($_POST['stand'] ?? 0))[0] ?? null;
         if (!$s || !$s['penjual_id']) throw new SbError('Stand belum punya penjual.');
-        sb('PUT', '/auth/v1/admin/users/' . rawurlencode($s['penjual_id']), ['password' => (string)($_POST['password'] ?? '')], null, true);
+        db_write('PATCH', 'profiles?id=eq.' . rawurlencode($s['penjual_id']), ['password_hash' => password_hash($pw, PASSWORD_DEFAULT)]);
         flash('Password diganti');
     } catch (SbError $x) { flash($x->getMessage()); }
     redirect('/admin/stand');
@@ -92,7 +112,7 @@ function r_adm_pengguna(): void {
     need('admin');
     $u = db_get('profiles?select=id,nama,username,no_hp,role,created_at&order=created_at.desc&limit=500');
     ob_start(); ?>
-<h1>Pengguna</h1><p class="mut">Mengubah peran menjadi admin dilakukan lewat SQL Editor Supabase (lihat README).</p>
+<h1>Pengguna</h1><p class="mut">Mengubah peran menjadi admin dilakukan lewat SQL (lihat bagian bawah schema.sql).</p>
 <div class="tw"><table><tr><th>Nama</th><th>Username</th><th>No. HP</th><th>Peran</th><th>Daftar</th></tr>
 <?php foreach ($u as $r): ?><tr><td><?= e($r['nama']) ?></td><td><?= e($r['username']) ?></td><td><?= e($r['no_hp'] ?? '-') ?></td><td><span class="tag r-<?= e($r['role']) ?>"><?= e($r['role']) ?></span></td><td><?= waktu($r['created_at']) ?></td></tr><?php endforeach; ?></table></div>
 <?php adm_layout('Pengguna', ob_get_clean(), '/admin/pengguna');
@@ -101,13 +121,20 @@ function r_adm_pengguna(): void {
 function r_adm_pesanan(): void {
     need('admin');
     $st = $_GET['status'] ?? '';
-    $f = isset(STATUS_LABEL[$st]) ? '&status=eq.' . $st : '';
-    $os = db_get('pesanan?select=id,kode,status,layanan,total,created_at,stands(nama),pesanan_item(nama,jumlah)' . $f . '&order=created_at.desc&limit=100');
+    $filter = isset(STATUS_LABEL[$st]);
+    $os = db_sql(
+        "SELECT p.id, p.kode, p.status, p.layanan, p.total, p.created_at, s.nama AS stand_nama,
+                (SELECT string_agg(i.jumlah::text || ' ' || i.nama, ', ' ORDER BY i.id) FROM pesanan_item i WHERE i.pesanan_id = p.id) AS menu_ringkas
+         FROM pesanan p LEFT JOIN stands s ON s.id = p.stand_id"
+        . ($filter ? ' WHERE p.status = :st' : '')
+        . ' ORDER BY p.created_at DESC LIMIT 100',
+        $filter ? [':st' => $st] : []
+    );
     ob_start(); ?>
 <h1>Pesanan</h1>
 <div class="chips"><a href="/admin/pesanan" class="<?= $st === '' ? 'on' : '' ?>">Semua</a><?php foreach (STATUS_LABEL as $k => $l): ?><a href="/admin/pesanan?status=<?= $k ?>" class="<?= $st === $k ? 'on' : '' ?>"><?= e($l) ?></a><?php endforeach; ?></div>
 <div class="tw"><table><tr><th>Kode</th><th>Stand</th><th>Menu</th><th>Layanan</th><th>Total</th><th>Status</th><th>Waktu</th></tr>
-<?php foreach ($os as $o): ?><tr><td>#<?= e($o['kode']) ?></td><td><?= e($o['stands']['nama'] ?? '') ?></td><td><?= e(implode(', ', array_map(fn($i) => $i['jumlah'] . ' ' . $i['nama'], $o['pesanan_item']))) ?></td>
+<?php foreach ($os as $o): ?><tr><td>#<?= e($o['kode']) ?></td><td><?= e($o['stand_nama'] ?? '') ?></td><td><?= e($o['menu_ringkas'] ?? '') ?></td>
   <td><?= e(LAY[$o['layanan']] ?? '') ?></td><td><?= rp($o['total']) ?></td><td><?= tag($o['status']) ?></td><td><?= waktu($o['created_at']) ?></td></tr>
 <?php endforeach; if (!$os) echo '<tr><td colspan="7" class="mut">Tidak ada pesanan.</td></tr>'; ?></table></div>
 <?php adm_layout('Pesanan', ob_get_clean(), '/admin/pesanan');

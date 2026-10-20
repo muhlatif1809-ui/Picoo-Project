@@ -1,12 +1,12 @@
 <?php
 // =====================================================================
-// boot.php : pengaturan dasar, koneksi ke Supabase, dan sesi login.
+// boot.php : pengaturan dasar, koneksi PostgreSQL (PDO), dan sesi login.
 // Semua halaman memanggil file ini lebih dulu.
 // =====================================================================
 date_default_timezone_set('Asia/Jakarta');
 
 // Baca file .env (hanya dipakai saat jalan di komputer sendiri).
-// Di Vercel, isi lewat Settings > Environment Variables.
+// Di server, isi nilainya lewat environment variable hosting.
 $envFile = dirname(__DIR__, 2) . '/.env';
 if (is_file($envFile)) {
     foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
@@ -47,81 +47,249 @@ function check_origin(): void {
 }
 
 // ---------------------------------------------------------------------
-// Klien Supabase (REST + Auth lewat cURL)
+// Sesi login memakai session PHP (tidak ada token yang dikirim ke browser,
+// hanya satu cookie ID sesi yang HttpOnly).
 // ---------------------------------------------------------------------
+if (session_status() === PHP_SESSION_NONE) {
+    session_name('pico_sid');
+    session_set_cookie_params(['lifetime' => 604800, 'path' => '/', 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
+    session_start();
+}
+
+// ---------------------------------------------------------------------
+// Koneksi PostgreSQL (PDO)
+// Env yang dibaca: DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD
+// ---------------------------------------------------------------------
+// Nama kelas dipertahankan supaya blok "catch (SbError ...)" di file lain tetap jalan.
 class SbError extends Exception {}
 
-if (!function_exists('sb')) {
-    /** Satu pintu ke Supabase. $svc=true memakai service_role key (HANYA untuk aksi admin/login di server). */
-    function sb(string $method, string $path, $body = null, ?string $token = null, bool $svc = false, array $extra = []) {
-        $base = rtrim(env('SUPABASE_URL'), '/');
-        $key = $svc ? env('SUPABASE_SERVICE_ROLE_KEY') : env('SUPABASE_ANON_KEY');
-        if ($base === '' || $key === '') throw new SbError($svc ? 'SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY belum diisi.' : 'SUPABASE_URL / SUPABASE_ANON_KEY belum diisi.');
-        $h = ['apikey: ' . $key, 'Content-Type: application/json', 'Accept: application/json'];
-        $bearer = $svc ? $key : ($token ?: $key);
-        if (!str_starts_with($bearer, 'sb_')) $h[] = 'Authorization: Bearer ' . $bearer; // key model baru (sb_...) tidak dikirim sebagai Bearer
-        $payload = $body === null ? null : json_encode($body, JSON_UNESCAPED_UNICODE);
-        if (function_exists('curl_init')) {
-            $ch = curl_init($base . $path);
-            curl_setopt_array($ch, [CURLOPT_CUSTOMREQUEST => $method, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15,
-                CURLOPT_HTTPHEADER => array_merge($h, $extra), CURLOPT_POSTFIELDS => $payload]);
-            $raw = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); $err = curl_error($ch); curl_close($ch);
-        } else { // cadangan jika cURL tidak tersedia
-            $ctx = stream_context_create(['http' => ['method' => $method, 'header' => implode("\r\n", array_merge($h, $extra)), 'content' => $payload ?? '', 'ignore_errors' => true, 'timeout' => 15]]);
-            $raw = @file_get_contents($base . $path, false, $ctx); $err = 'gagal terhubung';
-            $code = preg_match('#HTTP/\S+ (\d+)#', $http_response_header[0] ?? '', $mm) ? (int)$mm[1] : 0;
+function pdo(): PDO {
+    static $p = null;
+    if ($p) return $p;
+    if (env('DB_HOST') === '' || env('DB_DATABASE') === '' || env('DB_USERNAME') === '') {
+        throw new SbError('DB_HOST / DB_DATABASE / DB_USERNAME / DB_PASSWORD belum diisi.');
+    }
+    try {
+        $dsn = 'pgsql:host=' . env('DB_HOST') . ';port=' . (env('DB_PORT') ?: '5432') . ';dbname=' . env('DB_DATABASE');
+        $p = new PDO($dsn, env('DB_USERNAME'), env('DB_PASSWORD'), [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]);
+        // Beri tahu fungsi SQL siapa yang login (pengganti auth.uid() Supabase).
+        $p->prepare("select set_config('app.uid', :u, false)")->execute([':u' => (string)($_SESSION['uid'] ?? '')]);
+    } catch (PDOException $x) {
+        throw new SbError('Tidak bisa terhubung ke database.');
+    }
+    return $p;
+}
+
+function pg_ident(string $s): string {
+    if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $s)) throw new SbError('Nama tidak valid: ' . $s);
+    return '"' . $s . '"';
+}
+
+function pg_run(string $sql, array $par = []): PDOStatement {
+    try {
+        $st = pdo()->prepare($sql);
+        foreach ($par as $k => $v) {
+            if (is_array($v)) $v = json_encode($v, JSON_UNESCAPED_UNICODE);
+            $t = is_bool($v) ? PDO::PARAM_BOOL : (is_null($v) ? PDO::PARAM_NULL : (is_int($v) ? PDO::PARAM_INT : PDO::PARAM_STR));
+            $st->bindValue($k, $v, $t);
         }
-        if ($raw === false) throw new SbError('Tidak bisa terhubung ke Supabase: ' . $err);
-        $data = $raw === '' ? null : json_decode($raw, true);
-        if ($code >= 400) {
-            $msg = is_array($data) ? ($data['message'] ?? $data['msg'] ?? $data['error_description'] ?? $data['error'] ?? 'Terjadi kesalahan') : 'Terjadi kesalahan';
-            throw new SbError((string)$msg, $code);
+        $st->execute();
+        return $st;
+    } catch (PDOException $x) {
+        $info = $x->errorInfo ?? [];
+        // Pesan dari "raise exception" di fungsi SQL (mis. "Menu habis...") boleh tampil ke pengguna.
+        if (($info[0] ?? '') === 'P0001') {
+            throw new SbError(trim((string)preg_replace('/^ERROR:\s*/', '', (string)($info[2] ?? ''))), 400);
         }
-        return $data;
+        error_log('DB error: ' . $x->getMessage());
+        throw new SbError('Terjadi kesalahan pada database.', 500);
     }
 }
 
-function tok(): ?string { return $GLOBALS['TOK'] ?? null; }
-function db_get(string $qs, bool $svc = false): array { return sb('GET', '/rest/v1/' . $qs, null, tok(), $svc) ?? []; }
-function db_write(string $method, string $qs, array $body, bool $svc = false) { return sb($method, '/rest/v1/' . $qs, $body, tok(), $svc, ['Prefer: return=representation']); }
-function db_delete(string $qs, bool $svc = false): void { sb('DELETE', '/rest/v1/' . $qs, null, tok(), $svc); }
-function db_rpc(string $fn, array $args = [], bool $svc = false) { return sb('POST', '/rest/v1/rpc/' . $fn, $args ?: new stdClass, tok(), $svc); }
+/**
+ * Memecah string gaya lama: "tabel?select=a,b&kolom=eq.nilai&order=id.desc&limit=10"
+ * Mendukung: select (kolom biasa), eq/neq/gt/gte/lt/lte/like/ilike/in/is, order, limit, offset.
+ * Filter or/and dan select bersarang (tabel(kolom)) BELUM didukung.
+ */
+function pg_parse(string $qs): array {
+    $q = strpos($qs, '?');
+    $table = $q === false ? $qs : substr($qs, 0, $q);
+    $rest = $q === false ? '' : substr($qs, $q + 1);
+    $r = ['table' => $table, 'select' => '*', 'order' => '', 'limit' => null, 'offset' => null, 'where' => '', 'par' => []];
+    $ops = ['eq' => '=', 'neq' => '<>', 'gt' => '>', 'gte' => '>=', 'lt' => '<', 'lte' => '<=', 'like' => 'LIKE', 'ilike' => 'ILIKE'];
+    $w = []; $n = 0;
+    foreach (array_filter(explode('&', $rest), 'strlen') as $pair) {
+        $eq = strpos($pair, '=');
+        if ($eq === false) continue;
+        $k = rawurldecode(substr($pair, 0, $eq));
+        $v = rawurldecode(substr($pair, $eq + 1));
+        if ($k === 'select') {
+            if (str_contains($v, '(') || str_contains($v, ':')) throw new SbError('select bersarang belum didukung: ' . $v);
+            $r['select'] = $v === '*' ? '*' : implode(', ', array_map('pg_ident', array_map('trim', explode(',', $v))));
+        } elseif ($k === 'order') {
+            $o = [];
+            foreach (explode(',', $v) as $part) {
+                $bits = explode('.', trim($part));
+                $o[] = pg_ident($bits[0]) . (($bits[1] ?? 'asc') === 'desc' ? ' DESC' : ' ASC');
+            }
+            $r['order'] = ' ORDER BY ' . implode(', ', $o);
+        } elseif ($k === 'limit') { $r['limit'] = (int)$v;
+        } elseif ($k === 'offset') { $r['offset'] = (int)$v;
+        } elseif ($k === 'or' || $k === 'and') { throw new SbError('Filter ' . $k . ' belum didukung.');
+        } else {
+            $dot = strpos($v, '.');
+            if ($dot === false) throw new SbError('Filter tidak valid: ' . $k);
+            $op = substr($v, 0, $dot); $val = substr($v, $dot + 1);
+            $col = pg_ident($k);
+            if ($op === 'in') {
+                $ph = [];
+                foreach (explode(',', trim($val, '()')) as $item) { $key = ':w' . (++$n); $r['par'][$key] = trim($item, " \"'"); $ph[] = $key; }
+                $w[] = $ph ? $col . ' IN (' . implode(',', $ph) . ')' : 'FALSE';
+            } elseif ($op === 'is') {
+                $map = ['null' => 'NULL', 'true' => 'TRUE', 'false' => 'FALSE'];
+                if (!isset($map[$val])) throw new SbError('Filter is tidak valid.');
+                $w[] = $col . ' IS ' . $map[$val];
+            } elseif (isset($ops[$op])) {
+                $key = ':w' . (++$n);
+                $r['par'][$key] = ($op === 'like' || $op === 'ilike') ? str_replace('*', '%', $val) : $val;
+                $w[] = $col . ' ' . $ops[$op] . ' ' . $key;
+            } else {
+                throw new SbError('Operator tidak dikenal: ' . $op);
+            }
+        }
+    }
+    $r['where'] = $w ? ' WHERE ' . implode(' AND ', $w) : '';
+    return $r;
+}
 
-function auth_login(string $email, string $pw): array { return sb('POST', '/auth/v1/token?grant_type=password', ['email' => $email, 'password' => $pw]); }
-function auth_refresh(string $rt): array { return sb('POST', '/auth/v1/token?grant_type=refresh_token', ['refresh_token' => $rt]); }
+// Fungsi lama dipertahankan namanya supaya file lain tidak perlu banyak diubah.
+// Parameter $svc tidak dipakai lagi (tidak ada lagi "service key").
+function db_get(string $qs, bool $svc = false): array {
+    $p = pg_parse($qs);
+    $sql = 'SELECT ' . $p['select'] . ' FROM ' . pg_ident($p['table']) . $p['where'] . $p['order'];
+    if ($p['limit'] !== null) $sql .= ' LIMIT ' . (int)$p['limit'];
+    if ($p['offset'] !== null) $sql .= ' OFFSET ' . (int)$p['offset'];
+    return pg_run($sql, $p['par'])->fetchAll();
+}
+
+function db_write(string $method, string $qs, array $body, bool $svc = false) {
+    $p = pg_parse($qs);
+    $t = pg_ident($p['table']);
+    if ($method === 'POST') {
+        $rows = ($body && array_keys($body) === range(0, count($body) - 1)) ? $body : [$body];
+        if (!$rows) return [];
+        $cols = array_keys($rows[0]);
+        $out = [];
+        foreach ($rows as $row) {
+            $par = []; $ph = [];
+            foreach ($cols as $i => $c) { $ph[] = ':v' . $i; $par[':v' . $i] = $row[$c] ?? null; }
+            $sql = 'INSERT INTO ' . $t . ' (' . implode(', ', array_map('pg_ident', $cols)) . ') VALUES (' . implode(', ', $ph) . ') RETURNING *';
+            foreach (pg_run($sql, $par)->fetchAll() as $x) $out[] = $x;
+        }
+        return $out;
+    }
+    if ($method === 'PATCH') {
+        if ($p['where'] === '') throw new SbError('UPDATE tanpa filter ditolak.');
+        $set = []; $par = $p['par'];
+        foreach (array_keys($body) as $i => $c) { $set[] = pg_ident($c) . ' = :s' . $i; $par[':s' . $i] = $body[$c]; }
+        return pg_run('UPDATE ' . $t . ' SET ' . implode(', ', $set) . $p['where'] . ' RETURNING *', $par)->fetchAll();
+    }
+    throw new SbError('Metode tidak didukung: ' . $method);
+}
+
+function db_delete(string $qs, bool $svc = false): void {
+    $p = pg_parse($qs);
+    if ($p['where'] === '') throw new SbError('DELETE tanpa filter ditolak.');
+    pg_run('DELETE FROM ' . pg_ident($p['table']) . $p['where'], $p['par']);
+}
+
+/** Query SQL biasa (untuk JOIN dan agregasi). Pakai placeholder bernama, mis. :id */
+function db_sql(string $sql, array $par = []): array {
+    return pg_run($sql, $par)->fetchAll();
+}
+
+/**
+ * Memuat pesanan lengkap dengan stand dan item-nya (bentuk datanya sama seperti dulu:
+ * $o['stands']['nama'], $o['pesanan_item'][...]).
+ * $where memakai alias p (pesanan) dan s (stands), dengan placeholder bernama.
+ */
+function pesanan_muat(string $where, array $par = [], string $tail = ''): array {
+    $rows = db_sql('SELECT p.id, p.kode, p.status, p.layanan, p.total, p.created_at, s.nama AS stand_nama, s.kios AS stand_kios
+                    FROM pesanan p LEFT JOIN stands s ON s.id = p.stand_id WHERE ' . $where . ' ' . $tail, $par);
+    if (!$rows) return [];
+    $ids = implode(',', array_map('intval', array_column($rows, 'id')));
+    $by = [];
+    foreach (db_sql('SELECT pesanan_id, nama, jumlah, harga, catatan FROM pesanan_item WHERE pesanan_id IN (' . $ids . ') ORDER BY id') as $i) {
+        $by[$i['pesanan_id']][] = ['nama' => $i['nama'], 'jumlah' => $i['jumlah'], 'harga' => $i['harga'], 'catatan' => $i['catatan']];
+    }
+    foreach ($rows as &$r) {
+        $r['stands'] = ['nama' => $r['stand_nama'], 'kios' => $r['stand_kios']];
+        $r['pesanan_item'] = $by[$r['id']] ?? [];
+    }
+    unset($r);
+    return $rows;
+}
+
+/** Memanggil fungsi SQL (stored function) dengan argumen bernama. */
+function db_rpc(string $fn, array $args = [], bool $svc = false) {
+    $ph = []; $par = []; $i = 0;
+    foreach ($args as $k => $v) { $ph[] = pg_ident($k) . ' := :a' . $i; $par[':a' . $i] = $v; $i++; }
+    $rows = pg_run('SELECT * FROM ' . pg_ident($fn) . '(' . implode(', ', $ph) . ')', $par)->fetchAll();
+    // Fungsi yang mengembalikan satu nilai: kembalikan nilainya saja.
+    if (count($rows) === 1 && count($rows[0]) === 1 && array_key_exists($fn, $rows[0])) {
+        $v = $rows[0][$fn];
+        if (is_string($v) && $v !== '' && in_array($v[0], ['{', '['], true)) { $j = json_decode($v, true); if ($j !== null) return $j; }
+        return $v;
+    }
+    return $rows;
+}
+
+// ---------------------------------------------------------------------
+// Daftar & masuk (menggantikan Supabase Auth)
+// Butuh kolom email dan password_hash di tabel profiles (lihat catatan SQL).
+// ---------------------------------------------------------------------
 function auth_signup(string $email, string $pw, string $nama, string $hp): array {
-    return sb('POST', '/auth/v1/signup', ['email' => $email, 'password' => $pw, 'data' => ['nama' => $nama, 'no_hp' => $hp]]) ?? [];
+    $email = lc(trim($email));
+    if (pg_run('SELECT 1 FROM profiles WHERE email = :e', [':e' => $email])->fetch()) {
+        throw new SbError('Email sudah terdaftar.', 422);
+    }
+    $r = pg_run(
+        'INSERT INTO profiles (email, password_hash, nama, no_hp, role) VALUES (:e, :h, :n, :p, :r) RETURNING id',
+        [':e' => $email, ':h' => password_hash($pw, PASSWORD_DEFAULT), ':n' => $nama, ':p' => $hp, ':r' => 'pelanggan']
+    )->fetch();
+    return ['user_id' => $r['id']];
 }
 
-// ---------------------------------------------------------------------
-// Sesi login: token disimpan di cookie HttpOnly (tidak terbaca JavaScript)
-// ---------------------------------------------------------------------
-function save_session(array $s): void {
-    cookie_set('pico_at', $s['access_token'], 604800);
-    cookie_set('pico_rt', $s['refresh_token'] ?? '', 604800);
-    $GLOBALS['TOK'] = $s['access_token'];
+function auth_login(string $email, string $pw): array {
+    $row = pg_run('SELECT id, password_hash FROM profiles WHERE email = :e', [':e' => lc(trim($email))])->fetch();
+    if (!$row || !$row['password_hash'] || !password_verify($pw, $row['password_hash'])) {
+        throw new SbError('Email atau password salah.', 400);
+    }
+    return ['user_id' => $row['id']];
 }
-function clear_session(): void { cookie_del('pico_at'); cookie_del('pico_rt'); unset($GLOBALS['TOK']); }
-function jwt_claim(string $t, string $k) {
-    $p = explode('.', $t);
-    if (count($p) < 2) return null;
-    $j = json_decode(base64_decode(strtr($p[1], '-_', '+/')), true);
-    return is_array($j) ? ($j[$k] ?? null) : null;
+
+function save_session(array $s): void {
+    session_regenerate_id(true);
+    $_SESSION['uid'] = $s['user_id'];
+    pg_run("select set_config('app.uid', :u, false)", [':u' => (string)$s['user_id']]);
+}
+function clear_session(): void {
+    unset($_SESSION['uid']);
+    session_regenerate_id(true);
+    pg_run("select set_config('app.uid', '', false)");
 }
 
 /** Pengguna yang sedang login (profil dari tabel profiles), atau null. */
 function me(): ?array {
     static $m = false;
     if ($m !== false) return $m;
-    $at = $_COOKIE['pico_at'] ?? ''; $rt = $_COOKIE['pico_rt'] ?? '';
-    if ($at === '') return $m = null;
-    if ((int)jwt_claim($at, 'exp') < time() + 30) { // token hampir habis: perbarui
-        try { $s = auth_refresh($rt); save_session($s); $at = $s['access_token']; }
-        catch (SbError $x) { clear_session(); return $m = null; }
-    }
-    $GLOBALS['TOK'] = $at;
-    try { $r = db_get('profiles?select=id,role,nama,username,no_hp&id=eq.' . rawurlencode((string)jwt_claim($at, 'sub'))); }
-    catch (SbError $x) { clear_session(); return $m = null; }
+    $id = (string)($_SESSION['uid'] ?? '');
+    if ($id === '') return $m = null;
+    try { $r = db_get('profiles?select=id,role,nama,username,no_hp&id=eq.' . rawurlencode($id)); }
+    catch (SbError $x) { unset($_SESSION['uid']); return $m = null; }
     return $m = ($r[0] ?? null);
 }
 function home_for(string $role): string { return ['pelanggan' => '/home', 'penjual' => '/penjual', 'admin' => '/admin'][$role] ?? '/'; }

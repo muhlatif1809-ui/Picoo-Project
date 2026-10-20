@@ -14,8 +14,9 @@ function stand_saya(array $m): array {
 function r_pen_home(): void {
     $m = need('penjual'); $s = stand_saya($m);
     $tab = ($_GET['tab'] ?? '') === 'riwayat' ? 'riwayat' : 'aktif';
-    $filter = $tab === 'aktif' ? 'status=in.(baru,diproses,siap)&order=created_at.asc' : 'status=in.(selesai,batal)&order=created_at.desc&limit=30';
-    $os = db_get('pesanan?select=id,kode,status,layanan,total,created_at,pesanan_item(nama,jumlah,catatan)&stand_id=eq.' . (int)$s['id'] . '&' . $filter);
+    $os = $tab === 'aktif'
+        ? pesanan_muat("p.stand_id = :s AND p.status IN ('baru','diproses','siap')", [':s' => (int)$s['id']], 'ORDER BY p.created_at ASC')
+        : pesanan_muat("p.stand_id = :s AND p.status IN ('selesai','batal')", [':s' => (int)$s['id']], 'ORDER BY p.created_at DESC LIMIT 30');
     $next = ['baru' => ['diproses', 'Terima & proses'], 'diproses' => ['siap', 'Siap diambil'], 'siap' => ['selesai', 'Selesai (sudah diambil)']];
     ob_start(); ?>
 <header class="hd"><small>Stand Kios <?= e($s['kios']) ?></small><h1><?= e($s['nama']) ?></h1>
