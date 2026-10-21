@@ -58,17 +58,19 @@ function r_pen_menu(): void {
     ob_start();
     echo hd('Kelola Menu', e($s['nama'])); ?>
 <div class="bd"><details class="box"><summary><b>+ Tambah menu baru</b></summary>
-  <form method="post" action="/penjual/menu/tambah" class="frm">
+  <form method="post" action="/penjual/menu/tambah" class="frm" enctype="multipart/form-data">
     <input name="nama" placeholder="Nama menu" required maxlength="60"><input name="harga" type="number" min="0" placeholder="Harga (Rp)" required><input name="stok" type="number" min="0" placeholder="Stok" required>
-    <select name="kategori_id"><?= $opt(0) ?></select><input name="foto_url" type="url" placeholder="Link foto (opsional)"><button class="btn sm">Simpan menu</button></form></details>
+    <select name="kategori_id"><?= $opt(0) ?></select>
+    <label>Foto (JPG/PNG/WebP, maks 500 KB)<input name="foto" type="file" accept="image/jpeg,image/png,image/webp"></label>
+    <button class="btn sm">Simpan menu</button></form></details>
 <?php foreach ($menu as $i): ?>
   <div class="box"><div class="row"><b><?= e($i['nama']) ?></b><?= $i['stok'] > 0 && $i['tersedia'] ? '<span class="tag s-selesai">Tersedia</span>' : '<span class="tag s-batal">Habis / nonaktif</span>' ?></div>
-    <form method="post" action="/penjual/menu/simpan" class="frm">
+    <form method="post" action="/penjual/menu/simpan" class="frm" enctype="multipart/form-data">
       <input type="hidden" name="id" value="<?= (int)$i['id'] ?>">
       <label>Harga<input name="harga" type="number" min="0" value="<?= (int)$i['harga'] ?>" required></label>
       <label>Stok<input name="stok" type="number" min="0" value="<?= (int)$i['stok'] ?>" required></label>
       <label>Kategori<select name="kategori_id"><?= $opt($i['kategori_id'] ?? 0) ?></select></label>
-      <label>Link foto<input name="foto_url" type="url" value="<?= e($i['foto_url']) ?>"></label>
+      <label>Ganti foto (kosongkan jika tidak diganti)<input name="foto" type="file" accept="image/jpeg,image/png,image/webp"></label>
       <label class="chk"><input type="checkbox" name="tersedia" value="1" <?= $i['tersedia'] ? 'checked' : '' ?>> Tampilkan di menu</label>
       <div class="btns"><button class="btn sm">Simpan</button></div></form>
     <form method="post" action="/penjual/menu/hapus" data-confirm="Hapus menu ini?" style="margin-top:8px"><input type="hidden" name="id" value="<?= (int)$i['id'] ?>"><button class="btn sm sec">Hapus menu</button></form></div>
@@ -80,18 +82,41 @@ function r_pen_menu(): void {
 function r_pen_menu_tambah(): void {
     $m = need('penjual'); $s = stand_saya($m);
     $k = (int)($_POST['kategori_id'] ?? 0);
-    try { db_write('POST', 'menu', ['stand_id' => (int)$s['id'], 'nama' => trim($_POST['nama'] ?? ''), 'harga' => max(0, (int)($_POST['harga'] ?? 0)), 'stok' => max(0, (int)($_POST['stok'] ?? 0)),
-        'kategori_id' => $k ?: null, 'foto_url' => trim($_POST['foto_url'] ?? '') ?: null, 'tersedia' => true]); flash('Menu ditambahkan'); }
-    catch (SbError $x) { flash($x->getMessage()); }
+    try {
+        $r = db_write('POST', 'menu', [
+            'stand_id' => (int)$s['id'],
+            'nama' => trim($_POST['nama'] ?? ''),
+            'harga' => max(0, (int)($_POST['harga'] ?? 0)),
+            'stok' => max(0, (int)($_POST['stok'] ?? 0)),
+            'kategori_id' => $k ?: null,
+            'tersedia' => true,
+        ]);
+        flash('Menu ditambahkan');
+        if (($_FILES['foto']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK && !empty($r[0]['id'])) {
+            try { foto_simpan('menu', (int)$r[0]['id'], $_FILES['foto']); }
+            catch (SbError $x) { flash('Menu ditambahkan, tetapi foto gagal: ' . $x->getMessage()); }
+        }
+    } catch (SbError $x) { flash($x->getMessage()); }
     redirect('/penjual/menu');
 }
 
 function r_pen_menu_simpan(): void {
     $m = need('penjual'); $s = stand_saya($m);
     $k = (int)($_POST['kategori_id'] ?? 0);
-    try { db_write('PATCH', 'menu?id=eq.' . (int)($_POST['id'] ?? 0) . '&stand_id=eq.' . (int)$s['id'], ['harga' => max(0, (int)($_POST['harga'] ?? 0)), 'stok' => max(0, (int)($_POST['stok'] ?? 0)),
-        'kategori_id' => $k ?: null, 'foto_url' => trim($_POST['foto_url'] ?? '') ?: null, 'tersedia' => ($_POST['tersedia'] ?? '') === '1']); flash('Menu disimpan'); }
-    catch (SbError $x) { flash($x->getMessage()); }
+    $id = (int)($_POST['id'] ?? 0);
+    try {
+        $r = db_write('PATCH', 'menu?id=eq.' . $id . '&stand_id=eq.' . (int)$s['id'], [
+            'harga' => max(0, (int)($_POST['harga'] ?? 0)),
+            'stok' => max(0, (int)($_POST['stok'] ?? 0)),
+            'kategori_id' => $k ?: null,
+            'tersedia' => ($_POST['tersedia'] ?? '') === '1',
+        ]);
+        flash('Menu disimpan');
+        if ($r && ($_FILES['foto']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+            try { foto_simpan('menu', $id, $_FILES['foto']); }
+            catch (SbError $x) { flash('Menu disimpan, tetapi foto gagal: ' . $x->getMessage()); }
+        }
+    } catch (SbError $x) { flash($x->getMessage()); }
     redirect('/penjual/menu');
 }
 

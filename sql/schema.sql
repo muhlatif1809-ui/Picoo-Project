@@ -36,6 +36,8 @@ create table stands (
   id bigint generated always as identity primary key,
   nama text not null, kios int, lokasi text, foto_url text,
   qr_url text,   -- QR pembayaran milik stand
+  foto_data bytea, foto_mime text,   -- isi foto disimpan di database
+  constraint stands_foto_ukuran check (foto_data is null or octet_length(foto_data) <= 512000),
   penjual_id uuid references profiles(id) on delete set null,
   buka boolean not null default true
 );
@@ -51,7 +53,9 @@ create table menu (
   kategori_id bigint references kategori on delete set null,
   nama text not null, harga int not null check (harga >= 0),
   stok int not null default 0 check (stok >= 0),
-  tersedia boolean not null default true, foto_url text
+  tersedia boolean not null default true, foto_url text,
+  foto_data bytea, foto_mime text,   -- isi foto disimpan di database
+  constraint menu_foto_ukuran check (foto_data is null or octet_length(foto_data) <= 512000)
 );
 
 create sequence pesanan_kode_seq;

@@ -888,3 +888,94 @@ function cart_detail(): array
 
     return compact('stand', 'items', 'total');
 }
+
+// =====================================================================
+// FOTO MENU/STAND DISIMPAN DI DATABASE (kolom foto_data, foto_mime)
+// =====================================================================
+
+function foto_simpan(string $tabel, int $id, array $file): void
+{
+    if (!in_array($tabel, ['menu', 'stands'], true)) {
+        throw new SbError('Tabel foto tidak valid.');
+    }
+
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        throw new SbError('Foto gagal diunggah.');
+    }
+
+    if (($file['size'] ?? 0) > 512000) {
+        throw new SbError('Ukuran foto maksimal 500 KB.');
+    }
+
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+
+    if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+        throw new SbError('Foto harus berformat JPG, PNG, atau WebP.');
+    }
+
+    $fh = fopen($file['tmp_name'], 'rb');
+    $url = '/foto?t=' . $tabel . '&id=' . $id . '&v=' . time();
+
+    try {
+        $st = pdo()->prepare(
+            'UPDATE ' . $tabel . '
+             SET foto_data = :d, foto_mime = :m, foto_url = :u
+             WHERE id = :id'
+        );
+        $st->bindValue(':d', $fh, PDO::PARAM_LOB);
+        $st->bindValue(':m', $mime);
+        $st->bindValue(':u', $url);
+        $st->bindValue(':id', $id, PDO::PARAM_INT);
+        $st->execute();
+    } catch (PDOException $x) {
+        error_log('Simpan foto gagal: ' . $x->getMessage());
+        throw new SbError('Foto gagal disimpan.');
+    } finally {
+        if (is_resource($fh)) {
+            fclose($fh);
+        }
+    }
+}
+
+// Menyajikan foto di alamat /foto?t=menu&id=1 (dipasang langsung di sini,
+// jadi tidak perlu mendaftarkan rute di file lain).
+(function (): void {
+    $path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+
+    if ($path !== '/foto') {
+        return;
+    }
+
+    $t = $_GET['t'] ?? '';
+
+    if (!in_array($t, ['menu', 'stands'], true)) {
+        http_response_code(404);
+        exit;
+    }
+
+    try {
+        $st = pdo()->prepare(
+            'SELECT foto_data, foto_mime FROM ' . $t . ' WHERE id = :id'
+        );
+        $st->execute([':id' => (int) ($_GET['id'] ?? 0)]);
+        $row = $st->fetch();
+    } catch (Throwable $x) {
+        http_response_code(500);
+        exit;
+    }
+
+    if (!$row || $row['foto_data'] === null) {
+        http_response_code(404);
+        exit;
+    }
+
+    $data = is_resource($row['foto_data'])
+        ? stream_get_contents($row['foto_data'])
+        : $row['foto_data'];
+
+    header('Content-Type: ' . $row['foto_mime']);
+    header('Cache-Control: public, max-age=86400');
+    header('Content-Length: ' . strlen($data));
+    echo $data;
+    exit;
+})();
