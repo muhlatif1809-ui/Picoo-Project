@@ -61,7 +61,7 @@ function r_pen_menu(): void {
   <form method="post" action="/penjual/menu/tambah" class="frm" enctype="multipart/form-data">
     <input name="nama" placeholder="Nama menu" required maxlength="60"><input name="harga" type="number" min="0" placeholder="Harga (Rp)" required><input name="stok" type="number" min="0" placeholder="Stok" required>
     <select name="kategori_id"><?= $opt(0) ?></select>
-    <label>Foto (JPG/PNG/WebP, maks 500 KB)<input name="foto" type="file" accept="image/jpeg,image/png,image/webp"></label>
+    <label>Foto (JPG/PNG/WebP, maks 2 MB)<input name="foto" type="file" accept="image/jpeg,image/png,image/webp"></label>
     <button class="btn sm">Simpan menu</button></form></details>
 <?php foreach ($menu as $i): ?>
   <div class="box"><div class="row"><b><?= e($i['nama']) ?></b><?= $i['stok'] > 0 && $i['tersedia'] ? '<span class="tag s-selesai">Tersedia</span>' : '<span class="tag s-batal">Habis / nonaktif</span>' ?></div>
