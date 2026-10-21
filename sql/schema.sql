@@ -312,7 +312,18 @@ VALUES (
 )
 ON CONFLICT (username) DO NOTHING;
 
--- 6c. Admin
+-- 6c. Penjual: Perintis (Toko Jual Beli Barang Bekas)
+INSERT INTO profiles (username, email, password_hash, role, nama)
+VALUES (
+    'perintis',
+    'perintis@pico.local',
+    crypt('12345678', gen_salt('bf')),
+    'penjual',
+    'Toko Jual Beli Barang Bekas'
+)
+ON CONFLICT (username) DO NOTHING;
+
+-- 6d. Admin
 INSERT INTO profiles (username, email, password_hash, role, nama)
 VALUES (
     'admin',
@@ -329,6 +340,21 @@ WHERE username = 'bu_ima' AND email IS NULL;
 
 UPDATE profiles SET email = 'naqyka@pico.local'
 WHERE username = 'naqyka' AND email IS NULL;
+
+UPDATE profiles SET email = 'perintis@pico.local'
+WHERE username = 'perintis' AND email IS NULL;
+
+-- ============================================================
+-- 6e. STAND BARU (harus dibuat SEBELUM bagian 7)
+-- WHERE NOT EXISTS: tidak terduplikasi jika dijalankan ulang.
+-- Angka 7 = nomor kios, ganti sesuai kenyataan.
+-- ============================================================
+
+INSERT INTO stands (nama, kios, buka)
+SELECT 'Toko Jual Beli Barang Bekas', 7, TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM stands WHERE nama = 'Toko Jual Beli Barang Bekas'
+);
 
 -- ============================================================
 -- 7. HUBUNGKAN PENJUAL KE STAND
@@ -370,7 +396,7 @@ ORDER BY p.role, p.username;
 -- Tes login
 SELECT login_user('bu_ima', 'passwordnya123');
 SELECT login_user('naqyka', 'passwordnaqyka123');
-SELECT login_user('perintis','12345678')
+SELECT login_user('perintis', '12345678');
 SELECT login_user('admin', 'adminnyaganteng');
 
 -- Cek kolom foto (harus muncul 4 baris)
