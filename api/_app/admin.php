@@ -113,7 +113,7 @@
         $u = db_get('profiles?select=id,nama,username,no_hp,role,created_at&order=created_at.desc&limit=500');
         ob_start(); ?>
     <h1>Pengguna</h1><p class="mut">Mengubah peran menjadi admin dilakukan lewat SQL (lihat bagian bawah schema.sql).</p>
-    <div class="tw"><table><tr><th>Nama Lengkap</th><th>Username</th><th>No. HP</th><th>Peran</th><th>Daftar</th></tr>
+    <div class="tw"><table><tr><th>Nama Lengkap</th><th>Email</th><th>No. HP</th><th>Peran</th><th>Daftar</th></tr>
     <?php foreach ($u as $r): ?><tr><td><?= e($r['nama']) ?></td><td><?= e($r['username']) ?></td><td><?= e($r['no_hp'] ?? '-') ?></td><td><span class="tag r-<?= e($r['role']) ?>"><?= e($r['role']) ?></span></td><td><?= waktu($r['created_at']) ?></td></tr><?php endforeach; ?></table></div>
     <?php adm_layout('Pengguna', ob_get_clean(), '/admin/pengguna');
     }
