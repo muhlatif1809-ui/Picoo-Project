@@ -348,6 +348,13 @@ SET penjual_id = (
 )
 WHERE nama = 'Naqyka';
 
+UPDATE stands
+SET penjual_id = (
+    SELECT id FROM profiles
+    WHERE username = 'perintis' AND role = 'penjual'
+)
+WHERE nama = 'Toko Jual Beli Barang Bekas';
+
 -- ============================================================
 -- 8. PENGECEKAN (jalankan satu per satu jika editor hanya
 --    menampilkan hasil perintah terakhir)
@@ -363,7 +370,8 @@ ORDER BY p.role, p.username;
 -- Tes login
 SELECT login_user('bu_ima', 'passwordnya123');
 SELECT login_user('naqyka', 'passwordnaqyka123');
-SELECT login_user('admin', 'ganti_password_admin');
+SELECT login_user('perintis','12345678')
+SELECT login_user('admin', 'adminnyaganteng');
 
 -- Cek kolom foto (harus muncul 4 baris)
 SELECT table_name, column_name
