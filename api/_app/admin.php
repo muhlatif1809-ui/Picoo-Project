@@ -1,4 +1,4 @@
-    <?php
+<?php
     // admin.php : halaman admin. Akun penjual dibuat langsung di tabel profiles (password di-hash).
 
     function adm_layout(string $title, string $body, string $on): void {
