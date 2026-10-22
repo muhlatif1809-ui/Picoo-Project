@@ -1,30 +1,19 @@
--- ============================================================
--- PICO - GABUNGAN SEMUA QUERY TAMBAHAN
--- Aman dijalankan berulang di database yang sudah ada (db_pico):
--- memakai IF NOT EXISTS, OR REPLACE, dan ON CONFLICT DO NOTHING.
--- Tidak menghapus data dan tidak menduplikasi data contoh.
--- ============================================================
+-- PICO - Query tambahan (aman dijalankan berulang)
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- ============================================================
--- 1. KOLOM TAMBAHAN
--- ============================================================
-
+-- 1. Kolom tambahan
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS login_count INT NOT NULL DEFAULT 0;
 
--- QR pembayaran per stand
 ALTER TABLE stands ADD COLUMN IF NOT EXISTS qr_url TEXT;
 
--- Foto disimpan langsung di database (menu dan stand),
--- supaya tidak hilang saat aplikasi di-deploy ulang.
 ALTER TABLE menu   ADD COLUMN IF NOT EXISTS foto_data BYTEA;
 ALTER TABLE menu   ADD COLUMN IF NOT EXISTS foto_mime TEXT;
 ALTER TABLE stands ADD COLUMN IF NOT EXISTS foto_data BYTEA;
 ALTER TABLE stands ADD COLUMN IF NOT EXISTS foto_mime TEXT;
 
--- Batasi ukuran foto maksimal 2 MB
+-- Foto maksimal 2 MB
 ALTER TABLE menu DROP CONSTRAINT IF EXISTS menu_foto_ukuran;
 ALTER TABLE menu ADD CONSTRAINT menu_foto_ukuran
   CHECK (foto_data IS NULL OR octet_length(foto_data) <= 2097152);
@@ -33,10 +22,7 @@ ALTER TABLE stands DROP CONSTRAINT IF EXISTS stands_foto_ukuran;
 ALTER TABLE stands ADD CONSTRAINT stands_foto_ukuran
   CHECK (foto_data IS NULL OR octet_length(foto_data) <= 2097152);
 
--- ============================================================
--- 2. RIWAYAT LOGIN
--- ============================================================
-
+-- 2. Riwayat login
 CREATE TABLE IF NOT EXISTS login_log (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     profile_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
@@ -50,10 +36,7 @@ CREATE TABLE IF NOT EXISTS login_log (
 CREATE INDEX IF NOT EXISTS idx_login_log_profile
     ON login_log(profile_id, created_at DESC);
 
--- ============================================================
--- 3. FUNGSI DAFTAR & LOGIN
--- ============================================================
-
+-- 3. Fungsi daftar & login
 CREATE OR REPLACE FUNCTION daftar_pelanggan(
     p_nama TEXT,
     p_password TEXT,
@@ -163,11 +146,7 @@ BEGIN
 END;
 $$;
 
--- ============================================================
--- 4. FUNGSI QR STAND & PESANAN BANYAK STAND
--- ============================================================
-
--- Penjual mengganti QR stand miliknya sendiri
+-- 4. QR stand & pesanan multi-stand
 CREATE OR REPLACE FUNCTION ubah_qr_stand(p_stand BIGINT, p_qr_url TEXT)
 RETURNS VOID
 LANGUAGE plpgsql
@@ -181,8 +160,7 @@ BEGIN
 END;
 $$;
 
--- Keranjang berisi menu dari banyak stand -> satu pesanan per stand,
--- semuanya dalam satu transaksi (gagal satu = batal semua).
+-- Satu pesanan per stand, dalam satu transaksi
 CREATE OR REPLACE FUNCTION buat_pesanan_multi(
     p_layanan TEXT,
     p_items JSONB
@@ -229,11 +207,8 @@ BEGIN
 END;
 $$;
 
--- ============================================================
--- 5. VIEW
--- ============================================================
-
--- 5a. Katalog menu: menu + stand + kategori (halaman pembeli)
+-- 5. View
+-- Katalog menu (pembeli)
 CREATE OR REPLACE VIEW v_menu_stand AS
 SELECT m.id AS menu_id, m.nama AS menu, m.harga, m.stok, m.tersedia,
        m.foto_url, s.id AS stand_id, s.nama AS stand, s.kios, s.buka,
@@ -242,7 +217,7 @@ FROM menu m
 JOIN stands s ON s.id = m.stand_id
 LEFT JOIN kategori k ON k.id = m.kategori_id;
 
--- 5b. Antrean pesanan penjual (otomatis hanya stand miliknya)
+-- Antrean pesanan (penjual)
 CREATE OR REPLACE VIEW v_antrean_penjual AS
 SELECT p.id, p.kode, p.stand_id, p.layanan, p.status, p.total,
        p.created_at, pr.nama AS nama_pembeli,
@@ -253,7 +228,7 @@ FROM pesanan p
 JOIN profiles pr ON pr.id = p.pelanggan_id
 WHERE owns_stand(p.stand_id);
 
--- 5c. Riwayat pesanan pembeli (otomatis hanya milik yang login)
+-- Riwayat pesanan (pembeli)
 CREATE OR REPLACE VIEW v_riwayat_pembeli AS
 SELECT p.id, p.kode, s.nama AS stand, p.layanan, p.status,
        p.total, p.created_at,
@@ -263,7 +238,7 @@ FROM pesanan p
 JOIN stands s ON s.id = p.stand_id
 WHERE p.pelanggan_id = app_uid();
 
--- 5d. Rekap penjualan per stand (dashboard admin)
+-- Rekap penjualan (admin)
 CREATE OR REPLACE VIEW v_rekap_penjualan_stand AS
 SELECT s.id AS stand_id, s.nama AS stand, s.kios,
        COUNT(p.id) AS jumlah_pesanan,
@@ -274,23 +249,15 @@ LEFT JOIN pesanan p
       AND p.status IN ('baru', 'diproses', 'siap', 'selesai')
 GROUP BY s.id, s.nama, s.kios;
 
--- 5e. Daftar pengguna tanpa password_hash (halaman admin)
+-- Daftar pengguna tanpa password_hash (admin)
 CREATE OR REPLACE VIEW v_pengguna AS
 SELECT id, nama, username, no_hp, role,
        last_login_at, login_count, created_at
 FROM profiles;
 
--- ============================================================
--- 6. AKUN PENJUAL & ADMIN
--- ON CONFLICT DO NOTHING: jika username sudah ada, dilewati
--- (password yang sudah Anda ganti tidak ikut tertimpa).
--- GANTI password sebelum aplikasi dipakai sungguhan.
--- ============================================================
-
--- Hapus baris placeholder sisa template (jika ada)
+-- 6. Akun penjual & admin (ganti password sebelum dipakai sungguhan)
 DELETE FROM profiles WHERE username = 'USERNAME_PENJUAL';
 
--- 6a. Penjual: Kedai Bu Ima
 INSERT INTO profiles (username, email, password_hash, role, nama)
 VALUES (
     'bu_ima',
@@ -301,7 +268,6 @@ VALUES (
 )
 ON CONFLICT (username) DO NOTHING;
 
--- 6b. Penjual: Naqyka
 INSERT INTO profiles (username, email, password_hash, role, nama)
 VALUES (
     'naqyka',
@@ -312,7 +278,6 @@ VALUES (
 )
 ON CONFLICT (username) DO NOTHING;
 
--- 6c. Penjual: Perintis (Toko Jual Beli Barang Bekas)
 INSERT INTO profiles (username, email, password_hash, role, nama)
 VALUES (
     'perintis',
@@ -323,7 +288,6 @@ VALUES (
 )
 ON CONFLICT (username) DO NOTHING;
 
--- 6d. Admin
 INSERT INTO profiles (username, email, password_hash, role, nama)
 VALUES (
     'admin',
@@ -334,7 +298,6 @@ VALUES (
 )
 ON CONFLICT (username) DO NOTHING;
 
--- Pastikan akun penjual lama yang belum punya email ikut terisi
 UPDATE profiles SET email = 'bu_ima@pico.local'
 WHERE username = 'bu_ima' AND email IS NULL;
 
@@ -344,22 +307,14 @@ WHERE username = 'naqyka' AND email IS NULL;
 UPDATE profiles SET email = 'perintis@pico.local'
 WHERE username = 'perintis' AND email IS NULL;
 
--- ============================================================
--- 6e. STAND BARU (harus dibuat SEBELUM bagian 7)
--- WHERE NOT EXISTS: tidak terduplikasi jika dijalankan ulang.
--- Angka 7 = nomor kios, ganti sesuai kenyataan.
--- ============================================================
-
+-- 6e. Stand baru
 INSERT INTO stands (nama, kios, buka)
 SELECT 'Toko Jual Beli Barang Bekas', 7, TRUE
 WHERE NOT EXISTS (
     SELECT 1 FROM stands WHERE nama = 'Toko Jual Beli Barang Bekas'
 );
 
--- ============================================================
--- 7. HUBUNGKAN PENJUAL KE STAND
--- ============================================================
-
+-- 7. Hubungkan penjual ke stand
 UPDATE stands
 SET penjual_id = (
     SELECT id FROM profiles
@@ -381,32 +336,24 @@ SET penjual_id = (
 )
 WHERE nama = 'Toko Jual Beli Barang Bekas';
 
--- ============================================================
--- 8. PENGECEKAN (jalankan satu per satu jika editor hanya
---    menampilkan hasil perintah terakhir)
--- ============================================================
-
--- Akun dan stand-nya
+-- 8. Pengecekan
 SELECT p.username, p.email, p.role, s.nama AS stand
 FROM profiles p
 LEFT JOIN stands s ON s.penjual_id = p.id
 WHERE p.role IN ('penjual', 'admin')
 ORDER BY p.role, p.username;
 
--- Tes login
 SELECT login_user('bu_ima', 'passwordnya123');
 SELECT login_user('naqyka', 'passwordnaqyka123');
 SELECT login_user('perintis', '12345678');
 SELECT login_user('admin', 'adminnyaganteng');
 
--- Cek kolom foto (harus muncul 4 baris)
 SELECT table_name, column_name
 FROM information_schema.columns
 WHERE table_name IN ('menu', 'stands')
   AND column_name IN ('foto_data', 'foto_mime')
 ORDER BY table_name, column_name;
 
--- Tes view
 SELECT * FROM v_menu_stand;
 SELECT * FROM v_rekap_penjualan_stand;
 SELECT * FROM v_pengguna;

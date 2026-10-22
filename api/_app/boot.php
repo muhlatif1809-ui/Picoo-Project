@@ -979,3 +979,36 @@ function foto_simpan(string $tabel, int $id, array $file): void
     echo $data;
     exit;
 })();
+
+function qr_simpan(int $standId, array $file): void
+{
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        throw new SbError('QR gagal diunggah.');
+    }
+    if (($file['size'] ?? 0) > 2097152) {
+        throw new SbError('Ukuran QR maksimal 2 MB.');
+    }
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+    if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+        throw new SbError('QR harus berformat JPG, PNG, atau WebP.');
+    }
+
+    $fh = fopen($file['tmp_name'], 'rb');
+    $url = '/foto?t=qr&id=' . $standId . '&v=' . time();
+
+    try {
+        $st = pdo()->prepare(
+            'UPDATE stands SET qr_data = :d, qr_mime = :m, qr_url = :u WHERE id = :id'
+        );
+        $st->bindValue(':d', $fh, PDO::PARAM_LOB);
+        $st->bindValue(':m', $mime);
+        $st->bindValue(':u', $url);
+        $st->bindValue(':id', $standId, PDO::PARAM_INT);
+        $st->execute();
+    } catch (PDOException $x) {
+        error_log('Simpan QR gagal: ' . $x->getMessage());
+        throw new SbError('QR gagal disimpan.');
+    } finally {
+        if (is_resource($fh)) fclose($fh);
+    }
+}
