@@ -109,7 +109,8 @@ function nav_pel(string $on): string
 function nav_pen(string $on): string
 {
     return nav([
-        ['/penjual', 'home', 'Pesanan'],
+        ['/penjual', 'home', 'Home'],
+        ['/penjual/riwayat', 'book', 'Riwayat'],
         ['/penjual/menu', 'list', 'Menu'],
         ['/penjual/profil', 'user', 'Profil']
     ], $on);

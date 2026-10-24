@@ -16,7 +16,7 @@ $routes = [
     'GET /opsi' => 'r_opsi', 'POST /opsi' => 'r_opsi_post', 'GET /bayar' => 'r_bayar', 'POST /bayar' => 'r_bayar_post',
     'GET /qris' => 'r_qris', 'POST /qris/bayar' => 'r_qris_bayar', 'GET /status' => 'r_status', 'GET /riwayat' => 'r_riwayat', 'GET /profil' => 'r_profil',
     // penjual
-    'GET /penjual' => 'r_pen_home', 'POST /penjual/status' => 'r_pen_status', 'POST /penjual/buka' => 'r_pen_buka',
+    'GET /penjual' => 'r_pen_home', 'GET /penjual/riwayat' => 'r_pen_riwayat', 'POST /penjual/status' => 'r_pen_status', 'POST /penjual/buka' => 'r_pen_buka',
     'GET /penjual/menu' => 'r_pen_menu', 'POST /penjual/menu/tambah' => 'r_pen_menu_tambah', 'POST /penjual/menu/simpan' => 'r_pen_menu_simpan',
     'POST /penjual/menu/hapus' => 'r_pen_menu_hapus', 'GET /penjual/profil' => 'r_pen_profil',
     // admin

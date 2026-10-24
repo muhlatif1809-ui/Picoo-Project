@@ -4,7 +4,7 @@
 function r_root(): void {
     if ($m = me()) redirect(home_for($m['role']));
     ob_start(); ?>
-<div class="auth"><div class="logo">P</div><h1>PICO</h1><p class="mut">Pesan makanan Kantin AX tanpa antre</p>
+<div class="auth"><div class="logo"><img src="/img/pico-logo.png" alt="Logo PICO"></div><h1>PICO</h1><p class="mut">Pesan makanan Kantin AX tanpa antre</p>
 <div class="pilih">
   <a href="/login?sebagai=pembeli"><span class="ic">🍽️</span><span><b>Saya Pembeli</b><small>Pesan makanan dari stand kantin</small></span></a>
   <a href="/login?sebagai=penjual"><span class="ic">🏪</span><span><b>Saya Penjual</b><small>Kelola pesanan dan menu stand</small></span></a>
@@ -22,7 +22,7 @@ function r_login(): void {
     if (!in_array($_GET['sebagai'] ?? '', ['pembeli', 'penjual'], true)) redirect('/');
     $as = pintu(); $err = take_flash();
     ob_start(); ?>
-<div class="auth"><div class="logo">P</div><h1>Masuk sebagai <?= $as === 'penjual' ? 'Penjual' : 'Pembeli' ?></h1><p class="mut">Pesan makanan Kantin AX tanpa antre</p>
+<div class="auth"><div class="logo"><img src="/img/pico-logo.png" alt="Logo PICO"></div><h1>Masuk sebagai <?= $as === 'penjual' ? 'Penjual' : 'Pembeli' ?></h1><p class="mut">Pesan makanan Kantin AX tanpa antre</p>
 <form method="post" action="/login">
   <input type="hidden" name="sebagai" value="<?= e($as) ?>">
   <div class="fld"><input name="u" placeholder="<?= $as === 'penjual' ? 'Username atau email' : 'Username/email/no.HP/NIM/NIP' ?>" autocomplete="username" required></div>
@@ -95,7 +95,7 @@ function r_home(): void {
     }
     ob_start(); ?>
 <header class="hd"><small>Halo, <?= e($m['nama']) ?></small><h1>Mau makan apa hari ini?</h1>
-  <form method="get" action="/home"><label class="search"><span>🔍</span><input name="cari" value="<?= e($cari) ?>" placeholder="Cari stand atau menu"></label></form></header>
+  <form method="get" action="/home" data-live-search><label class="search"><span>🔍</span><input name="cari" value="<?= e($cari) ?>" placeholder="Cari stand atau menu" aria-label="Cari stand atau menu" autocomplete="off"></label></form></header>
 <div class="bd"><h3>Stand</h3>
 <?php foreach ($stands as $s): $buka = $s['buka']; ?>
   <a class="stand <?= $buka ? '' : 'off' ?>" href="/menu?stand=<?= (int)$s['id'] ?>"><div class="thumb"><?= img($s['foto_url']) ?></div>

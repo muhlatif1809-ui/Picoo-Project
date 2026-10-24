@@ -189,7 +189,8 @@ h3 {
 /* Stand tutup: dibuat pudar dan tidak bisa diklik */
 .stand.off {
   opacity: .55;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
 }
 /* Label hijau "Buka" di pojok kanan atas kartu stand */
 .badge {
@@ -406,15 +407,17 @@ h3 {
 }
 /* Kotak logo "P" di halaman login */
 .logo {
-  width: 68px;
+  width: 84px;
   height: 68px;
-  border-radius: 20px;
-  background: #0b57b0;
-  color: #fff;
-  display: grid;
-  place-items: center;
-  font-size: 2.2rem;
-  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+.logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 /* Pembungkus satu kolom isian */
 .fld {
@@ -738,6 +741,65 @@ details>summary::-webkit-details-marker {
 .hd form {
   margin: 0;
 }
+
+/* Dashboard dan riwayat penjual */
+.seller-home-head {
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+  padding:24px 20px 20px; background:#fff;
+}
+.seller-home-head small,.seller-section-title small {display:block;color:var(--mut);font-size:.78rem;margin-bottom:4px}
+.seller-home-head h1 {font-size:1.25rem;line-height:1.25}
+.seller-home-head span {display:block;color:var(--mut);font-size:.82rem;margin-top:4px}
+.seller-open {display:flex;align-items:center;gap:8px;border:0;border-radius:99px;padding:10px 14px;background:#fff0e6;color:#9e4b10;font:600 .82rem Inter,system-ui;cursor:pointer}
+.seller-open i {width:9px;height:9px;border-radius:50%;background:#ef8b32}
+.seller-open.is-open {background:#e8f7ee;color:#167545}
+.seller-open.is-open i {background:#25a65a}
+.seller-dashboard {padding-top:8px}
+.seller-stats {display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:26px}
+.seller-stat {min-height:126px;border-radius:18px;padding:16px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;color:var(--ink)}
+.seller-stat small {font-size:.77rem;color:var(--mut)}
+.seller-stat b {font-size:1.35rem;line-height:1.2;overflow-wrap:anywhere}
+.seller-stat span {font-size:.7rem;color:var(--mut)}
+.seller-stat span i {font-style:normal;color:var(--org);font-size:1rem}
+.stat-new {background:#fff0e4}.stat-income {background:#e9f5ed}.stat-progress {background:#edf1ff}.stat-stock {background:#fff6dc}
+.seller-section-title {display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:12px}
+.seller-section-title h2 {font-size:1.08rem}
+.seller-section-title>a {font-size:.82rem;color:#d87522;font-weight:600;white-space:nowrap;padding-bottom:2px}
+.seller-order-list .empty {background:#f4f6fb;border-radius:16px}
+.seller-order {background:#fff;box-shadow:0 3px 14px #1b2a4a0d;border:1px solid #edf0f5;padding:15px;margin-bottom:12px}
+.seller-order .row>div:first-child {display:flex;flex-direction:column;gap:4px}
+.seller-order .row>div:first-child b {font-size:.94rem}
+.seller-order .row>div:first-child small {font-size:.72rem}
+.seller-order .lines {font-size:.84rem;line-height:1.5}
+.seller-order-foot {border-top:1px solid #edf0f5;padding-top:10px;font-size:.8rem;color:var(--mut)}
+.seller-order-foot b {color:var(--ink);font-size:.9rem}
+.seller-history {padding-top:14px}
+.seller-filters {display:flex;gap:8px;overflow-x:auto;padding:0 0 12px;scrollbar-width:none}
+.seller-filters::-webkit-scrollbar {display:none}
+.seller-filters a {flex:0 0 auto;padding:9px 14px;border-radius:99px;background:#f0f1f4;color:#697286;font-size:.78rem;font-weight:600}
+.seller-filters a.on {background:var(--navy);color:#fff}
+.seller-order .btns {margin-top:12px}
+.seller-menu-head {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:24px 20px 18px}
+.seller-menu-head small {display:block;color:var(--mut);font-size:.78rem;margin-bottom:4px}
+.seller-menu-head h1 {font-size:1.25rem}
+.seller-menu-head p {font-size:.82rem;color:var(--mut);margin-top:4px}
+.seller-menu-head .btn {white-space:nowrap}
+.seller-menu-page {padding-top:0}
+.seller-add-menu {background:#fff;border:1px solid #edf0f5;box-shadow:0 3px 14px #1b2a4a0d}
+.seller-add-menu>summary,.seller-edit-menu>summary {display:flex;align-items:center;justify-content:space-between;font-size:.88rem}
+.seller-add-menu>summary span {display:grid;place-items:center;border-radius:50%;width:28px;height:28px;background:#fff0e4;color:#cb6b1d;font-size:1.15rem}
+.seller-menu-item {background:#fff;border:1px solid #edf0f5;box-shadow:0 3px 14px #1b2a4a0d;padding:12px}
+.seller-menu-preview {display:flex;align-items:center;gap:12px}
+.seller-menu-photo {width:76px;height:76px;flex:0 0 76px;border-radius:14px;background:#f0f2f6;overflow:hidden;display:grid;place-items:center}
+.seller-menu-photo img {width:100%;height:100%;object-fit:cover}
+.seller-menu-photo .ph {font-size:1.8rem}
+.seller-menu-info {display:flex;flex-direction:column;gap:5px;min-width:0}
+.seller-menu-info b {font-size:.91rem}
+.seller-menu-info strong {font-size:.83rem;color:#d87522}
+.seller-menu-info small {font-size:.73rem;color:var(--mut)}
+.seller-edit-menu {margin-top:12px;padding-top:10px;border-top:1px solid #edf0f5}
+.seller-edit-menu>summary {color:#667085}
+@media (max-width:360px) {.seller-stat {min-height:116px;padding:13px}.seller-stat b {font-size:1.15rem}.seller-filters {gap:6px}.seller-filters a {padding:8px 11px}}
 .hd .btn.sec {
   background: #ffffff1f;
   color: #fff;
@@ -768,10 +830,11 @@ form.qty {
   display: flex;
   gap: 14px;
   align-items: center;
+  min-height: 92px;
   background: var(--card);
   border: 2px solid transparent;
-  border-radius: var(--r);
-  padding: 18px;
+  border-radius: 18px;
+  padding: 16px 18px;
 }
 /* Saat kartu disentuh/dipilih: bingkai oranye */
 .pilih a:hover,

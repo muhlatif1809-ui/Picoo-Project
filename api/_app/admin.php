@@ -2,11 +2,11 @@
     // admin.php : halaman admin. Akun penjual dibuat langsung di tabel profiles (password di-hash).
 
     function adm_layout(string $title, string $body, string $on): void {
-        $links = ['/admin' => 'Dashboard', '/admin/stand' => 'Stand & Penjual', '/admin/pengguna' => 'Pengguna', '/admin/pesanan' => 'Pesanan'];
-        $nav = '<header class="top"><b class="brand">PICO Admin</b><nav>';
+        $links = ['/admin' => 'Dashboard', '/admin/pengguna' => 'Pengguna', '/admin/stand' => 'Stand', '/admin/pesanan' => 'Pesanan'];
+        $nav = '<header class="adm-mobile-top"><a class="adm-brand" href="/admin"><img src="/img/pico-logo.png" alt="PICO"></a><a href="/keluar">Keluar</a></header><aside class="adm-side"><a class="adm-brand" href="/admin"><img src="/img/pico-logo.png" alt="PICO"></a><nav>';
         foreach ($links as $h => $l) $nav .= '<a href="' . $h . '" class="' . ($on === $h ? 'on' : '') . '">' . $l . '</a>';
-        $nav .= '<a href="/keluar" class="out">Keluar</a></nav></header>';
-        layout($title, $nav . '<main>' . $body . '</main>', ['css' => 'admin', 'wrap' => 'adm']);
+        $nav .= '</nav><a href="/keluar" class="adm-logout">Keluar</a></aside>';
+        layout($title, $nav . '<main class="adm-main">' . $body . '</main>', ['css' => 'admin', 'wrap' => 'adm']);
     }
 
     function r_adm_home(): void {
@@ -112,9 +112,11 @@
         need('admin');
         $u = db_get('profiles?select=id,nama,username,no_hp,role,created_at&order=created_at.desc&limit=500');
         ob_start(); ?>
-    <h1>Pengguna</h1><p class="mut">Mengubah peran menjadi admin dilakukan lewat SQL (lihat bagian bawah schema.sql).</p>
-    <div class="tw"><table><tr><th>Nama Lengkap</th><th>Email</th><th>No. HP</th><th>Peran</th><th>Daftar</th></tr>
-    <?php foreach ($u as $r): ?><tr><td><?= e($r['nama']) ?></td><td><?= e($r['username']) ?></td><td><?= e($r['no_hp'] ?? '-') ?></td><td><span class="tag r-<?= e($r['role']) ?>"><?= e($r['role']) ?></span></td><td><?= waktu($r['created_at']) ?></td></tr><?php endforeach; ?></table></div>
+    <div class="adm-page-head"><div><small>Kelola akun PICO</small><h1>Pengguna</h1></div></div>
+    <div class="adm-user-tabs"><button type="button" class="on" data-role-filter="all">Semua</button><button type="button" data-role-filter="pelanggan">Pelanggan</button><button type="button" data-role-filter="penjual">Penjual</button><button type="button" data-role-filter="admin">Admin</button></div>
+    <div class="adm-toolbar"><label class="adm-search">⌕ <input type="search" placeholder="Cari pengguna" data-table-search="users-table"></label><span><?= count($u) ?> akun</span></div>
+    <div class="tw"><table id="users-table"><tr><th>Nama Lengkap</th><th>Username</th><th>No. HP</th><th>Peran</th><th>Daftar</th></tr>
+    <?php foreach ($u as $r): ?><tr data-user-role="<?= e($r['role']) ?>"><td><?= e($r['nama']) ?></td><td><?= e($r['username']) ?></td><td><?= e($r['no_hp'] ?? '-') ?></td><td><span class="tag r-<?= e($r['role']) ?>"><?= e($r['role']) ?></span></td><td><?= waktu($r['created_at']) ?></td></tr><?php endforeach; ?></table></div>
     <?php adm_layout('Pengguna', ob_get_clean(), '/admin/pengguna');
     }
 
