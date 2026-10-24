@@ -297,3 +297,47 @@ details>summary::-webkit-details-marker {
     padding: 18px 12px 50px;
   }
 }
+
+/* Admin layout matches the supplied desktop sidebar while keeping existing actions. */
+.adm {min-height:100vh;background:#f5f6fa}
+.adm-side {position:fixed;inset:0 auto 0 0;width:224px;padding:22px 14px;background:var(--navy);color:#fff;display:flex;flex-direction:column;z-index:8}
+.adm-side .adm-brand {display:block;padding:0 10px 20px}
+.adm-side .adm-brand img {display:block;width:136px;max-height:72px;object-fit:contain;object-position:left center}
+.adm-side nav {display:flex;flex-direction:column;gap:5px}
+.adm-side nav a {display:flex;align-items:center;padding:11px 12px;border-radius:8px;color:#c5cde0;font-size:.88rem}
+.adm-side nav a:hover {background:#ffffff12;color:#fff}
+.adm-side nav a.on {background:var(--org);color:#fff;font-weight:700;box-shadow:none}
+.adm-logout {margin-top:auto;color:#c5cde0;padding:12px;font-size:.86rem}
+.adm-main {max-width:none;margin:0 0 0 224px;padding:30px clamp(22px,4vw,62px) 64px;min-height:100vh}
+.adm-mobile-top {display:none}
+.adm-main h1 {color:var(--navy)}
+.adm-main .cards {grid-template-columns:repeat(4,minmax(0,1fr))}
+.adm-main .card {min-height:95px;border-radius:10px;box-shadow:none}
+.adm-main .tw {box-shadow:none;border:1px solid #edf0f5;border-radius:11px}
+.adm-main table {font-size:.84rem}
+.adm-main th {background:#f6f7fa;font-size:.75rem;white-space:nowrap}
+.adm-main .panel {box-shadow:none;border:1px solid #edf0f5}
+.adm-main .adm-page-head {display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.adm-main .adm-page-head small {display:block;color:var(--mut);font-size:.78rem;margin-bottom:5px}
+.adm-main .adm-page-head h1 {margin:0;color:var(--navy);font-size:1.45rem}
+.adm-main .adm-user-tabs {display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:14px}
+.adm-main .adm-user-tabs button {flex:none;border:0;border-bottom:2px solid transparent;background:none;padding:10px 14px;color:var(--mut);font:500 .83rem Inter,system-ui;cursor:pointer}
+.adm-main .adm-user-tabs button.on {color:var(--org);font-weight:700;border-color:var(--org)}
+.adm-main .adm-toolbar {display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0;color:var(--mut);font-size:.8rem}
+.adm-main .adm-search {display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #dce1ea;border-radius:9px;padding:0 12px;width:min(360px,100%);color:var(--mut);font-size:1.2rem}
+.adm-main .adm-search input {border:0;outline:0;width:100%;padding:10px 0;font:inherit;font-size:.83rem;background:transparent}
+.adm-main .chips {margin-bottom:14px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px}
+.adm-main .chips a {white-space:nowrap}
+@media (max-width:1000px) {.adm-main .cards {grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px) {
+  .adm-mobile-top {display:flex;align-items:center;justify-content:space-between;background:var(--navy);padding:12px 16px;color:#fff}
+  .adm-mobile-top .adm-brand {display:block;padding:0;width:86px}.adm-mobile-top .adm-brand img {display:block;width:100%;max-height:42px;object-fit:contain}.adm-mobile-top>a:last-child {font-size:.8rem;color:#d9deea}
+  .adm-side {position:sticky;top:0;width:100%;height:auto;padding:0 8px;display:block}
+  .adm-side .adm-brand,.adm-logout {display:none}
+  .adm-side nav {flex-direction:row;overflow-x:auto;gap:4px;padding:7px 0;scrollbar-width:none}
+  .adm-side nav::-webkit-scrollbar {display:none}
+  .adm-side nav a {flex:0 0 auto;padding:9px 12px;font-size:.76rem}
+  .adm-main {margin:0;padding:22px 14px 45px;min-height:calc(100vh - 104px)}
+  .adm-main .cards {gap:10px}.adm-main .card {min-height:82px;padding:13px}
+  .adm-main table {min-width:620px}
+}
