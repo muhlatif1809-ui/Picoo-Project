@@ -55,13 +55,23 @@ function r_daftar(): void {
     $err = take_flash();
     ob_start(); ?>
 <div class="auth" style="padding-top:36px"><h1>Buat akun</h1><p class="mut">Isi data untuk mulai memesan</p>
-<form method="post" action="/daftar">
-  <div class="fld"><input name="n" placeholder="Nama Lengkap" required></div>
-  <div class="fld"><input name="h" type="tel" placeholder="No. handphone" required></div>
-  <div class="fld"><input name="e" type="email" placeholder="Email" required></div>
-  <div class="fld"><input name="p" type="password" placeholder="Password (min. 6 karakter)" minlength="6" required></div>
-  <div class="fld"><input name="k" type="password" placeholder="Konfirmasi password" required></div>
-  <p class="er"><?= e($err) ?></p><button class="btn">Daftar</button>
+<form method="post" action="/daftar" enctype="multipart/form-data" id="fd">
+  <div class="stat">
+    <label class="opt"><input type="radio" name="s" value="polinema" required><div><b>Mahasiswa Polinema</b><small>Wajib upload KTM</small></div></label>
+    <label class="opt"><input type="radio" name="s" value="umum"><div><b>Bukan mahasiswa Polinema</b><small>Pengunjung umum</small></div></label>
+  </div>
+  <div class="fld" id="ktm-w" hidden>
+    <label for="ktm">Foto KTM (JPG/PNG/WebP, maks. 2 MB)</label>
+    <input type="file" id="ktm" name="ktm" accept="image/jpeg,image/png,image/webp">
+  </div>
+  <fieldset id="dd" disabled>
+    <div class="fld"><input name="n" placeholder="Nama Lengkap" required></div>
+    <div class="fld"><input name="h" type="tel" placeholder="No. handphone" required></div>
+    <div class="fld"><input name="e" type="email" placeholder="Email" required></div>
+    <div class="fld"><input name="p" type="password" placeholder="Password (min. 6 karakter)" minlength="6" required></div>
+    <div class="fld"><input name="k" type="password" placeholder="Konfirmasi password" required></div>
+    <p class="er"><?= e($err) ?></p><button class="btn">Daftar</button>
+  </fieldset>
 </form>
 <p class="mut c">Sudah punya akun? <a href="/login?sebagai=pembeli" class="org">Masuk</a></p></div>
 <?php layout('Daftar', ob_get_clean());
@@ -70,12 +80,34 @@ function r_daftar(): void {
 function r_daftar_post(): void {
     $n = trim($_POST['n'] ?? ''); $h = trim($_POST['h'] ?? ''); $em = trim($_POST['e'] ?? '');
     $p = (string)($_POST['p'] ?? ''); $k = (string)($_POST['k'] ?? '');
+    $s = $_POST['s'] ?? '';
+
+    if (!in_array($s, ['polinema', 'umum'], true)) { flash('Pilih dulu: mahasiswa Polinema atau bukan.'); redirect('/daftar'); }
+    $pol = $s === 'polinema';
+
     if ($n === '' || $em === '' || $p === '') { flash('Lengkapi semua data.'); redirect('/daftar'); }
     if (!filter_var($em, FILTER_VALIDATE_EMAIL)) { flash('Email tidak valid.'); redirect('/daftar'); }
     if (strlen($p) < 6) { flash('Password minimal 6 karakter.'); redirect('/daftar'); }
     if ($p !== $k) { flash('Password dan konfirmasi belum sama.'); redirect('/daftar'); }
-    try { save_session(auth_signup($em, $p, $n, $h)); }
-    catch (SbError $x) { flash($x->getMessage()); redirect('/daftar'); }
+
+    $ktm = $_FILES['ktm'] ?? null; $mime = '';
+    if ($pol) {
+        try { $mime = ktm_cek($ktm); }
+        catch (SbError $x) { flash($x->getMessage()); redirect('/daftar'); }
+    }
+
+    try {
+        $sess = auth_signup($em, $p, $n, $h, $pol);
+        if ($pol) {
+            try { ktm_simpan((string)$sess['user_id'], $ktm, $mime); }
+            catch (SbError $x) {
+                // KTM gagal tersimpan: batalkan akun agar tidak ada akun Polinema tanpa KTM
+                pg_run('DELETE FROM profiles WHERE id = :id', [':id' => $sess['user_id']]);
+                throw $x;
+            }
+        }
+        save_session($sess);
+    } catch (SbError $x) { flash($x->getMessage()); redirect('/daftar'); }
     redirect('/home');
 }
 

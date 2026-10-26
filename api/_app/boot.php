@@ -641,11 +641,16 @@ function db_rpc(string $fn, array $args = [], bool $svc = false)
 // DAFTAR DAN LOGIN
 // =====================================================================
 
+/**
+ * Mendaftarkan pelanggan baru.
+ * $pol = true bila mahasiswa Polinema (status KTM awal: 'menunggu').
+ */
 function auth_signup(
     string $email,
     string $pw,
     string $nama,
-    string $hp
+    string $hp,
+    bool $pol = false
 ): array {
     $email = lc(trim($email));
 
@@ -660,15 +665,17 @@ function auth_signup(
 
     $r = pg_run(
         'INSERT INTO profiles
-            (email, password_hash, nama, no_hp, role)
-         VALUES (:e, :h, :n, :p, :r)
+            (email, password_hash, nama, no_hp, role, is_polinema, ktm_status)
+         VALUES (:e, :h, :n, :p, :r, :pol, :ks)
          RETURNING id',
         [
-            ':e' => $email,
-            ':h' => password_hash($pw, PASSWORD_DEFAULT),
-            ':n' => $nama,
-            ':p' => $hp,
-            ':r' => 'pelanggan',
+            ':e'   => $email,
+            ':h'   => password_hash($pw, PASSWORD_DEFAULT),
+            ':n'   => $nama,
+            ':p'   => $hp,
+            ':r'   => 'pelanggan',
+            ':pol' => $pol,
+            ':ks'  => $pol ? 'menunggu' : null,
         ]
     )->fetch();
 
@@ -1012,3 +1019,92 @@ function qr_simpan(int $standId, array $file): void
         if (is_resource($fh)) fclose($fh);
     }
 }
+
+// =====================================================================
+// KTM MAHASISWA POLINEMA (disimpan di profiles.ktm_data, TIDAK publik)
+// =====================================================================
+
+/** Validasi file KTM. Mengembalikan MIME jika valid, atau melempar SbError. */
+function ktm_cek(?array $file): string
+{
+    $err = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+
+    if (!$file || $err === UPLOAD_ERR_NO_FILE) {
+        throw new SbError('Mahasiswa Polinema wajib upload KTM.');
+    }
+    if ($err === UPLOAD_ERR_INI_SIZE || $err === UPLOAD_ERR_FORM_SIZE) {
+        throw new SbError('Ukuran KTM maksimal 2 MB.');
+    }
+    if ($err !== UPLOAD_ERR_OK) {
+        throw new SbError('KTM gagal diunggah.');
+    }
+    if (($file['size'] ?? 0) > 2097152) {
+        throw new SbError('Ukuran KTM maksimal 2 MB.');
+    }
+
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+
+    if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+        throw new SbError('KTM harus berformat JPG, PNG, atau WebP.');
+    }
+
+    return $mime;
+}
+
+function ktm_simpan(string $uid, array $file, string $mime): void
+{
+    $fh = fopen($file['tmp_name'], 'rb');
+
+    try {
+        $st = pdo()->prepare(
+            'UPDATE profiles SET ktm_data = :d, ktm_mime = :m WHERE id = :id'
+        );
+        $st->bindValue(':d', $fh, PDO::PARAM_LOB);
+        $st->bindValue(':m', $mime);
+        $st->bindValue(':id', $uid);
+        $st->execute();
+    } catch (PDOException $x) {
+        error_log('Simpan KTM gagal: ' . $x->getMessage());
+        throw new SbError('KTM gagal disimpan.');
+    } finally {
+        if (is_resource($fh)) fclose($fh);
+    }
+}
+
+// Menyajikan KTM di /ktm?id=<uuid>. Hanya admin atau pemilik akun yang boleh melihat.
+(function (): void {
+    $path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+    if ($path !== '/ktm') return;
+
+    $uid = (string) ($_SESSION['uid'] ?? '');
+    if ($uid === '') { http_response_code(403); exit; }
+
+    try {
+        $st = pdo()->prepare('SELECT role FROM profiles WHERE id = :id');
+        $st->execute([':id' => $uid]);
+        $role = $st->fetchColumn();
+
+        $target = (string) ($_GET['id'] ?? $uid);
+        if ($role !== 'admin' && $target !== $uid) { http_response_code(403); exit; }
+
+        $st = pdo()->prepare('SELECT ktm_data, ktm_mime FROM profiles WHERE id = :id');
+        $st->execute([':id' => $target]);
+        $row = $st->fetch();
+    } catch (Throwable $x) {
+        http_response_code(404);
+        exit;
+    }
+
+    if (!$row || $row['ktm_data'] === null) { http_response_code(404); exit; }
+
+    $data = is_resource($row['ktm_data'])
+        ? stream_get_contents($row['ktm_data'])
+        : $row['ktm_data'];
+
+    header('Content-Type: ' . $row['ktm_mime']);
+    header('Cache-Control: private, no-store');
+    header('X-Content-Type-Options: nosniff');
+    header('Content-Length: ' . strlen($data));
+    echo $data;
+    exit;
+})();

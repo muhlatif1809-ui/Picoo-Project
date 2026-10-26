@@ -797,3 +797,12 @@ form.qty {
 .pilih small {
   color: var(--mut);
 }
+
+/* ===== Form daftar: pilihan status Polinema & KTM ===== */
+.stat { margin: 18px 0 14px; }
+.fld label { display: block; font-size: .8rem; color: var(--mut); margin-bottom: 6px; }
+.fld input[type=file] { padding: 12px 14px; box-shadow: none; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+fieldset:disabled { opacity: .5; }
+fieldset:disabled .fld input { background: #f1f3f8; cursor: not-allowed; }
+fieldset:disabled .btn { cursor: not-allowed; }
