@@ -12,9 +12,10 @@ Options -Indexes
     # Blokir akses langsung ke file internal
     RewriteRule ^(sql|api/_app)(/|$) - [F,L,NC]
 
-    # Layani aset CSS dan JavaScript
+    # Layani aset CSS, JavaScript, dan gambar
     RewriteRule ^css/(.*)$ public/css/$1 [L,NC]
     RewriteRule ^js/(.*)$ public/js/$1 [L,NC]
+    RewriteRule ^img/(.*)$ public/img/$1 [L,NC]
 
     # Jika file atau folder tersedia, layani langsung
     RewriteCond %{REQUEST_FILENAME} -f [OR]

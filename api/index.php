@@ -44,6 +44,24 @@ if ($path === $basePath) {
 
 $path = rtrim($path, '/') ?: '/';
 
+// Layani file statis dari public/ (css, js, img) bila server tidak melakukannya sendiri.
+if (preg_match('#^/(css|js|img)/[A-Za-z0-9._-]+$#', $path)) {
+    $f = dirname(__DIR__) . '/public' . $path;
+    $types = [
+        'png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg',
+        'webp' => 'image/webp', 'svg' => 'image/svg+xml',
+        'css' => 'text/css; charset=utf-8', 'js' => 'application/javascript; charset=utf-8',
+    ];
+    $ext = strtolower(pathinfo($f, PATHINFO_EXTENSION));
+    if (is_file($f) && isset($types[$ext])) {
+        header('Content-Type: ' . $types[$ext]);
+        header('Cache-Control: public, max-age=86400');
+        header('Content-Length: ' . filesize($f));
+        readfile($f);
+        exit;
+    }
+}
+
 if ($method === 'POST') check_origin();
 
 
