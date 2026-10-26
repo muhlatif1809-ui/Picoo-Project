@@ -1,13 +1,13 @@
     <?php
         // admin.php : halaman admin. Akun penjual dibuat langsung di tabel profiles (password di-hash).
 
-        function adm_layout(string $title, string $body, string $on): void {
-            $links = ['/admin' => 'Dashboard', '/admin/stand' => 'Stand & Penjual', '/admin/pengguna' => 'Pengguna', '/admin/pesanan' => 'Pesanan'];
-            $nav = '<header class="top"><b class="brand">PICO Admin</b><nav>';
-            foreach ($links as $h => $l) $nav .= '<a href="' . $h . '" class="' . ($on === $h ? 'on' : '') . '">' . $l . '</a>';
-            $nav .= '<a href="/keluar" class="out">Keluar</a></nav></header>';
-            layout($title, $nav . '<main>' . $body . '</main>', ['css' => 'admin', 'wrap' => 'adm']);
-        }
+    function adm_layout(string $title, string $body, string $on): void {
+        $links = ['/admin' => 'Dashboard', '/admin/pengguna' => 'Pengguna', '/admin/stand' => 'Stand', '/admin/pesanan' => 'Pesanan'];
+        $nav = '<header class="adm-mobile-top"><a class="adm-brand" href="/admin"><img src="/img/pico-logo.png" alt="PICO"></a><a href="/keluar">Keluar</a></header><aside class="adm-side"><a class="adm-brand" href="/admin"><img src="/img/pico-logo.png" alt="PICO"></a><nav>';
+        foreach ($links as $h => $l) $nav .= '<a href="' . $h . '" class="' . ($on === $h ? 'on' : '') . '">' . $l . '</a>';
+        $nav .= '</nav><a href="/keluar" class="adm-logout">Keluar</a></aside>';
+        layout($title, $nav . '<main class="adm-main">' . $body . '</main>', ['css' => 'admin', 'wrap' => 'adm']);
+    }
 
         function r_adm_home(): void {
             need('admin');
@@ -108,34 +108,36 @@
             redirect('/admin/stand');
         }
 
-        function r_adm_pengguna(): void {
-            need('admin');
-            $u = db_get('profiles?select=id,nama,username,no_hp,role,created_at&order=created_at.desc&limit=500');
-            ob_start(); ?>
-        <h1>Pengguna</h1><p class="mut">Mengubah peran menjadi admin dilakukan lewat SQL (lihat bagian bawah schema.sql).</p>
-        <div class="tw"><table><tr><th>Nama Lengkap</th><th>Email</th><th>No. HP</th><th>Peran</th><th>Daftar</th></tr>
-        <?php foreach ($u as $r): ?><tr><td><?= e($r['nama']) ?></td><td><?= e($r['username']) ?></td><td><?= e($r['no_hp'] ?? '-') ?></td><td><span class="tag r-<?= e($r['role']) ?>"><?= e($r['role']) ?></span></td><td><?= waktu($r['created_at']) ?></td></tr><?php endforeach; ?></table></div>
-        <?php adm_layout('Pengguna', ob_get_clean(), '/admin/pengguna');
-        }
+    function r_adm_pengguna(): void {
+        need('admin');
+        $u = db_get('profiles?select=id,nama,username,no_hp,role,created_at&order=created_at.desc&limit=500');
+        ob_start(); ?>
+    <div class="adm-page-head"><div><small>Kelola akun PICO</small><h1>Pengguna</h1></div></div>
+    <div class="adm-user-tabs"><button type="button" class="on" data-role-filter="all">Semua</button><button type="button" data-role-filter="pelanggan">Pelanggan</button><button type="button" data-role-filter="penjual">Penjual</button><button type="button" data-role-filter="admin">Admin</button></div>
+    <div class="adm-toolbar"><label class="adm-search">⌕ <input type="search" placeholder="Cari pengguna" data-table-search="users-table"></label><span><?= count($u) ?> akun</span></div>
+    <div class="tw"><table id="users-table"><tr><th>Nama Lengkap</th><th>Username</th><th>No. HP</th><th>Peran</th><th>Daftar</th></tr>
+    <?php foreach ($u as $r): ?><tr data-user-role="<?= e($r['role']) ?>"><td><?= e($r['nama']) ?></td><td><?= e($r['username']) ?></td><td><?= e($r['no_hp'] ?? '-') ?></td><td><span class="tag r-<?= e($r['role']) ?>"><?= e($r['role']) ?></span></td><td><?= waktu($r['created_at']) ?></td></tr><?php endforeach; ?></table></div>
+    <?php adm_layout('Pengguna', ob_get_clean(), '/admin/pengguna');
+    }
 
-        function r_adm_pesanan(): void {
-            need('admin');
-            $st = $_GET['status'] ?? '';
-            $filter = isset(STATUS_LABEL[$st]);
-            $os = db_sql(
-                "SELECT p.id, p.kode, p.status, p.layanan, p.total, p.created_at, s.nama AS stand_nama,
-                        (SELECT string_agg(i.jumlah::text || ' ' || i.nama, ', ' ORDER BY i.id) FROM pesanan_item i WHERE i.pesanan_id = p.id) AS menu_ringkas
-                FROM pesanan p LEFT JOIN stands s ON s.id = p.stand_id"
-                . ($filter ? ' WHERE p.status = :st' : '')
-                . ' ORDER BY p.created_at DESC LIMIT 100',
-                $filter ? [':st' => $st] : []
-            );
-            ob_start(); ?>
-        <h1>Pesanan</h1>
-        <div class="chips"><a href="/admin/pesanan" class="<?= $st === '' ? 'on' : '' ?>">Semua</a><?php foreach (STATUS_LABEL as $k => $l): ?><a href="/admin/pesanan?status=<?= $k ?>" class="<?= $st === $k ? 'on' : '' ?>"><?= e($l) ?></a><?php endforeach; ?></div>
-        <div class="tw"><table><tr><th>Kode</th><th>Stand</th><th>Menu</th><th>Layanan</th><th>Total</th><th>Status</th><th>Waktu</th></tr>
-        <?php foreach ($os as $o): ?><tr><td>#<?= e($o['kode']) ?></td><td><?= e($o['stand_nama'] ?? '') ?></td><td><?= e($o['menu_ringkas'] ?? '') ?></td>
-        <td><?= e(LAY[$o['layanan']] ?? '') ?></td><td><?= rp($o['total']) ?></td><td><?= tag($o['status']) ?></td><td><?= waktu($o['created_at']) ?></td></tr>
-        <?php endforeach; if (!$os) echo '<tr><td colspan="7" class="mut">Tidak ada pesanan.</td></tr>'; ?></table></div>
-        <?php adm_layout('Pesanan', ob_get_clean(), '/admin/pesanan');
-        }
+    function r_adm_pesanan(): void {
+        need('admin');
+        $st = $_GET['status'] ?? '';
+        $filter = isset(STATUS_LABEL[$st]);
+        $os = db_sql(
+            "SELECT p.id, p.kode, p.status, p.layanan, p.total, p.created_at, s.nama AS stand_nama,
+                    (SELECT string_agg(i.jumlah::text || ' ' || i.nama, ', ' ORDER BY i.id) FROM pesanan_item i WHERE i.pesanan_id = p.id) AS menu_ringkas
+            FROM pesanan p LEFT JOIN stands s ON s.id = p.stand_id"
+            . ($filter ? ' WHERE p.status = :st' : '')
+            . ' ORDER BY p.created_at DESC LIMIT 100',
+            $filter ? [':st' => $st] : []
+        );
+        ob_start(); ?>
+    <h1>Pesanan</h1>
+    <div class="chips"><a href="/admin/pesanan" class="<?= $st === '' ? 'on' : '' ?>">Semua</a><?php foreach (STATUS_LABEL as $k => $l): ?><a href="/admin/pesanan?status=<?= $k ?>" class="<?= $st === $k ? 'on' : '' ?>"><?= e($l) ?></a><?php endforeach; ?></div>
+    <div class="tw"><table><tr><th>Kode</th><th>Stand</th><th>Menu</th><th>Layanan</th><th>Total</th><th>Status</th><th>Waktu</th></tr>
+    <?php foreach ($os as $o): ?><tr><td>#<?= e($o['kode']) ?></td><td><?= e($o['stand_nama'] ?? '') ?></td><td><?= e($o['menu_ringkas'] ?? '') ?></td>
+    <td><?= e(LAY[$o['layanan']] ?? '') ?></td><td><?= rp($o['total']) ?></td><td><?= tag($o['status']) ?></td><td><?= waktu($o['created_at']) ?></td></tr>
+    <?php endforeach; if (!$os) echo '<tr><td colspan="7" class="mut">Tidak ada pesanan.</td></tr>'; ?></table></div>
+    <?php adm_layout('Pesanan', ob_get_clean(), '/admin/pesanan');
+    }
