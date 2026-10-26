@@ -1,4 +1,4 @@
-    <?php
+<?php
         // admin.php : halaman admin. Akun penjual dibuat langsung di tabel profiles (password di-hash).
 
     function adm_layout(string $title, string $body, string $on): void {
@@ -108,15 +108,30 @@
             redirect('/admin/stand');
         }
 
-    function r_adm_pengguna(): void {
+        function r_adm_pengguna(): void {
         need('admin');
-        $u = db_get('profiles?select=id,nama,username,no_hp,role,created_at&order=created_at.desc&limit=500');
+        $f = $_GET['ktm'] ?? '';
+        $u = db_get('profiles?select=id,nama,username,no_hp,role,created_at,is_polinema,ktm_status&order=created_at.desc&limit=500');
+        $menunggu = count(array_filter($u, fn($r) => ($r['ktm_status'] ?? '') === 'menunggu'));
+        if ($f === 'menunggu') $u = array_values(array_filter($u, fn($r) => ($r['ktm_status'] ?? '') === 'menunggu'));
+        $warna = ['menunggu' => 'background:#fff3cd;color:#7a5b00', 'disetujui' => 'background:#d6f3e1;color:#146c3b', 'ditolak' => 'background:#fde1e1;color:#b42318'];
+        $lbl = ['menunggu' => 'Menunggu', 'disetujui' => 'Disetujui', 'ditolak' => 'Ditolak'];
+        $bt = 'border:0;border-radius:8px;padding:5px 10px;font:inherit;font-size:.8rem;font-weight:600;cursor:pointer;';
         ob_start(); ?>
     <div class="adm-page-head"><div><small>Kelola akun PICO</small><h1>Pengguna</h1></div></div>
     <div class="adm-user-tabs"><button type="button" class="on" data-role-filter="all">Semua</button><button type="button" data-role-filter="pelanggan">Pelanggan</button><button type="button" data-role-filter="penjual">Penjual</button><button type="button" data-role-filter="admin">Admin</button></div>
-    <div class="adm-toolbar"><label class="adm-search">⌕ <input type="search" placeholder="Cari pengguna" data-table-search="users-table"></label><span><?= count($u) ?> akun</span></div>
-    <div class="tw"><table id="users-table"><tr><th>Nama Lengkap</th><th>Username</th><th>No. HP</th><th>Peran</th><th>Daftar</th></tr>
-    <?php foreach ($u as $r): ?><tr data-user-role="<?= e($r['role']) ?>"><td><?= e($r['nama']) ?></td><td><?= e($r['username']) ?></td><td><?= e($r['no_hp'] ?? '-') ?></td><td><span class="tag r-<?= e($r['role']) ?>"><?= e($r['role']) ?></span></td><td><?= waktu($r['created_at']) ?></td></tr><?php endforeach; ?></table></div>
+    <div class="adm-toolbar"><label class="adm-search">⌕ <input type="search" placeholder="Cari pengguna" data-table-search="users-table"></label><span><?= count($u) ?> akun</span>
+      <a href="/admin/pengguna<?= $f === 'menunggu' ? '' : '?ktm=menunggu' ?>" style="margin-left:auto;font-weight:600;color:#f28c28"><?= $f === 'menunggu' ? 'Tampilkan semua' : 'KTM menunggu verifikasi (' . $menunggu . ')' ?></a></div>
+    <div class="tw"><table id="users-table"><tr><th>Nama Lengkap</th><th>Username</th><th>No. HP</th><th>Peran</th><th>KTM</th><th>Daftar</th></tr>
+    <?php foreach ($u as $r): $ks = $r['ktm_status'] ?? ''; ?><tr data-user-role="<?= e($r['role']) ?>"><td><?= e($r['nama']) ?></td><td><?= e($r['username']) ?></td><td><?= e($r['no_hp'] ?? '-') ?></td><td><span class="tag r-<?= e($r['role']) ?>"><?= e($r['role']) ?></span></td>
+    <td><?php if ($ks === ''): ?><span class="mut">-</span><?php else: ?>
+      <span style="<?= $warna[$ks] ?? '' ?>;padding:3px 10px;border-radius:99px;font-size:.75rem;font-weight:600"><?= e($lbl[$ks] ?? $ks) ?></span><br>
+      <a href="/ktm?id=<?= e($r['id']) ?>" target="_blank" rel="noopener" style="font-size:.85rem;font-weight:600;color:#f28c28">Lihat KTM</a>
+      <form method="post" action="/admin/ktm" style="display:inline-flex;gap:6px;margin-left:6px"><input type="hidden" name="id" value="<?= e($r['id']) ?>">
+        <?php if ($ks !== 'disetujui'): ?><button name="aksi" value="setujui" style="<?= $bt ?>background:#d6f3e1;color:#146c3b">Setujui</button><?php endif; ?>
+        <?php if ($ks !== 'ditolak'): ?><button name="aksi" value="tolak" style="<?= $bt ?>background:#fde1e1;color:#b42318">Tolak</button><?php endif; ?></form>
+    <?php endif; ?></td>
+    <td><?= waktu($r['created_at']) ?></td></tr><?php endforeach; if (!$u) echo '<tr><td colspan="6" class="mut">Tidak ada pengguna.</td></tr>'; ?></table></div>
     <?php adm_layout('Pengguna', ob_get_clean(), '/admin/pengguna');
     }
 

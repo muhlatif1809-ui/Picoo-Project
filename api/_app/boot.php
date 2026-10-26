@@ -1108,3 +1108,33 @@ function ktm_simpan(string $uid, array $file, string $mime): void
     echo $data;
     exit;
 })();
+
+
+// Admin menyetujui / menolak KTM: POST /admin/ktm (id, aksi = setujui|tolak)
+(function (): void {
+    $path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+    if ($path !== '/admin/ktm' || ($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') return;
+
+    check_origin();
+    need('admin');
+
+    $map = ['setujui' => 'disetujui', 'tolak' => 'ditolak'];
+    $id = (string) ($_POST['id'] ?? '');
+    $aksi = (string) ($_POST['aksi'] ?? '');
+
+    if ($id === '' || !isset($map[$aksi])) {
+        flash('Permintaan tidak valid.');
+        redirect('/admin/pengguna');
+    }
+
+    try {
+        pg_run(
+            'UPDATE profiles SET ktm_status = :s WHERE id = :id AND is_polinema = TRUE',
+            [':s' => $map[$aksi], ':id' => $id]
+        );
+        flash('KTM ' . $map[$aksi]);
+    } catch (SbError $x) {
+        flash($x->getMessage());
+    }
+    redirect('/admin/pengguna');
+})();
