@@ -74,6 +74,33 @@ function r_daftar(): void {
   </fieldset>
 </form>
 <p class="mut c">Sudah punya akun? <a href="/login?sebagai=pembeli" class="org">Masuk</a></p></div>
+<script>
+(function () {
+  var f = document.getElementById('fd');
+  if (!f) return;
+  var dd = document.getElementById('dd'),
+      w  = document.getElementById('ktm-w'),
+      k  = document.getElementById('ktm');
+
+  function sync() {
+    var c = f.querySelector('input[name="s"]:checked');
+    var pol = !!c && c.value === 'polinema';
+    dd.disabled = !c;
+    w.hidden = !pol;
+    k.required = pol;
+    if (!pol) k.value = '';
+  }
+
+  f.addEventListener('change', function (e) {
+    if (e.target === k && k.files[0] && k.files[0].size > 2097152) {
+      alert('Ukuran KTM maksimal 2 MB');
+      k.value = '';
+    }
+    sync();
+  });
+  sync();
+})();
+</script>
 <?php layout('Daftar', ob_get_clean());
 }
 

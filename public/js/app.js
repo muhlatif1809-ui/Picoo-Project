@@ -101,29 +101,3 @@
   }, ms);
 })();
 
-/* Form daftar: kunci isian sebelum memilih status, KTM khusus Polinema */
-(function () {
-  var f = document.getElementById('fd');
-  if (!f) return;
-  var dd = document.getElementById('dd'),
-      w  = document.getElementById('ktm-w'),
-      k  = document.getElementById('ktm');
-
-  function sync() {
-    var c = f.querySelector('input[name="s"]:checked');
-    var pol = !!c && c.value === 'polinema';
-    dd.disabled = !c;
-    w.hidden = !pol;
-    k.required = pol;
-    if (!pol) k.value = '';
-  }
-
-  f.addEventListener('change', function (e) {
-    if (e.target === k && k.files[0] && k.files[0].size > 2097152) {
-      alert('Ukuran KTM maksimal 2 MB');
-      k.value = '';
-    }
-    sync();
-  });
-  sync();
-})();
