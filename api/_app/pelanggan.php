@@ -69,6 +69,7 @@ function r_daftar(): void {
   </div>
   <fieldset id="dd" disabled>
     <div class="fld"><input name="n" placeholder="Nama Lengkap" required></div>
+    <div class="fld"><input name="u" placeholder="Username" autocomplete="username" required></div>
     <div class="fld"><input name="h" type="tel" placeholder="No. handphone" required></div>
     <div class="fld"><input name="e" type="email" placeholder="Email" required></div>
     <div class="fld"><input name="p" type="password" placeholder="Password (min. 6 karakter)" minlength="6" required></div>
@@ -108,14 +109,19 @@ function r_daftar(): void {
 }
 
 function r_daftar_post(): void {
-    $n = trim($_POST['n'] ?? ''); $h = trim($_POST['h'] ?? ''); $em = trim($_POST['e'] ?? '');
-    $p = (string)($_POST['p'] ?? ''); $k = (string)($_POST['k'] ?? '');
+    $n = trim($_POST['n'] ?? '');
+    $u = trim($_POST['u'] ?? '');
+    $h = trim($_POST['h'] ?? '');
+    $em = trim($_POST['e'] ?? '');
+    $p = (string)($_POST['p'] ?? '');
+    $k = (string)($_POST['k'] ?? '');
     $s = $_POST['s'] ?? '';
 
     if (!in_array($s, ['polinema', 'umum'], true)) { flash('Pilih dulu: mahasiswa Polinema atau bukan.'); redirect('/daftar'); }
     $pol = $s === 'polinema';
 
-    if ($n === '' || $em === '' || $p === '') { flash('Lengkapi semua data.'); redirect('/daftar'); }
+    if ($n === '' || $u === '' || $em === '' || $p === '') { flash('Lengkapi semua data.'); redirect('/daftar'); }
+    if (!preg_match('/^[a-zA-Z0-9_.\-]{3,30}$/', $u)) { flash('Username 3-30 karakter (huruf, angka, titik, atau underscore tanpa spasi).'); redirect('/daftar'); }
     if (!filter_var($em, FILTER_VALIDATE_EMAIL)) { flash('Email tidak valid.'); redirect('/daftar'); }
     if (strlen($p) < 6) { flash('Password minimal 6 karakter.'); redirect('/daftar'); }
     if ($p !== $k) { flash('Password dan konfirmasi belum sama.'); redirect('/daftar'); }
@@ -127,7 +133,7 @@ function r_daftar_post(): void {
     }
 
     try {
-        $sess = auth_signup($em, $p, $n, $h, $pol);
+        $sess = auth_signup($em, $p, $n, $h, $pol, $u);
         if ($pol) {
             try { ktm_simpan((string)$sess['user_id'], $ktm, $mime); }
             catch (SbError $x) {
@@ -136,9 +142,11 @@ function r_daftar_post(): void {
                 throw $x;
             }
         }
-        save_session($sess);
     } catch (SbError $x) { flash($x->getMessage()); redirect('/daftar'); }
-    redirect('/home');
+
+    // Arahkan kembali ke halaman Masuk sebagai Pembeli agar user login dengan akun yang baru dibuat
+    flash('Pendaftaran berhasil! Silakan masuk dengan username dan password Anda.');
+    redirect('/login?sebagai=pembeli');
 }
 
 function r_keluar(): void { clear_session(); cookie_del('pico_cart'); redirect('/'); }

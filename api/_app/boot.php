@@ -650,9 +650,11 @@ function auth_signup(
     string $pw,
     string $nama,
     string $hp,
-    bool $pol = false
+    bool $pol = false,
+    string $username = ''
 ): array {
     $email = lc(trim($email));
+    $username = trim($username);
 
     if (
         pg_run(
@@ -663,21 +665,50 @@ function auth_signup(
         throw new SbError('Email sudah terdaftar.', 422);
     }
 
-    $r = pg_run(
-        'INSERT INTO profiles
-            (email, password_hash, nama, no_hp, role, is_polinema, ktm_status)
-         VALUES (:e, :h, :n, :p, :r, :pol, :ks)
-         RETURNING id',
-        [
-            ':e'   => $email,
-            ':h'   => password_hash($pw, PASSWORD_DEFAULT),
-            ':n'   => $nama,
-            ':p'   => $hp,
-            ':r'   => 'pelanggan',
-            ':pol' => $pol,
-            ':ks'  => $pol ? 'menunggu' : null,
-        ]
-    )->fetch();
+    if (
+        $username !== '' &&
+        pg_run(
+            'SELECT 1 FROM profiles WHERE LOWER(username) = LOWER(:u)',
+            [':u' => $username]
+        )->fetch()
+    ) {
+        throw new SbError('Username sudah digunakan, pilih yang lain.', 422);
+    }
+
+    if ($username !== '') {
+        $r = pg_run(
+            'INSERT INTO profiles
+                (email, username, password_hash, nama, no_hp, role, is_polinema, ktm_status)
+             VALUES (:e, :u, :h, :n, :p, :r, :pol, :ks)
+             RETURNING id',
+            [
+                ':e'   => $email,
+                ':u'   => $username,
+                ':h'   => password_hash($pw, PASSWORD_DEFAULT),
+                ':n'   => $nama,
+                ':p'   => $hp,
+                ':r'   => 'pelanggan',
+                ':pol' => $pol,
+                ':ks'  => $pol ? 'menunggu' : null,
+            ]
+        )->fetch();
+    } else {
+        $r = pg_run(
+            'INSERT INTO profiles
+                (email, password_hash, nama, no_hp, role, is_polinema, ktm_status)
+             VALUES (:e, :h, :n, :p, :r, :pol, :ks)
+             RETURNING id',
+            [
+                ':e'   => $email,
+                ':h'   => password_hash($pw, PASSWORD_DEFAULT),
+                ':n'   => $nama,
+                ':p'   => $hp,
+                ':r'   => 'pelanggan',
+                ':pol' => $pol,
+                ':ks'  => $pol ? 'menunggu' : null,
+            ]
+        )->fetch();
+    }
 
     return ['user_id' => $r['id']];
 }
