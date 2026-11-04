@@ -27,6 +27,9 @@ function r_login(): void {
   <input type="hidden" name="sebagai" value="<?= e($as) ?>">
   <div class="fld"><input name="u" placeholder="<?= $as === 'penjual' ? 'Username atau email' : 'Username/email/no.HP/NIM/NIP' ?>" autocomplete="username" required></div>
   <div class="fld"><input name="p" id="pw" type="password" placeholder="Password" autocomplete="current-password" required><button type="button" class="eye" id="eye" aria-label="Tampilkan password">👁</button></div>
+  <div style="display:flex;justify-content:flex-end;margin:-4px 0 12px">
+    <a href="/lupa-password?sebagai=<?= e($as) ?>" class="org" style="font-size:.85rem;font-weight:600;text-decoration:none">Lupa password?</a>
+  </div>
   <p class="er"><?= e($err) ?></p><button class="btn">Masuk</button>
 </form>
 <?php if ($as === 'pembeli'): ?><p class="mut c">Belum punya akun? <a href="/daftar" class="org">Daftar</a></p>
@@ -306,7 +309,7 @@ function r_qris(): void {
     }
     ob_start(); ?>
 <header class="hd"><a class="back" href="/home">← Pembayaran QRIS</a></header>
-<div class="bd c"><p class="mut">Pesanan #<?= e($o['kode']) ?> &nbsp; <?= e(LAY[$o['layanan']] ?? '') ?></p><h1 style="margin:6px 0"><?= rp($o['total']) ?></h1>
+<div class="bd c"><p class="mut">Pesanan #<?= e($o['kode']) ?>   <?= e(LAY[$o['layanan']] ?? '') ?></p><h1 style="margin:6px 0"><?= rp($o['total']) ?></h1>
 <div class="qr" role="img" aria-label="Kode QR pembayaran (contoh)"><?= $qr ?></div>
 <span class="timer" data-exp="<?= $exp ?>">Bayar dalam --:--</span>
 <p class="mut" style="margin-top:14px">Scan dengan e-wallet atau m-banking</p><p class="mut" style="font-size:.78rem">QR contoh. QRIS asli menyusul dari payment gateway.</p></div>
@@ -336,7 +339,7 @@ function r_status(): void {
     echo hd('Pesanan #' . e($o['kode']), $sub); ?>
 <div class="bd" id="live">
   <div class="box"><b><?= e(implode(', ', array_map(fn($i) => $i['jumlah'] . ' x ' . $i['nama'], $o['pesanan_item']))) ?></b>
-    <div class="mut" style="margin-top:6px"><?= e($o['stands']['nama'] ?? '') ?> &nbsp; <?= e(LAY[$o['layanan']] ?? '') ?> &nbsp; <?= rp($o['total']) ?></div></div>
+    <div class="mut" style="margin-top:6px"><?= e($o['stands']['nama'] ?? '') ?>   <?= e(LAY[$o['layanan']] ?? '') ?>   <?= rp($o['total']) ?></div></div>
   <?php if ($at >= 0): ?>
   <ul class="steps" style="margin:18px 6px"><?php foreach ($S as $k => [$t, $sb]): ?>
     <li class="<?= ($k === 0 || $k < $at || $done) ? 'd' : ($k === $at ? 'a' : '') ?>"><div><b><?= e($t) ?></b><?= $sb ? '<small>' . e($sb) . '</small>' : '' ?></div></li>
@@ -366,4 +369,61 @@ function r_riwayat(): void {
 function r_profil(): void {
     $m = need('pelanggan');
     layout('Profil', hd('Profil', e($m['nama'])) . '<div class="bd"><div class="box"><div class="sum"><span class="mut">Nama</span><b>' . e($m['nama']) . '</b></div><div class="sum"><span class="mut">Username</span><b>' . e($m['username']) . '</b></div><div class="sum"><span class="mut">No. HP</span><b>' . e($m['no_hp'] ?? '-') . '</b></div></div><a class="btn sec" href="/keluar">Keluar</a></div>' . nav_pel('/profil'));
+}
+
+// ---------------------------------------------------------------- lupa password
+function r_lupa(): void {
+    if ($m = me()) redirect(home_for($m['role']));
+    $as = pintu(); $err = take_flash();
+    ob_start(); ?>
+<div class="auth"><div class="logo"><img src="/img/pico-logo.png" alt="Logo PICO"></div><h1>Lupa Password</h1><p class="mut">Verifikasi data akun untuk membuat password baru</p>
+<form method="post" action="/lupa-password">
+  <input type="hidden" name="sebagai" value="<?= e($as) ?>">
+  <div class="fld"><input name="u" placeholder="Username / Email / NIM" required></div>
+  <div class="fld"><input name="h" type="tel" placeholder="No. Handphone terdaftar" required></div>
+  <div class="fld"><input name="p" id="pw" type="password" placeholder="Password baru (min. 6 karakter)" minlength="6" required><button type="button" class="eye" id="eye" aria-label="Tampilkan password">👁</button></div>
+  <div class="fld"><input name="k" type="password" placeholder="Konfirmasi password baru" minlength="6" required></div>
+  <p class="er"><?= e($err) ?></p><button class="btn">Simpan Password Baru</button>
+</form>
+<p class="mut c" style="margin-top:16px"><a href="/login?sebagai=<?= e($as) ?>" class="org">← Kembali ke Masuk</a></p></div>
+<?php layout('Lupa Password', ob_get_clean());
+}
+
+function r_lupa_post(): void {
+    $as = pintu();
+    $back = '/lupa-password?sebagai=' . $as;
+    $u = trim($_POST['u'] ?? '');
+    $h = trim($_POST['h'] ?? '');
+    $p = (string)($_POST['p'] ?? '');
+    $k = (string)($_POST['k'] ?? '');
+
+    if ($u === '' || $h === '' || $p === '') { flash('Lengkapi semua data.'); redirect($back); }
+    if (strlen($p) < 6) { flash('Password baru minimal 6 karakter.'); redirect($back); }
+    if ($p !== $k) { flash('Password baru dan konfirmasi belum sama.'); redirect($back); }
+
+    try {
+        $row = pg_run(
+            "SELECT id FROM profiles
+             WHERE (LOWER(username) = LOWER(:u) OR LOWER(email) = LOWER(:u) OR nim = :u)
+               AND no_hp = :h
+             LIMIT 1",
+            [':u' => $u, ':h' => $h]
+        )->fetch();
+
+        if (!$row) {
+            flash('Data akun atau No. HP tidak cocok.');
+            redirect($back);
+        }
+
+        pg_run(
+            'UPDATE profiles SET password_hash = :pw WHERE id = :id',
+            [':pw' => password_hash($p, PASSWORD_DEFAULT), ':id' => $row['id']]
+        );
+    } catch (SbError $x) {
+        flash($x->getMessage());
+        redirect($back);
+    }
+
+    flash('Password berhasil diubah. Silakan masuk.');
+    redirect('/login?sebagai=' . $as);
 }

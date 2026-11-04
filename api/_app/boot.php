@@ -1138,3 +1138,22 @@ function ktm_simpan(string $uid, array $file, string $mime): void
     }
     redirect('/admin/pengguna');
 })();
+
+// =====================================================================
+// RUTE OTOMATIS LUPA PASSWORD (/lupa-password)
+// =====================================================================
+(function (): void {
+    $path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+    if ($path !== '/lupa-password') return;
+
+    require_once __DIR__ . '/ui.php';
+    require_once __DIR__ . '/pelanggan.php';
+
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+        check_origin();
+        r_lupa_post();
+    } else {
+        r_lupa();
+    }
+    exit;
+})();
