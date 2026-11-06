@@ -802,9 +802,9 @@ function me(): ?array
     }
 
     try {
-        $r = db_get(
-            'profiles?select=id,role,nama,username,no_hp&id=eq.'
-            . rawurlencode($id)
+        $r = db_sql(
+            'SELECT * FROM profiles WHERE id = :id LIMIT 1',
+            [':id' => $id]
         );
     } catch (SbError $x) {
         unset($_SESSION['uid']);
@@ -978,7 +978,10 @@ function foto_simpan(string $tabel, int $id, array $file): void
 // Menyajikan foto di alamat /foto?t=menu&id=1 (dipasang langsung di sini,
 // jadi tidak perlu mendaftarkan rute di file lain).
 (function (): void {
-    $path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+    $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+    if (str_starts_with($path, '/PICO/')) {
+        $path = substr($path, 5);
+    }
 
     if ($path !== '/foto') {
         return;
@@ -986,16 +989,28 @@ function foto_simpan(string $tabel, int $id, array $file): void
 
     $t = $_GET['t'] ?? '';
 
-    if (!in_array($t, ['menu', 'stands'], true)) {
+    if (!in_array($t, ['menu', 'stands', 'qr', 'avatar'], true)) {
         http_response_code(404);
         exit;
     }
 
     try {
-        $st = pdo()->prepare(
-            'SELECT foto_data, foto_mime FROM ' . $t . ' WHERE id = :id'
-        );
-        $st->execute([':id' => (int) ($_GET['id'] ?? 0)]);
+        if ($t === 'qr') {
+            $st = pdo()->prepare(
+                'SELECT qr_data AS foto_data, qr_mime AS foto_mime FROM stands WHERE id = :id'
+            );
+            $st->execute([':id' => (int) ($_GET['id'] ?? 0)]);
+        } elseif ($t === 'avatar') {
+            $st = pdo()->prepare(
+                'SELECT foto_data, foto_mime FROM profiles WHERE id = :id'
+            );
+            $st->execute([':id' => (string) ($_GET['id'] ?? '')]);
+        } else {
+            $st = pdo()->prepare(
+                'SELECT foto_data, foto_mime FROM ' . $t . ' WHERE id = :id'
+            );
+            $st->execute([':id' => (int) ($_GET['id'] ?? 0)]);
+        }
         $row = $st->fetch();
     } catch (Throwable $x) {
         http_response_code(500);

@@ -15,10 +15,12 @@ $routes = [
     'POST /keranjang/tambah' => 'r_cart_add', 'GET /keranjang' => 'r_cart', 'POST /keranjang/ubah' => 'r_cart_change',
     'GET /opsi' => 'r_opsi', 'POST /opsi' => 'r_opsi_post', 'GET /bayar' => 'r_bayar', 'POST /bayar' => 'r_bayar_post',
     'GET /qris' => 'r_qris', 'POST /qris/bayar' => 'r_qris_bayar', 'GET /status' => 'r_status', 'GET /riwayat' => 'r_riwayat', 'GET /profil' => 'r_profil',
+    'POST /profil/ubah' => 'r_profil_ubah', 'POST /profil/avatar' => 'r_profil_avatar', 'POST /profil/password' => 'r_profil_password',
     // penjual
     'GET /penjual' => 'r_pen_home', 'GET /penjual/riwayat' => 'r_pen_riwayat', 'POST /penjual/status' => 'r_pen_status', 'POST /penjual/buka' => 'r_pen_buka',
     'GET /penjual/menu' => 'r_pen_menu', 'POST /penjual/menu/tambah' => 'r_pen_menu_tambah', 'POST /penjual/menu/simpan' => 'r_pen_menu_simpan',
     'POST /penjual/menu/hapus' => 'r_pen_menu_hapus', 'GET /penjual/profil' => 'r_pen_profil',
+    'POST /penjual/profil/ubah' => 'r_pen_profil_ubah', 'POST /penjual/profil/qris' => 'r_pen_profil_qris', 'POST /penjual/profil/notifikasi' => 'r_pen_profil_notifikasi',
     // admin
     'GET /admin' => 'r_adm_home', 'GET /admin/stand' => 'r_adm_stand', 'POST /admin/stand/tambah' => 'r_adm_stand_tambah',
     'POST /admin/stand/penjual' => 'r_adm_stand_penjual', 'POST /admin/stand/reset' => 'r_adm_stand_reset',

@@ -3,7 +3,7 @@
 
 /** Stand milik penjual yang login. Kalau belum dihubungkan admin, tampilkan pesan. */
 function stand_saya(array $m): array {
-    $s = db_get('stands?select=id,nama,kios,buka&penjual_id=eq.' . rawurlencode($m['id']) . '&limit=1')[0] ?? null;
+    $s = db_sql('SELECT * FROM stands WHERE penjual_id = :u LIMIT 1', [':u' => $m['id']])[0] ?? null;
     if (!$s) {
         layout('Belum ada stand', hd('Halo, ' . e($m['nama'])) . '<div class="bd"><div class="note" style="margin:0 0 14px">Akunmu belum dihubungkan ke stand. Minta admin menghubungkannya.</div><a class="btn sec" href="/keluar">Keluar</a></div>');
         exit;
@@ -81,7 +81,8 @@ function r_pen_status(): void {
 function r_pen_buka(): void {
     $m = need('penjual'); $s = stand_saya($m);
     db_write('PATCH', 'stands?id=eq.' . (int)$s['id'], ['buka' => !$s['buka']]);
-    flash($s['buka'] ? 'Stand ditutup' : 'Stand dibuka'); redirect('/penjual');
+    $to = ($_POST['redirect'] ?? '') === '/penjual/profil' ? '/penjual/profil' : '/penjual';
+    flash($s['buka'] ? 'Stand ditutup' : 'Stand dibuka'); redirect($to);
 }
 
 function r_pen_menu(): void {
@@ -164,6 +165,309 @@ function r_pen_menu_hapus(): void {
 }
 
 function r_pen_profil(): void {
-    $m = need('penjual'); $s = stand_saya($m);
-    layout('Profil', hd('Profil', e($m['nama'])) . '<div class="bd"><div class="box"><div class="sum"><span class="mut">Nama</span><b>' . e($m['nama']) . '</b></div><div class="sum"><span class="mut">Username</span><b>' . e($m['username']) . '</b></div><div class="sum"><span class="mut">Stand</span><b>' . e($s['nama']) . ' (Kios ' . e($s['kios']) . ')</b></div></div><a class="btn sec" href="/keluar">Keluar</a></div>' . nav_pen('/penjual/profil'));
+    $m = need('penjual');
+    $s = stand_saya($m);
+    $sid = (int)$s['id'];
+
+    $menuStats = db_sql(
+        "SELECT
+            COUNT(*) FILTER (WHERE tersedia = true AND stok > 0) AS aktif,
+            COUNT(*) FILTER (WHERE tersedia = false OR stok <= 0) AS habis
+         FROM menu WHERE stand_id = :s",
+        [':s' => $sid]
+    )[0] ?? ['aktif' => 0, 'habis' => 0];
+
+    $orderStats = db_sql(
+        "SELECT
+            COUNT(*) FILTER (WHERE created_at::date = CURRENT_DATE) AS hari_ini,
+            COALESCE(SUM(total) FILTER (WHERE status = 'selesai' AND created_at::date = CURRENT_DATE), 0) AS omzet_hari_ini,
+            COALESCE(SUM(total) FILTER (WHERE status = 'selesai' AND created_at >= CURRENT_DATE - INTERVAL '7 days'), 0) AS omzet_7_hari,
+            COALESCE(SUM(total) FILTER (WHERE status = 'selesai'), 0) AS omzet_total,
+            COUNT(*) FILTER (WHERE status = 'selesai') AS jml_selesai
+         FROM pesanan WHERE stand_id = :s",
+        [':s' => $sid]
+    )[0] ?? ['hari_ini' => 0, 'omzet_hari_ini' => 0, 'omzet_7_hari' => 0, 'omzet_total' => 0, 'jml_selesai' => 0];
+
+    $notifOn = ($_COOKIE['pico_notif_penjual'] ?? '1') === '1';
+    $buka = (bool)$s['buka'];
+    $qrUrl = (string)($s['qr_url'] ?? '');
+
+    $standInfoItems = [
+        ['key' => 'stand_nama', 'label' => 'Nama stand',      'val' => (string)$s['nama'],                           'raw' => (string)$s['nama'],             'type' => 'text', 'icon' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v8h14v-8"/><path d="M9 14h6v6H9z"/></svg>'],
+        ['key' => 'stand_kios', 'label' => 'Kios dan lokasi', 'val' => 'Kios ' . $s['kios'] . ' · Kantin AX',        'raw' => (string)$s['kios'],             'type' => 'text', 'icon' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-5.4-7-11a7 7 0 1 1 14 0c0 5.6-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>'],
+        ['key' => 'nama',       'label' => 'Nama penjual',    'val' => (string)($m['nama'] ?? '-'),                  'raw' => (string)($m['nama'] ?? ''),     'type' => 'text', 'icon' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.8-3.6 5-5.5 8-5.5s6.2 1.9 8 5.5"/></svg>'],
+        ['key' => 'username',   'label' => 'Username',        'val' => (string)($m['username'] ?? '-'),              'raw' => (string)($m['username'] ?? ''), 'type' => 'text', 'icon' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a2.5 2.5 0 0 0 5 0v-1a9 9 0 1 0-5.5 8.3"/></svg>'],
+        ['key' => 'no_hp',      'label' => 'No. HP',          'val' => (string)(($m['no_hp'] ?? '') ?: '-'),         'raw' => (string)($m['no_hp'] ?? ''),    'type' => 'tel',  'icon' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7A2 2 0 0 1 22 16.9z"/></svg>'],
+    ];
+
+    ob_start(); ?>
+<div class="sp-page">
+  <header class="sp-hero">
+    <h1>Profil</h1>
+    <div class="sp-stand-head">
+      <div class="sp-stand-ic">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v8h14v-8"/><path d="M9 14h6v6H9z"/></svg>
+      </div>
+      <div class="sp-stand-title">
+        <b><?= e($s['nama']) ?></b>
+        <span>Kios <?= e($s['kios']) ?> · Kantin AX</span>
+      </div>
+      <span class="sp-active-badge <?= $buka ? '' : 'is-off' ?>"><?= $buka ? 'Aktif' : 'Tutup' ?></span>
+    </div>
+  </header>
+
+  <div class="sp-body">
+    <div class="sp-status-bar">
+      <b>Status toko</b>
+      <form method="post" action="/penjual/buka" class="sp-toggle-form">
+        <input type="hidden" name="redirect" value="/penjual/profil">
+        <span class="sp-toggle-txt <?= $buka ? '' : 'is-off' ?>"><?= $buka ? 'Buka' : 'Tutup' ?></span>
+        <button type="submit" class="sp-switch <?= $buka ? 'on' : '' ?>" aria-label="Ubah status toko"></button>
+      </form>
+    </div>
+
+    <div class="sp-metrics">
+      <div class="sp-metric m-green">
+        <small>Menu aktif</small>
+        <b><?= (int)$menuStats['aktif'] ?></b>
+      </div>
+      <div class="sp-metric m-blue">
+        <small>Pesanan hari ini</small>
+        <b><?= (int)$orderStats['hari_ini'] ?></b>
+      </div>
+      <div class="sp-metric m-amber">
+        <small>Stok habis</small>
+        <b><?= (int)$menuStats['habis'] ?></b>
+      </div>
+    </div>
+
+    <div class="sp-sec-title">INFO STAND DAN AKUN</div>
+    <div class="sp-card">
+      <?php foreach ($standInfoItems as $item): ?>
+        <div class="sp-row">
+          <span class="sp-ic"><?= $item['icon'] ?></span>
+          <div class="sp-info-main">
+            <small><?= e($item['label']) ?></small>
+            <b><?= e($item['val']) ?></b>
+          </div>
+          <button type="button" class="sp-edit-btn" data-sp-open="dlg-sp-<?= e($item['key']) ?>" aria-label="Edit <?= e($item['label']) ?>">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+        </div>
+      <?php endforeach; ?>
+    </div>
+
+    <div class="sp-sec-title">PENGATURAN</div>
+    <div class="sp-card">
+      <button type="button" class="sp-set-row" data-sp-open="dlg-sp-qris">
+        <span class="sp-ic">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM18 14h3M14 18v3"/></svg>
+        </span>
+        <span class="sp-set-label">Pembayaran QRIS</span>
+        <span class="sp-chev">›</span>
+      </button>
+
+      <button type="button" class="sp-set-row" data-sp-open="dlg-sp-laporan">
+        <span class="sp-ic">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg>
+        </span>
+        <span class="sp-set-label">Laporan pendapatan</span>
+        <span class="sp-chev">›</span>
+      </button>
+
+      <form method="post" action="/penjual/profil/notifikasi" class="sp-set-row" style="cursor:default">
+        <span class="sp-ic">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </span>
+        <span class="sp-set-label">Notifikasi pesanan masuk</span>
+        <button type="submit" class="sp-switch <?= $notifOn ? 'on' : '' ?>" aria-label="Toggle notifikasi pesanan masuk"></button>
+      </form>
+
+      <button type="button" class="sp-set-row" data-sp-open="dlg-sp-password">
+        <span class="sp-ic">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1"/></svg>
+        </span>
+        <span class="sp-set-label">Ubah kata sandi</span>
+        <span class="sp-chev">›</span>
+      </button>
+    </div>
+
+    <a href="/keluar" class="sp-logout-btn">Keluar akun</a>
+  </div>
+</div>
+
+<?php foreach ($standInfoItems as $item): ?>
+<dialog id="dlg-sp-<?= e($item['key']) ?>" class="sp-dlg">
+  <form method="post" action="/penjual/profil/ubah">
+    <h3>Ubah <?= e($item['label']) ?></h3>
+    <input type="hidden" name="field" value="<?= e($item['key']) ?>">
+    <div class="fld">
+      <label><?= e($item['label']) ?></label>
+      <input type="<?= e($item['type']) ?>" name="value" value="<?= e($item['raw']) ?>" required>
+    </div>
+    <div class="sp-dlg-btns">
+      <button type="button" class="btn sec" data-sp-close>Batal</button>
+      <button type="submit" class="btn">Simpan</button>
+    </div>
+  </form>
+</dialog>
+<?php endforeach; ?>
+
+<dialog id="dlg-sp-qris" class="sp-dlg">
+  <form method="post" action="/penjual/profil/qris" enctype="multipart/form-data">
+    <h3>Pembayaran QRIS</h3>
+    <?php if ($qrUrl !== ''): ?>
+      <div style="text-align:center;margin-bottom:12px">
+        <img src="<?= e($qrUrl) ?>" alt="QRIS Stand" style="max-width:200px;max-height:200px;border-radius:12px;border:1px solid #e2e8f0">
+      </div>
+    <?php else: ?>
+      <p class="mut" style="font-size:.85rem;margin:0 0 12px">Belum ada gambar QRIS yang diunggah untuk stand ini.</p>
+    <?php endif; ?>
+    <div class="fld">
+      <label>Unggah QRIS Baru (JPG/PNG/WebP, maks. 2 MB)</label>
+      <input type="file" name="qris" accept="image/jpeg,image/png,image/webp" required>
+    </div>
+    <div class="sp-dlg-btns">
+      <button type="button" class="btn sec" data-sp-close>Tutup</button>
+      <button type="submit" class="btn">Simpan QRIS</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-sp-laporan" class="sp-dlg">
+  <h3>Laporan Pendapatan</h3>
+  <div class="sp-rep-grid">
+    <div class="sp-rep-box">
+      <small>Hari ini</small>
+      <b><?= rp($orderStats['omzet_hari_ini']) ?></b>
+    </div>
+    <div class="sp-rep-box">
+      <small>7 hari terakhir</small>
+      <b><?= rp($orderStats['omzet_7_hari']) ?></b>
+    </div>
+    <div class="sp-rep-box">
+      <small>Total pendapatan</small>
+      <b><?= rp($orderStats['omzet_total']) ?></b>
+    </div>
+    <div class="sp-rep-box">
+      <small>Pesanan selesai</small>
+      <b><?= (int)$orderStats['jml_selesai'] ?> pesanan</b>
+    </div>
+  </div>
+  <div class="sp-dlg-btns">
+    <a href="/penjual/riwayat?status=selesai" class="btn" style="text-align:center;text-decoration:none">Lihat Riwayat Selesai</a>
+    <button type="button" class="btn sec" data-sp-close>Tutup</button>
+  </div>
+</dialog>
+
+<dialog id="dlg-sp-password" class="sp-dlg">
+  <form method="post" action="/profil/password">
+    <h3>Ubah Kata Sandi</h3>
+    <div class="fld">
+      <label>Kata sandi lama</label>
+      <input type="password" name="pw_lama" placeholder="Masukkan kata sandi lama" required>
+    </div>
+    <div class="fld">
+      <label>Kata sandi baru</label>
+      <input type="password" name="pw_baru" minlength="6" placeholder="Minimal 6 karakter" required>
+    </div>
+    <div class="fld">
+      <label>Konfirmasi kata sandi baru</label>
+      <input type="password" name="pw_konf" minlength="6" placeholder="Ulangi kata sandi baru" required>
+    </div>
+    <div class="sp-dlg-btns">
+      <button type="button" class="btn sec" data-sp-close>Batal</button>
+      <button type="submit" class="btn">Simpan</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function(){
+  document.querySelectorAll('[data-sp-open]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var dlg = document.getElementById(btn.getAttribute('data-sp-open'));
+      if (dlg && dlg.showModal) dlg.showModal();
+    });
+  });
+  document.querySelectorAll('[data-sp-close]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var dlg = btn.closest('dialog');
+      if (dlg && dlg.close) dlg.close();
+    });
+  });
+  document.querySelectorAll('dialog.sp-dlg').forEach(function(dlg){
+    dlg.addEventListener('click', function(e){
+      if (e.target === dlg) dlg.close();
+    });
+  });
+})();
+</script>
+<?= nav_pen('/penjual/profil');
+    layout('Profil', ob_get_clean());
+}
+
+function r_pen_profil_ubah(): void {
+    $m = need('penjual');
+    $s = stand_saya($m);
+    $field = trim((string)($_POST['field'] ?? ''));
+    $val = trim((string)($_POST['value'] ?? ''));
+
+    if ($val === '') {
+        flash('Data tidak boleh kosong.');
+        redirect('/penjual/profil');
+    }
+
+    try {
+        if (in_array($field, ['stand_nama', 'stand_kios'], true)) {
+            $col = $field === 'stand_nama' ? 'nama' : 'kios';
+            if ($col === 'kios') {
+                $val = preg_replace('/^kios\s+/i', '', $val);
+                $val = trim(explode('·', $val)[0]);
+            }
+            db_write('PATCH', 'stands?id=eq.' . (int)$s['id'], [$col => $val]);
+            flash('Info stand berhasil diperbarui.');
+        } elseif (in_array($field, ['nama', 'username', 'no_hp'], true)) {
+            if ($field === 'username') {
+                if (!preg_match('/^[a-zA-Z0-9_.\-]{3,30}$/', $val)) {
+                    throw new SbError('Username 3-30 karakter (huruf, angka, titik, underscore).');
+                }
+                $dup = pg_run(
+                    'SELECT 1 FROM profiles WHERE LOWER(username) = LOWER(:u) AND id <> :id',
+                    [':u' => $val, ':id' => $m['id']]
+                )->fetch();
+                if ($dup) throw new SbError('Username sudah digunakan.');
+            }
+            pg_run(
+                'UPDATE profiles SET ' . pg_ident($field) . ' = :v WHERE id = :id',
+                [':v' => $val, ':id' => $m['id']]
+            );
+            flash('Info akun berhasil diperbarui.');
+        } else {
+            throw new SbError('Kolom tidak dikenal.');
+        }
+    } catch (SbError $x) {
+        flash($x->getMessage());
+    }
+    redirect('/penjual/profil');
+}
+
+function r_pen_profil_qris(): void {
+    $m = need('penjual');
+    $s = stand_saya($m);
+    try {
+        qr_simpan((int)$s['id'], $_FILES['qris'] ?? []);
+        flash('QRIS stand berhasil diperbarui.');
+    } catch (SbError $x) {
+        flash($x->getMessage());
+    }
+    redirect('/penjual/profil');
+}
+
+function r_pen_profil_notifikasi(): void {
+    need('penjual');
+    $cur = ($_COOKIE['pico_notif_penjual'] ?? '1') === '1';
+    cookie_set('pico_notif_penjual', $cur ? '0' : '1', 86400 * 365);
+    flash('Pengaturan notifikasi diperbarui.');
+    redirect('/penjual/profil');
 }

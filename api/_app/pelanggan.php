@@ -374,9 +374,345 @@ function r_riwayat(): void {
     layout('Riwayat', ob_get_clean());
 }
 
+function profil_inisial(string $nama): string {
+    $parts = preg_split('/\s+/u', trim($nama), -1, PREG_SPLIT_NO_EMPTY);
+    if (!$parts) return 'P';
+    if (count($parts) === 1) return mb_strtoupper(mb_substr($parts[0], 0, 2));
+    return mb_strtoupper(mb_substr($parts[0], 0, 1) . mb_substr($parts[1], 0, 1));
+}
+
 function r_profil(): void {
     $m = need('pelanggan');
-    layout('Profil', hd('Profil', e($m['nama'])) . '<div class="bd"><div class="box"><div class="sum"><span class="mut">Nama</span><b>' . e($m['nama']) . '</b></div><div class="sum"><span class="mut">Username</span><b>' . e($m['username']) . '</b></div><div class="sum"><span class="mut">No. HP</span><b>' . e($m['no_hp'] ?? '-') . '</b></div></div><a class="btn sec" href="/keluar">Keluar</a></div>' . nav_pel('/profil'));
+    $inisial = profil_inisial((string)($m['nama'] ?? 'Pelanggan'));
+    $uname = (string)($m['username'] ?? '');
+    $nim = (string)($m['nim'] ?? '');
+    $hp = (string)($m['no_hp'] ?? '');
+    $email = (string)($m['email'] ?? '');
+    $fotoUrl = (string)($m['foto_url'] ?? '');
+
+    $lastOrder = pesanan_muat('p.pelanggan_id = :u', [':u' => $m['id']], 'ORDER BY p.created_at DESC LIMIT 1')[0] ?? null;
+
+    $statusMap = [
+        'menunggu_bayar' => ['Menunggu Bayar', 'pf-badge-warn'],
+        'baru'           => ['Menunggu Konfirmasi', 'pf-badge-info'],
+        'diproses'       => ['Diproses', 'pf-badge-info'],
+        'siap'           => ['Siap Diambil', 'pf-badge-ok'],
+        'selesai'        => ['Selesai', 'pf-badge-ok'],
+        'batal'          => ['Dibatalkan', 'pf-badge-err'],
+    ];
+
+    $editItems = [
+        ['key' => 'nama',     'label' => 'Nama',     'val' => (string)($m['nama'] ?? '-'), 'raw' => (string)($m['nama'] ?? ''), 'type' => 'text',  'icon' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.8-3.6 5-5.5 8-5.5s6.2 1.9 8 5.5"/></svg>'],
+        ['key' => 'username', 'label' => 'Username', 'val' => $uname !== '' ? $uname : '-', 'raw' => $uname, 'type' => 'text',  'icon' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a2.5 2.5 0 0 0 5 0v-1a9 9 0 1 0-5.5 8.3"/></svg>'],
+        ['key' => 'nim',      'label' => 'NIM',      'val' => $nim !== '' ? $nim : '-',     'raw' => $nim,   'type' => 'text',  'icon' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M6 16c1.2-1.8 2.8-2.5 4.5-2.5S13.8 14.2 15 16"/><line x1="14" y1="9" x2="18" y2="9"/><line x1="15" y1="12" x2="18" y2="12"/></svg>'],
+        ['key' => 'no_hp',    'label' => 'No. HP',   'val' => $hp !== '' ? $hp : '-',       'raw' => $hp,    'type' => 'tel',   'icon' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7A2 2 0 0 1 22 16.9z"/></svg>'],
+        ['key' => 'email',    'label' => 'Email',    'val' => $email !== '' ? $email : '-', 'raw' => $email, 'type' => 'email', 'icon' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>'],
+    ];
+
+    ob_start(); ?>
+<div class="pf-page">
+  <header class="pf-hero">
+    <div class="pf-topbar">
+      <a href="/home" class="pf-back" aria-label="Kembali">← <span>Profil</span></a>
+    </div>
+    <div class="pf-avatar-wrap">
+      <div class="pf-avatar">
+        <?php if ($fotoUrl !== ''): ?>
+          <img src="<?= e($fotoUrl) ?>" alt="<?= e($m['nama']) ?>">
+        <?php else: ?>
+          <?= e($inisial) ?>
+        <?php endif; ?>
+      </div>
+      <button type="button" class="pf-cam-btn" data-pf-open="dlg-avatar" aria-label="Ubah foto profil">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </button>
+    </div>
+    <h1 class="pf-name"><?= e($m['nama']) ?></h1>
+    <div class="pf-sub">
+      <span>@<?= e($uname !== '' ? $uname : lc(preg_replace('/\s+/', '', (string)$m['nama']))) ?></span>
+      <span class="pf-role-pill">Pelanggan</span>
+    </div>
+  </header>
+
+  <div class="pf-body">
+    <div class="pf-sec-title">INFO AKUN</div>
+    <div class="pf-card">
+      <?php foreach ($editItems as $item): ?>
+        <div class="pf-info-row">
+          <span class="pf-ic"><?= $item['icon'] ?></span>
+          <div class="pf-info-main">
+            <small><?= e($item['label']) ?></small>
+            <b><?= e($item['val']) ?></b>
+          </div>
+          <button type="button" class="pf-edit-btn" data-pf-open="dlg-edit-<?= e($item['key']) ?>" aria-label="Edit <?= e($item['label']) ?>">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+        </div>
+      <?php endforeach; ?>
+    </div>
+
+    <div class="pf-sec-title">PESANAN TERAKHIR</div>
+    <div class="pf-card">
+      <?php if ($lastOrder):
+        [$stLabel, $stClass] = $statusMap[$lastOrder['status']] ?? [ucfirst((string)$lastOrder['status']), 'pf-badge-info'];
+        $layLabel = LAY[$lastOrder['layanan']] ?? ($lastOrder['layanan'] === 'take_away' ? 'Take Away' : 'Dine In');
+        $orderHref = ($lastOrder['status'] === 'menunggu_bayar' ? '/qris' : '/status') . '?id=' . (int)$lastOrder['id'];
+      ?>
+        <a class="pf-order-card" href="<?= e($orderHref) ?>">
+          <div class="pf-order-ic">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2h12a1 1 0 0 1 1 1v18l-3-2-3 2-3-2-3 2V3a1 1 0 0 1 1-1z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg>
+          </div>
+          <div class="pf-order-main">
+            <b><?= e($lastOrder['kode']) ?> · <?= e($lastOrder['stands']['nama'] ?? '-') ?></b>
+            <small><?= e($layLabel) ?> · <?= rp($lastOrder['total']) ?></small>
+          </div>
+          <span class="pf-badge <?= e($stClass) ?>"><?= e($stLabel) ?></span>
+        </a>
+      <?php else: ?>
+        <div class="pf-order-card">
+          <div class="pf-order-ic">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2h12a1 1 0 0 1 1 1v18l-3-2-3 2-3-2-3 2V3a1 1 0 0 1 1-1z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+          </div>
+          <div class="pf-order-main">
+            <b>Belum ada pesanan</b>
+            <small>Pesanan terakhirmu akan tampil di sini</small>
+          </div>
+        </div>
+      <?php endif; ?>
+    </div>
+
+    <div class="pf-sec-title">PENGATURAN</div>
+    <div class="pf-card">
+      <button type="button" class="pf-nav-row" data-pf-open="dlg-password">
+        <span class="pf-nav-ic">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1"/></svg>
+        </span>
+        <span class="pf-nav-label">Ubah kata sandi</span>
+        <span class="pf-nav-chev">›</span>
+      </button>
+      <a href="/keluar" class="pf-nav-row is-logout">
+        <span class="pf-nav-ic">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </span>
+        <span class="pf-nav-label">Keluar</span>
+        <span class="pf-nav-chev">›</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<?php foreach ($editItems as $item): ?>
+<dialog id="dlg-edit-<?= e($item['key']) ?>" class="pf-dlg">
+  <form method="post" action="/profil/ubah">
+    <h3>Ubah <?= e($item['label']) ?></h3>
+    <input type="hidden" name="field" value="<?= e($item['key']) ?>">
+    <div class="fld">
+      <label><?= e($item['label']) ?></label>
+      <input type="<?= e($item['type']) ?>" name="value" value="<?= e($item['raw']) ?>" placeholder="Masukkan <?= e(lc($item['label'])) ?>" <?= in_array($item['key'], ['nama', 'username', 'email'], true) ? 'required' : '' ?>>
+    </div>
+    <div class="pf-dlg-btns">
+      <button type="button" class="btn sec" data-pf-close>Batal</button>
+      <button type="submit" class="btn">Simpan</button>
+    </div>
+  </form>
+</dialog>
+<?php endforeach; ?>
+
+<dialog id="dlg-avatar" class="pf-dlg">
+  <form method="post" action="/profil/avatar" enctype="multipart/form-data">
+    <h3>Ubah Foto Profil</h3>
+    <div class="fld">
+      <label>Pilih Foto (JPG/PNG/WebP, maks. 1 MB)</label>
+      <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" required>
+    </div>
+    <div class="pf-dlg-btns">
+      <button type="button" class="btn sec" data-pf-close>Batal</button>
+      <button type="submit" class="btn">Unggah</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-password" class="pf-dlg">
+  <form method="post" action="/profil/password">
+    <h3>Ubah Kata Sandi</h3>
+    <div class="fld">
+      <label>Kata sandi lama</label>
+      <input type="password" name="pw_lama" placeholder="Masukkan kata sandi lama" required>
+    </div>
+    <div class="fld">
+      <label>Kata sandi baru</label>
+      <input type="password" name="pw_baru" minlength="6" placeholder="Minimal 6 karakter" required>
+    </div>
+    <div class="fld">
+      <label>Konfirmasi kata sandi baru</label>
+      <input type="password" name="pw_konf" minlength="6" placeholder="Ulangi kata sandi baru" required>
+    </div>
+    <div class="pf-dlg-btns">
+      <button type="button" class="btn sec" data-pf-close>Batal</button>
+      <button type="submit" class="btn">Simpan</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function(){
+  document.querySelectorAll('[data-pf-open]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var dlg = document.getElementById(btn.getAttribute('data-pf-open'));
+      if (dlg && dlg.showModal) dlg.showModal();
+    });
+  });
+  document.querySelectorAll('[data-pf-close]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var dlg = btn.closest('dialog');
+      if (dlg && dlg.close) dlg.close();
+    });
+  });
+  document.querySelectorAll('dialog.pf-dlg').forEach(function(dlg){
+    dlg.addEventListener('click', function(e){
+      if (e.target === dlg) dlg.close();
+    });
+  });
+})();
+</script>
+<?= nav_pel('/profil');
+    layout('Profil', ob_get_clean());
+}
+
+function r_profil_ubah(): void {
+    $m = need('pelanggan');
+    $field = trim((string)($_POST['field'] ?? ''));
+    $val = trim((string)($_POST['value'] ?? ''));
+
+    $allowed = ['nama', 'username', 'nim', 'no_hp', 'email'];
+    if (!in_array($field, $allowed, true)) {
+        flash('Kolom tidak valid.');
+        redirect('/profil');
+    }
+    if ($val === '' && in_array($field, ['nama', 'username', 'email'], true)) {
+        flash('Data tidak boleh kosong.');
+        redirect('/profil');
+    }
+
+    try {
+        if ($field === 'username') {
+            if (!preg_match('/^[a-zA-Z0-9_.\-]{3,30}$/', $val)) {
+                throw new SbError('Username 3-30 karakter (huruf, angka, titik, underscore).');
+            }
+            $dup = pg_run(
+                'SELECT 1 FROM profiles WHERE LOWER(username) = LOWER(:u) AND id <> :id',
+                [':u' => $val, ':id' => $m['id']]
+            )->fetch();
+            if ($dup) throw new SbError('Username sudah digunakan.');
+        } elseif ($field === 'email') {
+            $val = lc($val);
+            if (!filter_var($val, FILTER_VALIDATE_EMAIL)) {
+                throw new SbError('Format email tidak valid.');
+            }
+            $dup = pg_run(
+                'SELECT 1 FROM profiles WHERE LOWER(email) = :e AND id <> :id',
+                [':e' => $val, ':id' => $m['id']]
+            )->fetch();
+            if ($dup) throw new SbError('Email sudah digunakan akun lain.');
+        } elseif ($field === 'nim' && $val !== '') {
+            $dup = pg_run(
+                'SELECT 1 FROM profiles WHERE nim = :n AND id <> :id',
+                [':n' => $val, ':id' => $m['id']]
+            )->fetch();
+            if ($dup) throw new SbError('NIM sudah terdaftar pada akun lain.');
+        }
+
+        pg_run(
+            'UPDATE profiles SET ' . pg_ident($field) . ' = :v WHERE id = :id',
+            [':v' => ($val === '' ? null : $val), ':id' => $m['id']]
+        );
+        flash('Profil berhasil diperbarui.');
+    } catch (SbError $x) {
+        flash($x->getMessage());
+    }
+    redirect('/profil');
+}
+
+function r_profil_avatar(): void {
+    $m = need('pelanggan');
+    $file = $_FILES['avatar'] ?? null;
+    try {
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            throw new SbError('Pilih foto terlebih dahulu.');
+        }
+        if (($file['size'] ?? 0) > 1048576) {
+            throw new SbError('Ukuran foto profil maksimal 1 MB.');
+        }
+        $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+            throw new SbError('Foto harus berformat JPG, PNG, atau WebP.');
+        }
+        $fh = fopen($file['tmp_name'], 'rb');
+        $url = '/foto?t=avatar&id=' . rawurlencode((string)$m['id']) . '&v=' . time();
+        try {
+            $st = pdo()->prepare(
+                'UPDATE profiles SET foto_data = :d, foto_mime = :m, foto_url = :u WHERE id = :id'
+            );
+            $st->bindValue(':d', $fh, PDO::PARAM_LOB);
+            $st->bindValue(':m', $mime);
+            $st->bindValue(':u', $url);
+            $st->bindValue(':id', $m['id']);
+            $st->execute();
+            flash('Foto profil diperbarui.');
+        } finally {
+            if (is_resource($fh)) fclose($fh);
+        }
+    } catch (Throwable $x) {
+        flash($x instanceof SbError ? $x->getMessage() : 'Gagal menyimpan foto profil.');
+    }
+    redirect('/profil');
+}
+
+function r_profil_password(): void {
+    $m = me();
+    if (!$m) redirect('/');
+    $back = ($m['role'] ?? '') === 'penjual' ? '/penjual/profil' : '/profil';
+    $lama = (string)($_POST['pw_lama'] ?? '');
+    $baru = (string)($_POST['pw_baru'] ?? '');
+    $konf = (string)($_POST['pw_konf'] ?? '');
+
+    if ($lama === '' || $baru === '' || $konf === '') {
+        flash('Semua kolom kata sandi wajib diisi.');
+        redirect($back);
+    }
+    if (strlen($baru) < 6) {
+        flash('Kata sandi baru minimal 6 karakter.');
+        redirect($back);
+    }
+    if ($baru !== $konf) {
+        flash('Konfirmasi kata sandi baru tidak cocok.');
+        redirect($back);
+    }
+
+    try {
+        $row = pg_run(
+            "SELECT password_hash,
+                    (password_hash = crypt(:pw, password_hash)) AS crypt_ok
+             FROM profiles WHERE id = :id LIMIT 1",
+            [':pw' => $lama, ':id' => $m['id']]
+        )->fetch();
+
+        $cryptOk = $row && in_array($row['crypt_ok'] ?? false, [true, 1, '1', 't', 'true'], true);
+        $phpOk = $row && !empty($row['password_hash']) && password_verify($lama, $row['password_hash']);
+
+        if (!$row || (!$phpOk && !$cryptOk)) {
+            throw new SbError('Kata sandi lama salah.');
+        }
+
+        pg_run(
+            'UPDATE profiles SET password_hash = :h WHERE id = :id',
+            [':h' => password_hash($baru, PASSWORD_DEFAULT), ':id' => $m['id']]
+        );
+        flash('Kata sandi berhasil diubah.');
+    } catch (SbError $x) {
+        flash($x->getMessage());
+    }
+    redirect($back);
 }
 
 // ---------------------------------------------------------------- lupa password

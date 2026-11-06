@@ -884,3 +884,105 @@ fieldset:disabled .btn { cursor: not-allowed; }
   object-fit: contain;
   display: block;
 }
+
+
+/* ============================================================
+   17. HALAMAN PROFIL PELANGGAN (.pf-*) DAN PENJUAL (.sp-*)
+   ============================================================ */
+.pf-page { background:#f4f6f9; min-height:100vh; padding-bottom:92px; color:#1b2b48; }
+.pf-hero { background:var(--navy); color:#fff; padding:18px 20px 26px; border-radius:0 0 24px 24px; text-align:center; position:relative; }
+.pf-topbar { display:flex; align-items:center; gap:10px; text-align:left; margin-bottom:14px; }
+.pf-back { color:#fff; text-decoration:none; display:inline-flex; align-items:center; gap:10px; font-size:1.15rem; font-weight:700; }
+.pf-avatar-wrap { position:relative; width:76px; height:76px; margin:0 auto 12px; }
+.pf-avatar { width:76px; height:76px; border-radius:50%; background:#e57c23; color:#1b2b48; display:flex; align-items:center; justify-content:center; font-size:1.65rem; font-weight:800; overflow:hidden; letter-spacing:.5px; }
+.pf-avatar img { width:100%; height:100%; object-fit:cover; }
+.pf-cam-btn { position:absolute; right:-2px; bottom:-2px; width:26px; height:26px; border-radius:50%; background:#fff; color:#1b2b48; border:none; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,.22); cursor:pointer; padding:0; }
+.pf-name { font-size:1.2rem; font-weight:700; margin:0 0 6px; color:#fff; }
+.pf-sub { display:inline-flex; align-items:center; gap:8px; font-size:.86rem; color:#cbd5e1; }
+.pf-role-pill { background:#e57c23; color:#1b2b48; font-weight:700; font-size:.76rem; padding:3px 12px; border-radius:999px; }
+.pf-body { padding:16px 16px 24px; }
+.pf-sec-title { font-size:.78rem; font-weight:700; color:#64748b; letter-spacing:.6px; text-transform:uppercase; margin:16px 4px 8px; }
+.pf-sec-title:first-child { margin-top:2px; }
+.pf-card { background:#fff; border-radius:16px; box-shadow:0 1px 3px rgba(15,23,42,.04); overflow:hidden; }
+.pf-info-row { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid #f1f5f9; }
+.pf-info-row:last-child { border-bottom:none; }
+.pf-ic { color:#64748b; display:flex; align-items:center; justify-content:center; width:24px; flex-shrink:0; }
+.pf-info-main { flex:1; min-width:0; }
+.pf-info-main small { display:block; font-size:.74rem; color:#94a3b8; margin-bottom:2px; }
+.pf-info-main b { display:block; font-size:.95rem; color:#1e293b; font-weight:600; word-break:break-word; }
+.pf-edit-btn { background:none; border:none; color:#64748b; cursor:pointer; padding:6px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+.pf-edit-btn:hover { background:#f1f5f9; color:#1e293b; }
+.pf-order-card { display:flex; align-items:center; gap:12px; padding:14px 16px; text-decoration:none; color:inherit; }
+.pf-order-ic { width:40px; height:40px; border-radius:11px; background:#f1f5f9; color:#334155; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.pf-order-main { flex:1; min-width:0; }
+.pf-order-main b { display:block; font-size:.93rem; color:#1e293b; margin-bottom:2px; }
+.pf-order-main small { display:block; font-size:.8rem; color:#64748b; }
+.pf-badge { font-size:.76rem; font-weight:700; padding:5px 12px; border-radius:999px; flex-shrink:0; }
+.pf-badge-ok { background:#dcfce7; color:#15803d; }
+.pf-badge-warn { background:#fef3c7; color:#b45309; }
+.pf-badge-info { background:#dbeafe; color:#1d4ed8; }
+.pf-badge-err { background:#fee2e2; color:#b91c1c; }
+.pf-nav-row { display:flex; align-items:center; gap:12px; padding:13px 16px; width:100%; background:none; border:none; border-bottom:1px solid #f1f5f9; text-align:left; font:inherit; color:#1e293b; text-decoration:none; cursor:pointer; box-sizing:border-box; }
+.pf-nav-row:last-child { border-bottom:none; }
+.pf-nav-ic { width:34px; height:34px; border-radius:10px; background:#f1f5f9; color:#334155; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.pf-nav-label { flex:1; font-size:.95rem; font-weight:500; }
+.pf-nav-chev { color:#64748b; font-size:1.1rem; font-weight:600; }
+.pf-nav-row.is-logout .pf-nav-ic { background:#fff7ed; color:#e57c23; }
+.pf-nav-row.is-logout .pf-nav-label { color:#e57c23; font-weight:600; }
+
+/* Profil Penjual */
+.sp-page { background:#f8fafc; min-height:100vh; padding-bottom:96px; color:#1b2b48; }
+.sp-hero { background:var(--navy); color:#fff; padding:22px 20px 24px; border-radius:0 0 24px 24px; }
+.sp-hero h1 { margin:0 0 16px; font-size:1.45rem; font-weight:800; color:#fff; }
+.sp-stand-head { display:flex; align-items:center; gap:14px; }
+.sp-stand-ic { width:50px; height:50px; border-radius:14px; background:#fde6c4; color:#d97706; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.sp-stand-title { flex:1; min-width:0; }
+.sp-stand-title b { display:block; font-size:1.18rem; font-weight:700; color:#fff; margin-bottom:2px; }
+.sp-stand-title span { display:block; font-size:.86rem; color:#cbd5e1; }
+.sp-active-badge { background:#dcfce7; color:#15803d; font-size:.8rem; font-weight:700; padding:5px 14px; border-radius:999px; }
+.sp-active-badge.is-off { background:#fee2e2; color:#b91c1c; }
+.sp-body { padding:18px 16px 24px; }
+.sp-status-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; padding:0 2px; }
+.sp-status-bar > b { font-size:1.05rem; font-weight:700; color:#1e293b; }
+.sp-toggle-form { display:inline-flex; align-items:center; gap:10px; margin:0; }
+.sp-toggle-txt { font-size:1rem; font-weight:700; color:#15803d; }
+.sp-toggle-txt.is-off { color:#64748b; }
+.sp-switch { position:relative; width:48px; height:26px; border-radius:999px; background:#cbd5e1; border:none; cursor:pointer; padding:0; transition:background .2s; }
+.sp-switch.on { background:#16a34a; }
+.sp-switch::after { content:''; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; transition:transform .2s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+.sp-switch.on::after { transform:translateX(22px); }
+.sp-metrics { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:20px; }
+.sp-metric { border-radius:16px; padding:12px 14px; display:flex; flex-direction:column; justify-content:space-between; min-height:84px; }
+.sp-metric small { font-size:.78rem; color:#334155; line-height:1.25; font-weight:500; }
+.sp-metric b { font-size:1.55rem; font-weight:800; color:#1b2b48; margin-top:8px; }
+.sp-metric.m-green { background:#dff6e4; }
+.sp-metric.m-blue { background:#dceeff; }
+.sp-metric.m-amber { background:#fde8cd; }
+.sp-sec-title { font-size:.78rem; font-weight:700; color:#64748b; letter-spacing:.6px; text-transform:uppercase; margin:16px 4px 8px; }
+.sp-card { background:#f1f5f9; border-radius:16px; overflow:hidden; margin-bottom:18px; }
+.sp-row { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid #e2e8f0; }
+.sp-row:last-child { border-bottom:none; }
+.sp-ic { width:24px; color:#64748b; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.sp-info-main { flex:1; min-width:0; }
+.sp-info-main small { display:block; font-size:.74rem; color:#64748b; margin-bottom:2px; }
+.sp-info-main b { display:block; font-size:.95rem; color:#1e293b; font-weight:500; word-break:break-word; }
+.sp-edit-btn { background:none; border:none; color:#64748b; cursor:pointer; padding:6px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+.sp-set-row { display:flex; align-items:center; gap:12px; padding:14px 16px; width:100%; background:none; border:none; border-bottom:1px solid #e2e8f0; text-align:left; font:inherit; color:#1e293b; text-decoration:none; cursor:pointer; box-sizing:border-box; }
+.sp-set-row:last-child { border-bottom:none; }
+.sp-set-label { flex:1; font-size:.94rem; font-weight:500; color:#1e293b; }
+.sp-chev { color:#64748b; font-size:1.1rem; font-weight:600; }
+.sp-logout-btn { display:block; width:100%; background:#e57c23; color:#fff; text-align:center; text-decoration:none; font-weight:700; font-size:1rem; padding:14px; border-radius:14px; margin-top:16px; box-sizing:border-box; box-shadow:0 4px 12px rgba(229,124,35,.25); }
+
+/* Dialog Modal Profil */
+.pf-dlg, .sp-dlg { border:none; border-radius:18px; padding:20px; width:min(92vw, 370px); margin:auto; box-shadow:0 20px 40px rgba(15,23,42,.25); }
+.pf-dlg::backdrop, .sp-dlg::backdrop { background:rgba(15,23,42,.45); }
+.pf-dlg h3, .sp-dlg h3 { margin:0 0 14px; font-size:1.05rem; color:#1b2b48; }
+.pf-dlg .fld, .sp-dlg .fld { margin-bottom:12px; }
+.pf-dlg .fld label, .sp-dlg .fld label { display:block; font-size:.8rem; color:#64748b; margin-bottom:4px; font-weight:600; }
+.pf-dlg .fld input, .sp-dlg .fld input { width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:10px; font-size:.95rem; box-sizing:border-box; box-shadow:none; }
+.pf-dlg-btns, .sp-dlg-btns { display:flex; gap:8px; margin-top:14px; }
+.pf-dlg-btns button, .sp-dlg-btns button { flex:1; }
+.sp-rep-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+.sp-rep-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px 12px; }
+.sp-rep-box small { display:block; font-size:.74rem; color:#64748b; }
+.sp-rep-box b { display:block; font-size:1rem; color:#1b2b48; margin-top:4px; }
