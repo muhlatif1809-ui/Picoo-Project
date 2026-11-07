@@ -14,7 +14,9 @@ $routes = [
     'GET /home' => 'r_home', 'GET /menu' => 'r_menu',
     'POST /keranjang/tambah' => 'r_cart_add', 'GET /keranjang' => 'r_cart', 'POST /keranjang/ubah' => 'r_cart_change',
     'GET /opsi' => 'r_opsi', 'POST /opsi' => 'r_opsi_post', 'GET /bayar' => 'r_bayar', 'POST /bayar' => 'r_bayar_post',
-    'GET /qris' => 'r_qris', 'POST /qris/bayar' => 'r_qris_bayar', 'GET /status' => 'r_status', 'GET /riwayat' => 'r_riwayat', 'GET /profil' => 'r_profil',
+    'GET /qris' => 'r_qris', 'POST /qris/bayar' => 'r_qris_bayar',
+    'GET /qris/scan' => 'r_qris_scan', 'GET /qris/cek' => 'r_qris_cek',
+    'GET /status' => 'r_status', 'GET /riwayat' => 'r_riwayat', 'GET /profil' => 'r_profil',
     'POST /profil/ubah' => 'r_profil_ubah', 'POST /profil/avatar' => 'r_profil_avatar', 'POST /profil/password' => 'r_profil_password',
     // penjual
     'GET /penjual' => 'r_pen_home', 'GET /penjual/riwayat' => 'r_pen_riwayat', 'POST /penjual/status' => 'r_pen_status', 'POST /penjual/buka' => 'r_pen_buka',

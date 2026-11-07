@@ -308,20 +308,83 @@ function r_qris(): void {
     if (!$o) { flash('Pesanan tidak ditemukan.'); redirect('/riwayat'); }
     if ($o['status'] !== 'menunggu_bayar') redirect('/status?id=' . $id);
     $exp = strtotime($o['created_at']) + 900;
-    $seed = $id * 9301 + 49297; $qr = '';
-    for ($k = 0; $k < 441; $k++) {
-        $x = $k % 21; $y = intdiv($k, 21);
-        if (($x < 7 && $y < 7) || ($x > 13 && $y < 7) || ($x < 7 && $y > 13)) $w = !($x % 6 === 0 || $y % 6 === 0 || ($x % 6 > 1 && $x % 6 < 5 && $y % 6 > 1 && $y % 6 < 5));
-        else { $seed = ($seed * 9301 + 49297) % 233280; $w = $seed / 233280 <= .5; }
-        $qr .= '<i' . ($w ? ' class="w"' : '') . '></i>';
-    }
+
+    // Buat URL otomatis yang akan terbuka saat QR di-scan oleh HP
+    $proto = is_https() ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    $base = str_contains($scriptPath, '/PICO/') ? '/PICO' : '';
+    $token = substr(hash_hmac('sha256', (string)$id, (string)$o['kode']), 0, 12);
+    $scanUrl = $proto . '://' . $host . $base . '/qris/scan?id=' . $id . '&t=' . $token;
+
+    // Generate gambar QR Code yang bisa di-scan kamera HP
+    $qrImg = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=' . rawurlencode($scanUrl);
+
     ob_start(); ?>
 <header class="hd"><a class="back" href="/home">← Pembayaran QRIS</a></header>
-<div class="bd c"><p class="mut">Pesanan #<?= e($o['kode']) ?>   <?= e(LAY[$o['layanan']] ?? '') ?></p><h1 style="margin:6px 0"><?= rp($o['total']) ?></h1>
-<div class="qr" role="img" aria-label="Kode QR pembayaran (contoh)"><?= $qr ?></div>
-<span class="timer" data-exp="<?= $exp ?>">Bayar dalam --:--</span>
-<p class="mut" style="margin-top:14px">Scan dengan e-wallet atau m-banking</p><p class="mut" style="font-size:.78rem">QR contoh. QRIS asli menyusul dari payment gateway.</p></div>
-<form method="post" action="/qris/bayar" class="foot"><input type="hidden" name="id" value="<?= $id ?>"><button class="btn" id="ok">Saya sudah bayar</button></form>
+<div class="bd c" id="qris-box">
+  <p class="mut">Pesanan #<?= e($o['kode']) ?> · <?= e($o['stands']['nama'] ?? '') ?> (<?= e(LAY[$o['layanan']] ?? '') ?>)</p>
+  <h1 style="margin:6px 0"><?= rp($o['total']) ?></h1>
+
+  <!-- Kotak QRIS yang akan tertutup otomatis saat di-scan -->
+  <div id="qr-wrap" style="margin:16px auto;width:240px;background:#fff;padding:16px;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,.08);transition:all .3s ease">
+    <div style="font-weight:800;font-size:.9rem;letter-spacing:1px;margin-bottom:8px;color:#1e293b">QRIS PICO</div>
+    <img src="<?= e($qrImg) ?>" alt="Scan QRIS" style="width:100%;height:auto;border-radius:8px;display:block">
+    <small class="mut" style="display:block;margin-top:8px;font-size:.75rem">NMID: ID<?= e($o['kode']) ?>00<?= $id ?></small>
+  </div>
+
+  <!-- Animasi Sukses (muncul otomatis begitu QR di-scan) -->
+  <div id="qr-sukses" hidden style="margin:28px auto;padding:24px;max-width:260px;background:#d6f3e1;color:#146c3b;border-radius:18px">
+    <div style="font-size:3rem;line-height:1">✅</div>
+    <h3 style="margin:10px 0 4px">Pembayaran Berhasil!</h3>
+    <small>QRIS telah di-scan. Mengalihkan ke status pesanan...</small>
+  </div>
+
+  <span class="timer" id="qr-timer" data-exp="<?= $exp ?>">Bayar dalam --:--</span>
+  <p class="mut" id="qr-hint" style="margin-top:14px">Scan QR di atas dengan Kamera HP / QR Scanner untuk menyelesaikan pembayaran otomatis</p>
+</div>
+
+<form method="post" action="/qris/bayar" class="foot" id="qr-foot">
+  <input type="hidden" name="id" value="<?= $id ?>">
+  <button class="btn sec" id="ok">Saya sudah bayar</button>
+</form>
+
+<script>
+(function(){
+  var id = <?= $id ?>;
+  var base = <?= json_encode($base) ?>;
+  var done = false;
+
+  // Cek ke server setiap 2 detik apakah QR sudah di-scan
+  var timer = setInterval(function(){
+    if (done) return;
+    fetch(base + '/qris/cek?id=' + id, { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d && d.lunas) {
+          done = true;
+          clearInterval(timer);
+          var wrap = document.getElementById('qr-wrap');
+          var sukses = document.getElementById('qr-sukses');
+          var foot = document.getElementById('qr-foot');
+          var tmr = document.getElementById('qr-timer');
+          var hint = document.getElementById('qr-hint');
+          if (wrap) wrap.hidden = true;
+          if (tmr) tmr.hidden = true;
+          if (hint) hint.hidden = true;
+          if (foot) foot.hidden = true;
+          if (sukses) sukses.hidden = false;
+
+          // Pindah otomatis ke halaman status setelah 1.2 detik
+          setTimeout(function(){
+            window.location.href = base + '/status?id=' + id;
+          }, 1200);
+        }
+      })
+      .catch(function(){});
+  }, 2000);
+})();
+</script>
 <?php layout('QRIS', ob_get_clean());
 }
 
@@ -330,6 +393,59 @@ function r_qris_bayar(): void {
     try { db_rpc('saya_sudah_bayar', ['p_id' => $id]); }
     catch (SbError $x) { flash($x->getMessage()); redirect('/riwayat'); }
     redirect('/status?id=' . $id);
+}
+
+/** Endpoint JSON untuk mengecek apakah QRIS sudah di-scan (dipanggil otomatis tiap 2 detik). */
+function r_qris_cek(): void {
+    $m = me();
+    header('Content-Type: application/json; charset=utf-8');
+    if (!$m) { echo json_encode(['lunas' => false]); exit; }
+    $id = (int)($_GET['id'] ?? 0);
+    $row = db_sql('SELECT status FROM pesanan WHERE id = :id AND pelanggan_id = :u LIMIT 1', [
+        ':id' => $id, ':u' => $m['id']
+    ])[0] ?? null;
+    $lunas = $row && $row['status'] !== 'menunggu_bayar';
+    echo json_encode(['lunas' => $lunas]);
+    exit;
+}
+
+/** Halaman yang terbuka di HP saat QRIS di-scan dengan kamera. */
+function r_qris_scan(): void {
+    $id = (int)($_GET['id'] ?? 0);
+    $t = (string)($_GET['t'] ?? '');
+    $row = db_sql('SELECT id, kode, total, status, pelanggan_id FROM pesanan WHERE id = :id LIMIT 1', [':id' => $id])[0] ?? null;
+
+    if (!$row) {
+        layout('QRIS Tidak Valid', '<div class="bd c" style="padding-top:48px"><h2>❌ QR Tidak Ditemukan</h2><p class="mut">Pesanan tidak ditemukan.</p></div>');
+        return;
+    }
+
+    $validToken = substr(hash_hmac('sha256', (string)$id, (string)$row['kode']), 0, 12);
+    if (!hash_equals($validToken, $t)) {
+        layout('QRIS Tidak Valid', '<div class="bd c" style="padding-top:48px"><h2>❌ Token QR Tidak Valid</h2></div>');
+        return;
+    }
+
+    // Jika status masih menunggu_bayar, langsung ubah menjadi 'baru' (lunas)
+    if ($row['status'] === 'menunggu_bayar') {
+        try {
+            pg_run("SELECT set_config('app.uid', :u, false)", [':u' => (string)$row['pelanggan_id']]);
+            db_rpc('saya_sudah_bayar', ['p_id' => $id]);
+        } catch (SbError $x) {
+            pg_run("UPDATE pesanan SET status = 'baru' WHERE id = :id AND status = 'menunggu_bayar'", [':id' => $id]);
+        }
+    }
+
+    ob_start(); ?>
+<div class="bd c" style="padding-top:60px">
+  <div style="font-size:4rem;margin-bottom:12px">✅</div>
+  <h1>Pembayaran QRIS Berhasil!</h1>
+  <p class="mut">Pesanan <b>#<?= e($row['kode']) ?></b> sebesar <b><?= rp($row['total']) ?></b> telah dikonfirmasi.</p>
+  <div class="note" style="margin-top:20px;background:#d6f3e1;color:#146c3b">
+    Layar QRIS pada aplikasi pembeli akan tertutup secara otomatis. Anda bisa menutup halaman ini di HP Anda.
+  </div>
+</div>
+<?php layout('Pembayaran Berhasil', ob_get_clean());
 }
 
 function r_status(): void {
@@ -347,7 +463,7 @@ function r_status(): void {
     echo hd('Pesanan #' . e($o['kode']), $sub); ?>
 <div class="bd" id="live">
   <div class="box"><b><?= e(implode(', ', array_map(fn($i) => $i['jumlah'] . ' x ' . $i['nama'], $o['pesanan_item']))) ?></b>
-    <div class="mut" style="margin-top:6px"><?= e($o['stands']['nama'] ?? '') ?>   <?= e(LAY[$o['layanan']] ?? '') ?>   <?= rp($o['total']) ?></div></div>
+    <div class="mut" style="margin-top:6px"><?= e($o['stands']['nama'] ?? '') ?>   <?= e(LAY[$o['layanan']] ?? '') ?>   <?= rp($o['total']) ?></div></div>
   <?php if ($at >= 0): ?>
   <ul class="steps" style="margin:18px 6px"><?php foreach ($S as $k => [$t, $sb]): ?>
     <li class="<?= ($k === 0 || $k < $at || $done) ? 'd' : ($k === $at ? 'a' : '') ?>"><div><b><?= e($t) ?></b><?= $sb ? '<small>' . e($sb) . '</small>' : '' ?></div></li>

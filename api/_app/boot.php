@@ -550,7 +550,7 @@ function pesanan_muat(
 ): array {
     $rows = db_sql(
         'SELECT p.id, p.kode, p.status, p.layanan, p.total, p.created_at,
-                s.nama AS stand_nama, s.kios AS stand_kios
+                s.nama AS stand_nama, s.kios AS stand_kios, s.qr_url AS stand_qr
          FROM pesanan p
          LEFT JOIN stands s ON s.id = p.stand_id
          WHERE ' . $where . ' ' . $tail,
@@ -584,6 +584,7 @@ function pesanan_muat(
         $r['stands'] = [
             'nama' => $r['stand_nama'],
             'kios' => $r['stand_kios'],
+            'qr_url' => $r['stand_qr'] ?? '',
         ];
 
         $r['pesanan_item'] = $by[$r['id']] ?? [];
