@@ -309,16 +309,17 @@ function r_qris(): void {
     if ($o['status'] !== 'menunggu_bayar') redirect('/status?id=' . $id);
     $exp = strtotime($o['created_at']) + 900;
 
-    // Buat URL otomatis yang akan terbuka saat QR di-scan oleh HP
+    // 1. Ambil foto QRIS asli yang diupload penjual di profil stand
+    $qrStandUrl = (string)($o['stands']['qr_url'] ?? '');
+
+    // 2. Buat QR Auto-Close untuk demo scan pakai Kamera HP biasa / Google Lens
     $proto = is_https() ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
     $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
     $base = str_contains($scriptPath, '/PICO/') ? '/PICO' : '';
     $token = substr(hash_hmac('sha256', (string)$id, (string)$o['kode']), 0, 12);
     $scanUrl = $proto . '://' . $host . $base . '/qris/scan?id=' . $id . '&t=' . $token;
-
-    // Generate gambar QR Code yang bisa di-scan kamera HP
-    $qrImg = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=' . rawurlencode($scanUrl);
+    $qrAutoImg = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=' . rawurlencode($scanUrl);
 
     ob_start(); ?>
 <header class="hd"><a class="back" href="/home">← Pembayaran QRIS</a></header>
@@ -326,27 +327,52 @@ function r_qris(): void {
   <p class="mut">Pesanan #<?= e($o['kode']) ?> · <?= e($o['stands']['nama'] ?? '') ?> (<?= e(LAY[$o['layanan']] ?? '') ?>)</p>
   <h1 style="margin:6px 0"><?= rp($o['total']) ?></h1>
 
-  <!-- Kotak QRIS yang akan tertutup otomatis saat di-scan -->
-  <div id="qr-wrap" style="margin:16px auto;width:240px;background:#fff;padding:16px;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,.08);transition:all .3s ease">
-    <div style="font-weight:800;font-size:.9rem;letter-spacing:1px;margin-bottom:8px;color:#1e293b">QRIS PICO</div>
-    <img src="<?= e($qrImg) ?>" alt="Scan QRIS" style="width:100%;height:auto;border-radius:8px;display:block">
-    <small class="mut" style="display:block;margin-top:8px;font-size:.75rem">NMID: ID<?= e($o['kode']) ?>00<?= $id ?></small>
+  <!-- Pilihan Mode Scan agar bisa ditunjukkan saat demo -->
+  <div style="display:inline-flex;gap:6px;background:#f1f5f9;padding:4px;border-radius:10px;margin:8px 0">
+    <button type="button" id="tab-asli" style="border:0;padding:6px 12px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;background:#fff;color:#0f172a;box-shadow:0 1px 3px rgba(0,0,0,.1)">
+      Scan E-Wallet / M-Banking
+    </button>
+    <button type="button" id="tab-auto" style="border:0;padding:6px 12px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;background:transparent;color:#64748b">
+      Scan Kamera HP (Auto-Close)
+    </button>
   </div>
 
-  <!-- Animasi Sukses (muncul otomatis begitu QR di-scan) -->
+  <!-- Kotak QRIS -->
+  <div id="qr-wrap" style="margin:10px auto 16px;width:250px;background:#fff;padding:14px;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,.08);transition:all .3s ease">
+    <!-- Mode 1: Foto QRIS Asli yang diupload Penjual -->
+    <div id="box-qr-asli">
+      <?php if ($qrStandUrl !== ''): ?>
+        <img src="<?= e($qrStandUrl) ?>" alt="QRIS Stand" style="width:100%;height:auto;border-radius:10px;display:block">
+      <?php else: ?>
+        <img src="<?= e($qrAutoImg) ?>" alt="Scan QRIS" style="width:100%;height:auto;border-radius:8px;display:block">
+        <small class="mut" style="display:block;margin-top:6px;color:#b42318;font-size:.75rem">Penjual belum upload foto QRIS stand.</small>
+      <?php endif; ?>
+    </div>
+
+    <!-- Mode 2: QR Auto-Close (Scan pakai Kamera HP / Chrome / Safari) -->
+    <div id="box-qr-auto" hidden>
+      <div style="font-weight:800;font-size:.85rem;letter-spacing:1px;margin-bottom:6px;color:#1e293b">QR AUTO-CLOSE PICO</div>
+      <img src="<?= e($qrAutoImg) ?>" alt="Scan Kamera HP" style="width:100%;height:auto;border-radius:8px;display:block">
+      <small class="mut" style="display:block;margin-top:6px;font-size:.72rem">Scan dengan Kamera HP biasa / Google Lens</small>
+    </div>
+  </div>
+
+  <!-- Animasi Sukses (muncul otomatis begitu pembayaran terkonfirmasi) -->
   <div id="qr-sukses" hidden style="margin:28px auto;padding:24px;max-width:260px;background:#d6f3e1;color:#146c3b;border-radius:18px">
     <div style="font-size:3rem;line-height:1">✅</div>
     <h3 style="margin:10px 0 4px">Pembayaran Berhasil!</h3>
-    <small>QRIS telah di-scan. Mengalihkan ke status pesanan...</small>
+    <small>Pesanan telah dikonfirmasi. Mengalihkan ke status pesanan...</small>
   </div>
 
   <span class="timer" id="qr-timer" data-exp="<?= $exp ?>">Bayar dalam --:--</span>
-  <p class="mut" id="qr-hint" style="margin-top:14px">Scan QR di atas dengan Kamera HP / QR Scanner untuk menyelesaikan pembayaran otomatis</p>
+  <p class="mut" id="qr-hint" style="margin-top:12px;font-size:.85rem">
+    Gunakan aplikasi <b>E-Wallet / M-Banking</b> untuk scan QRIS Stand di atas, lalu klik tombol di bawah.
+  </p>
 </div>
 
 <form method="post" action="/qris/bayar" class="foot" id="qr-foot">
   <input type="hidden" name="id" value="<?= $id ?>">
-  <button class="btn sec" id="ok">Saya sudah bayar</button>
+  <button class="btn" id="ok">Saya sudah bayar</button>
 </form>
 
 <script>
@@ -355,30 +381,73 @@ function r_qris(): void {
   var base = <?= json_encode($base) ?>;
   var done = false;
 
-  // Cek ke server setiap 2 detik apakah QR sudah di-scan
+  // Toggle antara QRIS Asli (E-Wallet) dan QR Auto-Close (Kamera HP)
+  var tAsli = document.getElementById('tab-asli');
+  var tAuto = document.getElementById('tab-auto');
+  var bAsli = document.getElementById('box-qr-asli');
+  var bAuto = document.getElementById('box-qr-auto');
+  var hint  = document.getElementById('qr-hint');
+
+  if (tAsli && tAuto) {
+    tAsli.addEventListener('click', function(){
+      bAsli.hidden = false; bAuto.hidden = true;
+      tAsli.style.background = '#fff'; tAsli.style.color = '#0f172a';
+      tAuto.style.background = 'transparent'; tAuto.style.color = '#64748b';
+      hint.innerHTML = 'Gunakan aplikasi <b>E-Wallet / M-Banking</b> untuk scan QRIS Stand di atas, lalu klik tombol di bawah.';
+    });
+    tAuto.addEventListener('click', function(){
+      bAsli.hidden = true; bAuto.hidden = false;
+      tAuto.style.background = '#fff'; tAuto.style.color = '#0f172a';
+      tAsli.style.background = 'transparent'; tAsli.style.color = '#64748b';
+      hint.innerHTML = 'Arahkan <b>Kamera HP / Google Lens</b> ke QR di atas dan buka tautannya — layar ini akan tertutup otomatis!';
+    });
+  }
+
+  function tampilkanSukses() {
+    if (done) return;
+    done = true;
+    var wrap = document.getElementById('qr-wrap');
+    var sukses = document.getElementById('qr-sukses');
+    var foot = document.getElementById('qr-foot');
+    var tmr = document.getElementById('qr-timer');
+    if (wrap) wrap.hidden = true;
+    if (tmr) tmr.hidden = true;
+    if (hint) hint.hidden = true;
+    if (foot) foot.hidden = true;
+    if (tAsli && tAsli.parentNode) tAsli.parentNode.hidden = true;
+    if (sukses) sukses.hidden = false;
+
+    setTimeout(function(){
+      window.location.href = base + '/status?id=' + id;
+    }, 1200);
+  }
+
+  // Saat klik tombol "Saya sudah bayar", tutup QRIS dengan animasi lalu kirim
+  var form = document.getElementById('qr-foot');
+  if (form) {
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      fetch(base + '/qris/bayar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'id=' + encodeURIComponent(id)
+      }).then(function(){
+        tampilkanSukses();
+      }).catch(function(){
+        form.submit();
+      });
+    });
+  }
+
+  // Polling tiap 2 detik kalau di-scan pakai mode Kamera HP (Auto-Close)
   var timer = setInterval(function(){
     if (done) return;
     fetch(base + '/qris/cek?id=' + id, { cache: 'no-store' })
       .then(function(r){ return r.json(); })
       .then(function(d){
         if (d && d.lunas) {
-          done = true;
           clearInterval(timer);
-          var wrap = document.getElementById('qr-wrap');
-          var sukses = document.getElementById('qr-sukses');
-          var foot = document.getElementById('qr-foot');
-          var tmr = document.getElementById('qr-timer');
-          var hint = document.getElementById('qr-hint');
-          if (wrap) wrap.hidden = true;
-          if (tmr) tmr.hidden = true;
-          if (hint) hint.hidden = true;
-          if (foot) foot.hidden = true;
-          if (sukses) sukses.hidden = false;
-
-          // Pindah otomatis ke halaman status setelah 1.2 detik
-          setTimeout(function(){
-            window.location.href = base + '/status?id=' + id;
-          }, 1200);
+          tampilkanSukses();
         }
       })
       .catch(function(){});
