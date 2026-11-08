@@ -18,7 +18,7 @@ if (session_status() === PHP_SESSION_NONE) {
             'path' => '/',
             'secure' => (
                 (!empty($_SERVER['HTTPS']) &&
-                 strtolower((string) $_SERVER['HTTPS']) !== 'off')
+                    strtolower((string) $_SERVER['HTTPS']) !== 'off')
                 || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
             ),
             'httponly' => true,
@@ -233,8 +233,8 @@ function pdo(): PDO
         $p->prepare(
             "SELECT set_config('app.uid', :u, false)"
         )->execute([
-            ':u' => (string) ($_SESSION['uid'] ?? ''),
-        ]);
+                    ':u' => (string) ($_SESSION['uid'] ?? ''),
+                ]);
     } catch (PDOException $x) {
         error_log('Koneksi database gagal: ' . $x->getMessage());
         throw new SbError('Tidak bisa terhubung ke database.');
@@ -683,14 +683,14 @@ function auth_signup(
              VALUES (:e, :u, :h, :n, :p, :r, :pol, :ks)
              RETURNING id',
             [
-                ':e'   => $email,
-                ':u'   => $username,
-                ':h'   => password_hash($pw, PASSWORD_DEFAULT),
-                ':n'   => $nama,
-                ':p'   => $hp,
-                ':r'   => 'pelanggan',
+                ':e' => $email,
+                ':u' => $username,
+                ':h' => password_hash($pw, PASSWORD_DEFAULT),
+                ':n' => $nama,
+                ':p' => $hp,
+                ':r' => 'pelanggan',
                 ':pol' => $pol,
-                ':ks'  => $pol ? 'menunggu' : null,
+                ':ks' => $pol ? 'menunggu' : null,
             ]
         )->fetch();
     } else {
@@ -700,13 +700,13 @@ function auth_signup(
              VALUES (:e, :h, :n, :p, :r, :pol, :ks)
              RETURNING id',
             [
-                ':e'   => $email,
-                ':h'   => password_hash($pw, PASSWORD_DEFAULT),
-                ':n'   => $nama,
-                ':p'   => $hp,
-                ':r'   => 'pelanggan',
+                ':e' => $email,
+                ':h' => password_hash($pw, PASSWORD_DEFAULT),
+                ':n' => $nama,
+                ':p' => $hp,
+                ':r' => 'pelanggan',
                 ':pol' => $pol,
-                ':ks'  => $pol ? 'menunggu' : null,
+                ':ks' => $pol ? 'menunggu' : null,
             ]
         )->fetch();
     }
@@ -978,7 +978,7 @@ function foto_simpan(string $tabel, int $id, array $file): void
 
 // Menyajikan foto di alamat /foto?t=menu&id=1 (dipasang langsung di sini,
 // jadi tidak perlu mendaftarkan rute di file lain).
-(function (): void {
+(function (): void{
     $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
     if (str_starts_with($path, '/PICO/')) {
         $path = substr($path, 5);
@@ -1063,7 +1063,8 @@ function qr_simpan(int $standId, array $file): void
         error_log('Simpan QR gagal: ' . $x->getMessage());
         throw new SbError('QR gagal disimpan.');
     } finally {
-        if (is_resource($fh)) fclose($fh);
+        if (is_resource($fh))
+            fclose($fh);
     }
 }
 
@@ -1114,17 +1115,21 @@ function ktm_simpan(string $uid, array $file, string $mime): void
         error_log('Simpan KTM gagal: ' . $x->getMessage());
         throw new SbError('KTM gagal disimpan.');
     } finally {
-        if (is_resource($fh)) fclose($fh);
+        if (is_resource($fh))
+            fclose($fh);
     }
 }
 
 // Menyajikan KTM di /ktm?id=<uuid>. Hanya admin atau pemilik akun yang boleh melihat.
-(function (): void {
+(function (): void{
     $path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
-    if ($path !== '/ktm') return;
+    if ($path !== '/ktm')
+        return;
 
     $uid = (string) ($_SESSION['uid'] ?? '');
-    if ($uid === '') { http_response_code(403); exit; }
+    if ($uid === '') {
+        http_response_code(403);
+        exit; }
 
     try {
         $st = pdo()->prepare('SELECT role FROM profiles WHERE id = :id');
@@ -1132,7 +1137,9 @@ function ktm_simpan(string $uid, array $file, string $mime): void
         $role = $st->fetchColumn();
 
         $target = (string) ($_GET['id'] ?? $uid);
-        if ($role !== 'admin' && $target !== $uid) { http_response_code(403); exit; }
+        if ($role !== 'admin' && $target !== $uid) {
+            http_response_code(403);
+            exit; }
 
         $st = pdo()->prepare('SELECT ktm_data, ktm_mime FROM profiles WHERE id = :id');
         $st->execute([':id' => $target]);
@@ -1142,7 +1149,9 @@ function ktm_simpan(string $uid, array $file, string $mime): void
         exit;
     }
 
-    if (!$row || $row['ktm_data'] === null) { http_response_code(404); exit; }
+    if (!$row || $row['ktm_data'] === null) {
+        http_response_code(404);
+        exit; }
 
     $data = is_resource($row['ktm_data'])
         ? stream_get_contents($row['ktm_data'])
@@ -1158,9 +1167,10 @@ function ktm_simpan(string $uid, array $file, string $mime): void
 
 
 // Admin menyetujui / menolak KTM: POST /admin/ktm (id, aksi = setujui|tolak)
-(function (): void {
+(function (): void{
     $path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
-    if ($path !== '/admin/ktm' || ($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') return;
+    if ($path !== '/admin/ktm' || ($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST')
+        return;
 
     check_origin();
     need('admin');
@@ -1189,9 +1199,10 @@ function ktm_simpan(string $uid, array $file, string $mime): void
 // =====================================================================
 // RUTE OTOMATIS LUPA PASSWORD (/lupa-password)
 // =====================================================================
-(function (): void {
+(function (): void{
     $path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
-    if ($path !== '/lupa-password') return;
+    if ($path !== '/lupa-password')
+        return;
 
     require_once __DIR__ . '/ui.php';
     require_once __DIR__ . '/pelanggan.php';

@@ -6,6 +6,7 @@ $f = realpath(__DIR__ . '/public' . $p);
 if ($p !== '/' && $f && str_starts_with($f, realpath(__DIR__ . '/public')) && is_file($f)) {
     $types = ['css' => 'text/css', 'js' => 'application/javascript', 'svg' => 'image/svg+xml', 'png' => 'image/png', 'jpg' => 'image/jpeg', 'ico' => 'image/x-icon'];
     header('Content-Type: ' . ($types[pathinfo($f, PATHINFO_EXTENSION)] ?? 'application/octet-stream'));
-    readfile($f); return true;
+    readfile($f);
+    return true;
 }
 require __DIR__ . '/api/index.php';

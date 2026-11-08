@@ -13,18 +13,18 @@ Browser tidak pernah memegang key rahasia. Semua panggilan ke Supabase dilakukan
 
 ## 1. Isi folder
 
-| Lokasi | Fungsinya |
-|---|---|
-| `api/index.php` | Pintu masuk + daftar alamat (route). Mulai membaca dari sini. |
-| `api/_app/boot.php` | Koneksi Supabase, login/sesi, keranjang |
-| `api/_app/pelanggan.php` | Halaman pelanggan + login/daftar |
-| `api/_app/penjual.php` | Halaman penjual |
-| `api/_app/admin.php` | Halaman admin |
-| `api/_app/ui.php` | Kerangka halaman & navigasi |
-| `public/css`, `public/js` | Tampilan & JavaScript kecil |
-| `sql/01_schema.sql`, `sql/02_seed.sql` | Database (dijalankan di Supabase) |
-| `vercel.json` | Pengaturan Vercel |
-| `.env.example` | Contoh isi pengaturan rahasia |
+| Lokasi                                 | Fungsinya                                                     |
+| -------------------------------------- | ------------------------------------------------------------- |
+| `api/index.php`                        | Pintu masuk + daftar alamat (route). Mulai membaca dari sini. |
+| `api/_app/boot.php`                    | Koneksi Supabase, login/sesi, keranjang                       |
+| `api/_app/pelanggan.php`               | Halaman pelanggan + login/daftar                              |
+| `api/_app/penjual.php`                 | Halaman penjual                                               |
+| `api/_app/admin.php`                   | Halaman admin                                                 |
+| `api/_app/ui.php`                      | Kerangka halaman & navigasi                                   |
+| `public/css`, `public/js`              | Tampilan & JavaScript kecil                                   |
+| `sql/01_schema.sql`, `sql/02_seed.sql` | Database (dijalankan di Supabase)                             |
+| `vercel.json`                          | Pengaturan Vercel                                             |
+| `.env.example`                         | Contoh isi pengaturan rahasia                                 |
 
 ---
 
@@ -33,15 +33,15 @@ Browser tidak pernah memegang key rahasia. Semua panggilan ke Supabase dilakukan
 1. Buka project Supabase → **SQL Editor → New query**.
 2. Tempel isi `sql/01_schema.sql` → **Run**. Lalu `sql/02_seed.sql` → **Run** (data contoh stand & menu).
 3. **Authentication → Sign In / Providers → Email**: matikan **Confirm email** (supaya pendaftaran langsung bisa dipakai saat uji coba).
-4. Ambil 3 nilai ini dari **Project Settings → API** (atau *API Keys*):
+4. Ambil 3 nilai ini dari **Project Settings → API** (atau _API Keys_):
    - **Project URL**
-   - **anon key** (pada dashboard baru: *publishable key*)
-   - **service_role key** (pada dashboard baru: *secret key*) — **RAHASIA**, jangan dibagikan atau di-upload ke GitHub.
+   - **anon key** (pada dashboard baru: _publishable key_)
+   - **service_role key** (pada dashboard baru: _secret key_) — **RAHASIA**, jangan dibagikan atau di-upload ke GitHub.
 5. Buat **admin pertama**: buka aplikasi → **Saya Pembeli** → **Daftar**, buat akunmu, lalu di SQL Editor jalankan (ganti username-nya):
    ```sql
    update profiles set role = 'admin' where username = 'usernamemu';
    ```
-6. Setelah itu akun penjual dibuat dari halaman admin (*Stand & Penjual → Buat akun penjual*), tidak perlu SQL lagi.
+6. Setelah itu akun penjual dibuat dari halaman admin (_Stand & Penjual → Buat akun penjual_), tidak perlu SQL lagi.
 
 > Kalau database temanmu sudah punya tabel sendiri yang berbeda, hanya teks query di `api/_app/*.php` yang perlu disesuaikan (nama tabel/kolom).
 
@@ -81,15 +81,16 @@ Browser tidak pernah memegang key rahasia. Semua panggilan ke Supabase dilakukan
 Vercel tidak mendukung PHP bawaan, jadi proyek ini memakai runtime komunitas `vercel-php` (diatur di `vercel.json`).
 
 **Jika ada masalah di Vercel**
+
 - Tampilan polos (CSS tidak muncul): di Vercel → Settings → Build & Output → isi **Output Directory** dengan `public`, lalu Redeploy.
-- Halaman error tentang runtime/PHP: cek log di tab *Deployments → Functions*. Alternatifnya, deploy lewat **Railway** atau **Render**: sudah disediakan `Dockerfile`, cukup hubungkan repository GitHub dan isi 3 Environment Variables yang sama.
+- Halaman error tentang runtime/PHP: cek log di tab _Deployments → Functions_. Alternatifnya, deploy lewat **Railway** atau **Render**: sudah disediakan `Dockerfile`, cukup hubungkan repository GitHub dan isi 3 Environment Variables yang sama.
 - Setelah mengubah Environment Variables, klik **Redeploy**.
 
 ---
 
 ## 5. Alur & hak akses singkat
 
-**Halaman awal** menampilkan dua pintu: *Saya Pembeli* (ada tombol Daftar) dan *Saya Penjual* (tanpa Daftar, akunnya dibuat admin). Pintu hanya soal tampilan. Setelah login, pengguna selalu dibawa ke halaman sesuai **role di database**: admin ke `/admin` (boleh login lewat pintu mana saja), penjual ke `/penjual`, pembeli ke `/home`. Tidak ada tombol menuju admin.
+**Halaman awal** menampilkan dua pintu: _Saya Pembeli_ (ada tombol Daftar) dan _Saya Penjual_ (tanpa Daftar, akunnya dibuat admin). Pintu hanya soal tampilan. Setelah login, pengguna selalu dibawa ke halaman sesuai **role di database**: admin ke `/admin` (boleh login lewat pintu mana saja), penjual ke `/penjual`, pembeli ke `/home`. Tidak ada tombol menuju admin.
 
 - **Pelanggan**: daftar/masuk → pilih stand → tambah menu → checkout → QRIS → pantau status → riwayat.
 - **Penjual**: lihat pesanan masuk (refresh otomatis) → Terima → Siap → Selesai / Batalkan; kelola menu (harga, stok, foto); buka/tutup stand.

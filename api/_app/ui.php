@@ -41,20 +41,20 @@ function layout(string $title, string $body, array $o = []): void
     }
 
     echo '<!DOCTYPE html><html lang="id"><head>'
-       . '<meta charset="utf-8">'
-       . '<meta name="viewport" content="width=device-width,initial-scale=1">'
-       . '<title>' . e($title) . ' · PICO</title>'
-       . '<link rel="stylesheet" href="' . $base . '/css/' . e($css) . '.css">'
-       . '</head>'
-       . '<body' . (!empty($o['live']) ? ' data-live="' . (int)$o['live'] . '"' : '') . '>'
-       . '<div class="' . e($wrap) . '">' . $body . '</div>';
+        . '<meta charset="utf-8">'
+        . '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        . '<title>' . e($title) . ' · PICO</title>'
+        . '<link rel="stylesheet" href="' . $base . '/css/' . e($css) . '.css">'
+        . '</head>'
+        . '<body' . (!empty($o['live']) ? ' data-live="' . (int) $o['live'] . '"' : '') . '>'
+        . '<div class="' . e($wrap) . '">' . $body . '</div>';
 
     if ($fl !== '') {
         echo '<div class="toast">' . e($fl) . '</div>';
     }
 
     echo '<script src="' . $base . '/js/app.js"></script>'
-       . '</body></html>';
+        . '</body></html>';
 }
 
 /**
@@ -63,11 +63,11 @@ function layout(string $title, string $body, array $o = []): void
 function ico(string $k): string
 {
     static $IC = [
-        'home' => 'M3 11l9-8 9 8v10H3zM9 21v-6h6v6',
-        'cart' => 'M3 4h2l2.5 11h10l2-8H6.5M9 20h.01M17 20h.01',
-        'book' => 'M5 3h14v18H5zM5 17h14',
-        'user' => 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6',
-        'list' => 'M4 6h16M4 12h16M4 18h16'
+    'home' => 'M3 11l9-8 9 8v10H3zM9 21v-6h6v6',
+    'cart' => 'M3 4h2l2.5 11h10l2-8H6.5M9 20h.01M17 20h.01',
+    'book' => 'M5 3h14v18H5zM5 17h14',
+    'user' => 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6',
+    'list' => 'M4 6h16M4 12h16M4 18h16'
     ];
 
     $path = $IC[$k] ?? $IC['home'];
