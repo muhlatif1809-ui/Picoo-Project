@@ -63,9 +63,12 @@ function r_pen_home(): void {
         FROM pesanan WHERE stand_id = :s", [':s' => $sid])[0] ?? ['baru'=>0,'diproses'=>0,'pendapatan'=>0];
     $stock = db_sql('SELECT COUNT(*) AS jumlah FROM menu WHERE stand_id = :s AND tersedia = true AND stok > 0', [':s' => $sid])[0]['jumlah'] ?? 0;
     $os = pesanan_muat('p.stand_id = :s', [':s' => $sid], 'ORDER BY p.created_at DESC LIMIT 3');
+    
     ob_start(); ?>
-<header class="seller-home-head"><div><small>Dashboard penjual</small><h1><?= e($s['nama']) ?></h1><span>Kios <?= e($s['kios']) ?></span></div>
-  <form method="post" action="/penjual/buka"><button class="seller-open <?= $s['buka'] ? 'is-open' : '' ?>"><i></i><?= $s['buka'] ? 'Buka' : 'Tutup' ?></button></form></header>
+<header class="seller-home-head">
+  <div><small>Dashboard penjual</small><h1><?= e($s['nama']) ?></h1><span>Kios <?= e($s['kios']) ?></span></div>
+  <form method="post" action="/penjual/buka"><button class="seller-open <?= $s['buka'] ? 'is-open' : '' ?>"><i></i><?= $s['buka'] ? 'Buka' : 'Tutup' ?></button></form>
+</header>
 <div class="bd seller-dashboard" id="live">
   <section class="seller-stats" aria-label="Ringkasan penjualan">
     <a class="seller-stat stat-new" href="/penjual/riwayat?status=baru"><small>Pesanan baru</small><b><?= (int)$stats['baru'] ?></b><span>Perlu diterima <i>→</i></span></a>
@@ -73,58 +76,24 @@ function r_pen_home(): void {
     <a class="seller-stat stat-progress" href="/penjual/riwayat?status=diproses"><small>Sedang diproses</small><b><?= (int)$stats['diproses'] ?></b><span>Lihat pesanan <i>→</i></span></a>
     <a class="seller-stat stat-stock" href="/penjual/menu"><small>Menu tersedia</small><b><?= (int)$stock ?></b><span>Kelola stok <i>→</i></span></a>
   </section>
-  <section class="seller-recent"><div class="seller-section-title"><div><small>Aktivitas terbaru</small><h2>Pesanan terbaru</h2></div><a href="/penjual/riwayat">Lihat semua <span>→</span></a></div>
+  <section class="seller-recent">
+    <div class="seller-section-title"><div><small>Aktivitas terbaru</small><h2>Pesanan terbaru</h2></div><a href="/penjual/riwayat">Lihat semua <span>→</span></a></div>
     <div class="seller-order-list">
     <?php foreach ($os as $o): ?>
-      <article class="box ocard seller-order"><div class="row"><div><small class="mut"><?= waktu($o['created_at']) ?><?= !empty($o['pelanggan_nama']) ? ' · ' . e($o['pelanggan_nama']) : '' ?></small><b>#<?= e($o['kode']) ?></b></div><?= tag($o['status']) ?></div>
+      <article class="box ocard seller-order">
+        <div class="row"><div><small class="mut"><?= waktu($o['created_at']) ?><?= !empty($o['pelanggan_nama']) ? ' · ' . e($o['pelanggan_nama']) : '' ?></small><b>#<?= e($o['kode']) ?></b></div><?= tag($o['status']) ?></div>
         <ul class="lines"><?php foreach (array_slice($o['pesanan_item'],0,2) as $i): ?><li><b><?= (int)$i['jumlah'] ?>×</b> <?= e($i['nama']) ?></li><?php endforeach; ?><?php if (count($o['pesanan_item']) > 2): ?><li class="mut">+<?= count($o['pesanan_item'])-2 ?> menu lainnya</li><?php endif; ?></ul>
         <div class="row seller-order-foot"><span><?= e(LAY[$o['layanan']] ?? '') ?></span><b><?= rp($o['total']) ?></b></div>
         <?= html_bukti_pembeli($o) ?>
       </article>
     <?php endforeach; if (!$os) echo empty_box('Belum ada aktivitas pesanan.'); ?>
     </div>
-    <form method="post" action="/penjual/buka"><button
-        class="seller-open <?= $s['buka'] ? 'is-open' : '' ?>"><i></i><?= $s['buka'] ? 'Buka' : 'Tutup' ?></button></form>
-  </header>
-  <div class="bd seller-dashboard" id="live">
-    <section class="seller-stats" aria-label="Ringkasan penjualan">
-      <a class="seller-stat stat-new" href="/penjual/riwayat?status=baru"><small>Pesanan
-          baru</small><b><?= (int) $stats['baru'] ?></b><span>Perlu diterima <i>→</i></span></a>
-      <a class="seller-stat stat-income" href="/penjual/riwayat?status=selesai"><small>Pendapatan hari
-          ini</small><b><?= rp($stats['pendapatan']) ?></b><span>Pesanan selesai</span></a>
-      <a class="seller-stat stat-progress" href="/penjual/riwayat?status=diproses"><small>Sedang
-          diproses</small><b><?= (int) $stats['diproses'] ?></b><span>Lihat pesanan <i>→</i></span></a>
-      <a class="seller-stat stat-stock" href="/penjual/menu"><small>Menu
-          tersedia</small><b><?= (int) $stock ?></b><span>Kelola stok <i>→</i></span></a>
-    </section>
-    <section class="seller-recent">
-      <div class="seller-section-title">
-        <div><small>Aktivitas terbaru</small>
-          <h2>Pesanan terbaru</h2>
-        </div><a href="/penjual/riwayat">Lihat semua <span>→</span></a>
-      </div>
-      <div class="seller-order-list">
-        <?php foreach ($os as $o): ?>
-          <article class="box ocard seller-order">
-            <div class="row">
-              <div><small class="mut"><?= waktu($o['created_at']) ?></small><b>#<?= e($o['kode']) ?></b></div>
-              <?= tag($o['status']) ?>
-            </div>
-            <ul class="lines"><?php foreach (array_slice($o['pesanan_item'], 0, 2) as $i): ?>
-                <li><b><?= (int) $i['jumlah'] ?>×</b> <?= e($i['nama']) ?></li>
-              <?php endforeach; ?>    <?php if (count($o['pesanan_item']) > 2): ?>
-                <li class="mut">+<?= count($o['pesanan_item']) - 2 ?> menu lainnya</li><?php endif; ?>
-            </ul>
-            <div class="row seller-order-foot"><span><?= e(LAY[$o['layanan']] ?? '') ?></span><b><?= rp($o['total']) ?></b>
-            </div>
-          </article>
-        <?php endforeach;
-        if (!$os)
-          echo empty_box('Belum ada aktivitas pesanan.'); ?>
-      </div>
-    </section>
-  </div><?= nav_pen('/penjual');
-  layout('Home Penjual', ob_get_clean(), ['live' => 10000]);
+  </section>
+</div>
+<?= nav_pen('/penjual'); ?>
+<?php 
+    $body = ob_get_clean();
+    layout('Home Penjual', $body, ['live' => 10000]);
 }
 
 function r_pen_riwayat(): void {
