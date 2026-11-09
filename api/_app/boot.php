@@ -1003,14 +1003,8 @@ function foto_simpan(string $tabel, int $id, array $file): void
     }
 }
 
-<<<<<<< HEAD
-// Menyajikan foto di alamat /foto?t=menu&id=1 (dipasang langsung di sini,
-// jadi tidak perlu mendaftarkan rute di file lain).
-(function (): void{
-=======
 // Menyajikan foto di alamat /foto?t=menu&id=1 (termasuk qr, avatar, dan bukti)
 (function (): void {
->>>>>>> 99ce109 (penambahan upload file qr)
     $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
     if (str_starts_with($path, '/PICO/')) {
         $path = substr($path, 5);

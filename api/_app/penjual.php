@@ -12,24 +12,6 @@ function stand_saya(array $m): array
   return $s;
 }
 
-<<<<<<< HEAD
-function r_pen_home(): void
-{
-  $m = need('penjual');
-  $s = stand_saya($m);
-  $sid = (int) $s['id'];
-  $stats = db_sql("SELECT
-        COUNT(*) FILTER (WHERE status = 'baru') AS baru,
-        COUNT(*) FILTER (WHERE status = 'diproses') AS diproses,
-        COALESCE(SUM(total) FILTER (WHERE status = 'selesai' AND created_at::date = CURRENT_DATE), 0) AS pendapatan
-        FROM pesanan WHERE stand_id = :s", [':s' => $sid])[0] ?? ['baru' => 0, 'diproses' => 0, 'pendapatan' => 0];
-  $stock = db_sql('SELECT COUNT(*) AS jumlah FROM menu WHERE stand_id = :s AND tersedia = true AND stok > 0', [':s' => $sid])[0]['jumlah'] ?? 0;
-  $os = pesanan_muat('p.stand_id = :s', [':s' => $sid], 'ORDER BY p.created_at DESC LIMIT 3');
-  ob_start(); ?>
-  <header class="seller-home-head">
-    <div><small>Dashboard penjual</small>
-      <h1><?= e($s['nama']) ?></h1><span>Kios <?= e($s['kios']) ?></span>
-=======
 /**
  * Potongan HTML + Modal untuk menampilkan bukti pembayaran dari pembeli di setiap kartu pesanan penjual.
  */
@@ -100,7 +82,6 @@ function r_pen_home(): void {
         <?= html_bukti_pembeli($o) ?>
       </article>
     <?php endforeach; if (!$os) echo empty_box('Belum ada aktivitas pesanan.'); ?>
->>>>>>> 99ce109 (penambahan upload file qr)
     </div>
     <form method="post" action="/penjual/buka"><button
         class="seller-open <?= $s['buka'] ? 'is-open' : '' ?>"><i></i><?= $s['buka'] ? 'Buka' : 'Tutup' ?></button></form>
@@ -146,61 +127,6 @@ function r_pen_home(): void {
   layout('Home Penjual', ob_get_clean(), ['live' => 10000]);
 }
 
-<<<<<<< HEAD
-function r_pen_riwayat(): void
-{
-  $m = need('penjual');
-  $s = stand_saya($m);
-  $filters = ['semua' => 'Semua', 'baru' => 'Baru', 'diproses' => 'Proses', 'siap' => 'Siap', 'selesai' => 'Selesai', 'batal' => 'Batal'];
-  $status = $_GET['status'] ?? 'baru';
-  if (!isset($filters[$status]))
-    $status = 'baru';
-  $where = 'p.stand_id = :s';
-  $par = [':s' => (int) $s['id']];
-  if ($status !== 'semua') {
-    $where .= ' AND p.status = :status';
-    $par[':status'] = $status;
-  }
-  $os = pesanan_muat($where, $par, 'ORDER BY p.created_at DESC LIMIT 60');
-  $next = ['baru' => ['diproses', 'Terima & proses'], 'diproses' => ['siap', 'Siap diambil'], 'siap' => ['selesai', 'Selesai (sudah diambil)']];
-  ob_start(); ?>
-  <?= hd('Riwayat Pesanan', e($s['nama']) . ' · Kios ' . e($s['kios'])) ?>
-  <div class="bd seller-history">
-    <nav class="seller-filters" aria-label="Filter status pesanan"><?php foreach ($filters as $key => $label): ?><a
-          href="/penjual/riwayat?status=<?= e($key) ?>"
-          class="<?= $status === $key ? 'on' : '' ?>"><?= e($label) ?></a><?php endforeach; ?></nav>
-    <div id="live" class="seller-order-list">
-      <?php foreach ($os as $o): ?>
-        <div class="box ocard seller-order">
-          <div class="row">
-            <div><small class="mut"><?= waktu($o['created_at']) ?></small><b>#<?= e($o['kode']) ?> ·
-                <?= e(LAY[$o['layanan']] ?? '') ?></b></div><?= tag($o['status']) ?>
-          </div>
-          <ul class="lines"><?php foreach ($o['pesanan_item'] as $i): ?>
-              <li><b><?= (int) $i['jumlah'] ?> x</b>
-                <?= e($i['nama']) ?>      <?= $i['catatan'] ? ' <small class="mut">(' . e($i['catatan']) . ')</small>' : '' ?></li>
-            <?php endforeach; ?>
-          </ul>
-          <div class="row seller-order-foot"><span><?= count($o['pesanan_item']) ?> item</span><b><?= rp($o['total']) ?></b>
-          </div>
-          <?php if (isset($next[$o['status']])):
-            [$to, $lb] = $next[$o['status']]; ?>
-            <div class="btns" style="margin-top:12px">
-              <?php if ($o['status'] !== 'siap'): ?>
-                <form method="post" action="/penjual/status" data-confirm="Batalkan pesanan ini? Stok akan dikembalikan."><input
-                    type="hidden" name="id" value="<?= (int) $o['id'] ?>"><input type="hidden" name="status"
-                    value="batal"><button class="btn sm sec">Batalkan</button></form><?php endif; ?>
-              <form method="post" action="/penjual/status"><input type="hidden" name="id" value="<?= (int) $o['id'] ?>"><input
-                  type="hidden" name="status" value="<?= $to ?>"><button class="btn sm"><?= e($lb) ?></button></form>
-            </div><?php endif; ?>
-        </div>
-      <?php endforeach;
-      if (!$os)
-        echo empty_box('Tidak ada pesanan untuk status ini.'); ?>
-    </div>
-  </div><?= nav_pen('/penjual/riwayat');
-  layout('Riwayat Pesanan', ob_get_clean(), ['live' => in_array($status, ['semua', 'baru', 'diproses', 'siap'], true) ? 6000 : 0]);
-=======
 function r_pen_riwayat(): void {
     $m = need('penjual'); $s = stand_saya($m);
     $filters = ['semua'=>'Semua', 'baru'=>'Baru', 'diproses'=>'Proses', 'siap'=>'Siap', 'selesai'=>'Selesai', 'batal'=>'Batal'];
@@ -227,7 +153,6 @@ function r_pen_riwayat(): void {
 <?php endforeach; if (!$os) echo empty_box('Tidak ada pesanan untuk status ini.'); ?>
 </div></div><?= nav_pen('/penjual/riwayat');
     layout('Riwayat Pesanan', ob_get_clean(), ['live' => in_array($status, ['semua','baru','diproses','siap'], true) ? 6000 : 0]);
->>>>>>> 99ce109 (penambahan upload file qr)
 }
 
 function r_pen_status(): void
