@@ -21,6 +21,7 @@ function r_root(): void
 }
 
 // ---------------------------------------------------------------- login & daftar
+<<<<<<< HEAD
 // Dua "pintu" (pembeli / penjual) hanya beda tampilan. Admin boleh lewat pintu mana saja.
 // Setelah login, pengguna SELALU dibawa ke halaman sesuai role di database, bukan sesuai pintu yang diklik.
 function pintu(): string
@@ -32,6 +33,44 @@ function pintu(): string
 function r_login(): void
 {
   if ($m = me())
+=======
+function pintu(): string { $as = $_POST['sebagai'] ?? $_GET['sebagai'] ?? ''; return in_array($as, ['pembeli', 'penjual'], true) ? $as : 'pembeli'; }
+
+function r_login(): void {
+    if ($m = me()) redirect(home_for($m['role']));
+    if (!in_array($_GET['sebagai'] ?? '', ['pembeli', 'penjual'], true)) redirect('/');
+    $as = pintu(); $err = take_flash();
+    ob_start(); ?>
+<div class="auth"><div class="logo"><img src="/img/pico-logo.png" alt="Logo PICO"></div><h1>Masuk sebagai <?= $as === 'penjual' ? 'Penjual' : 'Pembeli' ?></h1><p class="mut">Pesan makanan Kantin AX tanpa antre</p>
+<form method="post" action="/login">
+  <input type="hidden" name="sebagai" value="<?= e($as) ?>">
+  <div class="fld"><input name="u" placeholder="<?= $as === 'penjual' ? 'Username atau email' : 'Username/email/no.HP/NIM/NIP' ?>" autocomplete="username" required></div>
+  <div class="fld"><input name="p" id="pw" type="password" placeholder="Password" autocomplete="current-password" required><button type="button" class="eye" id="eye" aria-label="Tampilkan password">👁</button></div>
+  <div style="display:flex;justify-content:flex-end;margin:-4px 0 12px">
+    <a href="/lupa-password?sebagai=<?= e($as) ?>" class="org" style="font-size:.85rem;font-weight:600;text-decoration:none">Lupa password?</a>
+  </div>
+  <p class="er"><?= e($err) ?></p><button class="btn">Masuk</button>
+</form>
+<?php if ($as === 'pembeli'): ?><p class="mut c">Belum punya akun? <a href="/daftar" class="org">Daftar</a></p>
+<?php else: ?><div class="note">Akun penjual dibuat oleh admin kantin. Hubungi admin jika belum punya akun.</div><?php endif; ?>
+<p class="mut c" style="margin-top:16px"><a href="/" class="org">← Ganti peran</a></p></div>
+<?php layout('Masuk', ob_get_clean());
+}
+
+function r_login_post(): void {
+    $as = pintu(); $back = '/login?sebagai=' . $as;
+    $id = trim($_POST['u'] ?? ''); $pw = (string)($_POST['p'] ?? '');
+    $email = $id;
+    if (!str_contains($id, '@')) {
+        try { $email = db_rpc('login_lookup', ['p_identifier' => $id], true); }
+        catch (SbError $x) { flash('Gagal memeriksa akun: ' . $x->getMessage()); redirect($back); }
+        if (!$email) { flash('Akun tidak ditemukan.'); redirect($back); }
+    }
+    try { save_session(auth_login((string)$email, $pw)); }
+    catch (SbError $x) { flash('Username atau password salah.'); redirect($back); }
+    $m = me();
+    if (!$m) { flash('Profil akun tidak ditemukan. Hubungi admin.'); redirect($back); }
+>>>>>>> 99ce109 (penambahan upload file qr)
     redirect(home_for($m['role']));
   if (!in_array($_GET['sebagai'] ?? '', ['pembeli', 'penjual'], true))
     redirect('/');
@@ -500,6 +539,7 @@ function ambil_pesanan(array $m, int $id): ?array
   return pesanan_muat('p.id = :id AND p.pelanggan_id = :u', [':id' => $id, ':u' => $m['id']])[0] ?? null;
 }
 
+<<<<<<< HEAD
 function r_qris(): void
 {
   $m = need('pelanggan');
@@ -514,6 +554,293 @@ function r_qris(): void
     redirect('/riwayat');
   }
   if ($o['status'] !== 'menunggu_bayar')
+=======
+function r_qris(): void {
+    $m = need('pelanggan'); $id = (int)($_GET['id'] ?? 0);
+    try { db_rpc('bersihkan_kadaluarsa'); } catch (SbError $x) {}
+    $o = ambil_pesanan($m, $id);
+    if (!$o) { flash('Pesanan tidak ditemukan.'); redirect('/riwayat'); }
+    if ($o['status'] !== 'menunggu_bayar') redirect('/status?id=' . $id);
+    $exp = strtotime($o['created_at']) + 900;
+
+    $qrStandUrl = (string)($o['stands']['qr_url'] ?? '');
+
+    $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    $base = str_contains($scriptPath, '/PICO/') ? '/PICO' : '';
+
+    $qrFallback = '';
+    if ($qrStandUrl === '') {
+        $seed = $id * 9301 + 49297;
+        for ($k = 0; $k < 441; $k++) {
+            $x = $k % 21; $y = intdiv($k, 21);
+            if (($x < 7 && $y < 7) || ($x > 13 && $y < 7) || ($x < 7 && $y > 13)) $w = !($x % 6 === 0 || $y % 6 === 0 || ($x % 6 > 1 && $x % 6 < 5 && $y % 6 > 1 && $y % 6 < 5));
+            else { $seed = ($seed * 9301 + 49297) % 233280; $w = $seed / 233280 <= .5; }
+            $qrFallback .= '<i' . ($w ? ' class="w"' : '') . '></i>';
+        }
+    }
+
+    ob_start(); ?>
+<style>
+  #ok:disabled {
+    background: #cbd5e1 !important;
+    color: #64748b !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+    opacity: 1 !important;
+  }
+  .bukti-upload-card {
+    margin: 14px auto 0;
+    max-width: 300px;
+    background: #fff;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 14px;
+    padding: 12px 14px;
+    text-align: left;
+    transition: border-color .2s, background .2s;
+  }
+  .bukti-upload-card.has-file {
+    border-style: solid;
+    border-color: #16a34a;
+    background: #f0fdf4;
+  }
+  .bukti-upload-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #1e293b;
+    font-size: .84rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .bukti-preview-wrap {
+    margin-top: 10px;
+    text-align: center;
+  }
+  .bukti-preview-wrap img {
+    max-height: 150px;
+    max-width: 100%;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    display: inline-block;
+  }
+</style>
+<header class="hd"><a class="back" href="/home">← Pembayaran QRIS</a></header>
+<div class="bd c" id="qris-box" style="padding-bottom:110px">
+  <p class="mut">Pesanan #<?= e($o['kode']) ?> · <?= e($o['stands']['nama'] ?? '') ?> (<?= e(LAY[$o['layanan']] ?? '') ?>)</p>
+  <h1 style="margin:6px 0"><?= rp($o['total']) ?></h1>
+
+  <!-- Gambar QRIS Stand + Tombol Simpan ke Galeri -->
+  <div id="qr-wrap" style="margin:12px auto 14px;width:100%;max-width:300px;background:#fff;padding:16px;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,.08);transition:all .3s ease">
+    <?php if ($qrStandUrl !== ''): ?>
+      <img id="img-qr-stand" src="<?= e($qrStandUrl) ?>" alt="QRIS <?= e($o['stands']['nama'] ?? 'Stand') ?>" title="Ketuk untuk memperbesar"
+           style="width:100%;height:auto;border-radius:10px;display:block;cursor:zoom-in;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges">
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:14px">
+        <a href="<?= e($qrStandUrl) ?>" download="QRIS-<?= e($o['stands']['nama'] ?? 'PICO') ?>-<?= e($o['kode']) ?>.png"
+           style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#fff7ed;border:1px solid #fed7aa;color:#c2410c;padding:9px 12px;border-radius:10px;font-size:.82rem;font-weight:700;text-decoration:none">
+          ⬇ Simpan QRIS ke Galeri
+        </a>
+        <button type="button" id="btn-zoom-qr" aria-label="Perbesar QR"
+                style="border:1px solid #e2e8f0;background:#f8fafc;color:#334155;padding:9px 12px;border-radius:10px;font-size:.82rem;font-weight:600;cursor:pointer">
+          🔍
+        </button>
+      </div>
+    <?php else: ?>
+      <div class="qr" role="img" aria-label="Kode QR pembayaran"><?= $qrFallback ?></div>
+      <small class="mut" style="display:block;margin-top:10px;color:#b42318;font-size:.78rem">
+        Penjual belum mengunggah foto QRIS di menu Profil Penjual.
+      </small>
+    <?php endif; ?>
+  </div>
+
+  <?php if ($qrStandUrl !== ''): ?>
+  <!-- Dialog Zoom Fullscreen -->
+  <dialog id="dlg-zoom-qr" style="border:0;border-radius:16px;padding:16px;max-width:92vw;background:#fff;box-shadow:0 20px 40px rgba(0,0,0,.35)">
+    <div style="text-align:center">
+      <b style="display:block;margin-bottom:8px;font-size:.95rem">QRIS <?= e($o['stands']['nama'] ?? '') ?></b>
+      <img src="<?= e($qrStandUrl) ?>" alt="QRIS Zoom" style="width:82vw;max-width:420px;height:auto;display:block;margin:0 auto;border-radius:8px">
+      <button type="button" id="close-zoom-qr" class="btn sec" style="margin-top:12px">Tutup</button>
+    </div>
+  </dialog>
+  <?php endif; ?>
+
+  <!-- Animasi Sukses -->
+  <div id="qr-sukses" hidden style="margin:28px auto;padding:24px;max-width:260px;background:#d6f3e1;color:#146c3b;border-radius:18px">
+    <div style="font-size:3rem;line-height:1">✅</div>
+    <h3 style="margin:10px 0 4px">Pembayaran Berhasil!</h3>
+    <small>Bukti pembayaran dan pesanan sedang diteruskan ke penjual...</small>
+  </div>
+
+  <span class="timer" id="qr-timer" data-exp="<?= $exp ?>">Bayar dalam --:--</span>
+
+  <!-- Kotak Upload Bukti Pembayaran -->
+  <div id="bukti-box" class="bukti-upload-card">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <b style="font-size:.85rem;color:#0f172a">Bukti Pembayaran <span style="color:#dc2626">*</span></b>
+      <small id="bukti-status" style="font-size:.75rem;color:#dc2626;font-weight:600">Wajib diunggah</small>
+    </div>
+    <small class="mut" style="display:block;font-size:.76rem;margin-top:2px">
+      Unggah screenshot/foto bukti transfer QRIS (JPG, PNG, WebP, maks. 2 MB) untuk mengaktifkan tombol konfirmasi.
+    </small>
+    <label for="input-bukti" class="bukti-upload-btn" id="lbl-bukti">
+      📷 <span id="txt-pilih-bukti">Pilih Foto Bukti Transfer</span>
+    </label>
+    <div id="bukti-preview" class="bukti-preview-wrap" hidden>
+      <img id="img-bukti-preview" src="" alt="Preview Bukti Transfer">
+    </div>
+  </div>
+
+  <div id="qr-hint" style="margin:14px auto 0;max-width:300px;text-align:left;background:#f8fafc;border:1px solid #e2e8f0;padding:10px 14px;border-radius:12px;font-size:.8rem;color:#475569;line-height:1.5">
+    <b>Cara bayar pakai HP sendiri:</b>
+    <ol style="margin:4px 0 0;padding-left:18px">
+      <li>Klik <b>Simpan QRIS ke Galeri</b> di atas.</li>
+      <li>Buka <b>DANA / GoPay / M-Banking</b>, pilih <b>Scan QR</b> lalu ambil gambar dari <b>Galeri</b>.</li>
+      <li>Bayar sesuai nominal <b><?= rp($o['total']) ?></b>, lalu <b>screenshot bukti transfer</b>.</li>
+      <li>Unggah foto bukti transfer di atas, lalu klik <b>Saya sudah bayar</b>.</li>
+    </ol>
+  </div>
+</div>
+
+<form method="post" action="/qris/bayar" enctype="multipart/form-data" class="foot" id="qr-foot">
+  <input type="hidden" name="id" value="<?= $id ?>">
+  <input type="file" id="input-bukti" name="bukti" accept="image/jpeg,image/png,image/webp" required hidden>
+  <button class="btn" id="ok" disabled>Saya sudah bayar</button>
+</form>
+
+<script>
+(function(){
+  var id = <?= $id ?>;
+  var base = <?= json_encode($base) ?>;
+  var done = false;
+
+  // Fitur Zoom QRIS
+  var imgQr = document.getElementById('img-qr-stand');
+  var btnZoom = document.getElementById('btn-zoom-qr');
+  var dlgZoom = document.getElementById('dlg-zoom-qr');
+  var clsZoom = document.getElementById('close-zoom-qr');
+  function openZoom() { if (dlgZoom && dlgZoom.showModal) dlgZoom.showModal(); }
+  if (imgQr) imgQr.addEventListener('click', openZoom);
+  if (btnZoom) btnZoom.addEventListener('click', openZoom);
+  if (clsZoom) clsZoom.addEventListener('click', function(){ dlgZoom.close(); });
+  if (dlgZoom) dlgZoom.addEventListener('click', function(e){ if (e.target === dlgZoom) dlgZoom.close(); });
+
+  // Fitur Upload Bukti Transfer & Aktivasi Tombol "Saya sudah bayar"
+  var inputBukti = document.getElementById('input-bukti');
+  var btnOk = document.getElementById('ok');
+  var buktiBox = document.getElementById('bukti-box');
+  var buktiStatus = document.getElementById('bukti-status');
+  var txtPilih = document.getElementById('txt-pilih-bukti');
+  var previewWrap = document.getElementById('bukti-preview');
+  var previewImg = document.getElementById('img-bukti-preview');
+
+  if (inputBukti) {
+    inputBukti.addEventListener('change', function(){
+      var file = inputBukti.files && inputBukti.files[0];
+      if (!file) {
+        btnOk.disabled = true;
+        if (buktiBox) buktiBox.classList.remove('has-file');
+        if (buktiStatus) { buktiStatus.textContent = 'Wajib diunggah'; buktiStatus.style.color = '#dc2626'; }
+        if (txtPilih) txtPilih.textContent = 'Pilih Foto Bukti Transfer';
+        if (previewWrap) previewWrap.hidden = true;
+        return;
+      }
+
+      if (file.size > 2097152) {
+        alert('Ukuran foto bukti pembayaran maksimal 2 MB.');
+        inputBukti.value = '';
+        btnOk.disabled = true;
+        return;
+      }
+
+      // Aktifkan tombol "Saya sudah bayar"
+      btnOk.disabled = false;
+      if (buktiBox) buktiBox.classList.add('has-file');
+      if (buktiStatus) { buktiStatus.textContent = '✓ Siap dikirim'; buktiStatus.style.color = '#16a34a'; }
+      if (txtPilih) txtPilih.textContent = 'Ganti Foto (' + file.name.slice(0, 18) + ')';
+
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        if (previewImg && previewWrap) {
+          previewImg.src = ev.target.result;
+          previewWrap.hidden = false;
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function tampilkanSukses() {
+    if (done) return;
+    done = true;
+    if (dlgZoom && dlgZoom.open) dlgZoom.close();
+    var wrap = document.getElementById('qr-wrap');
+    var sukses = document.getElementById('qr-sukses');
+    var foot = document.getElementById('qr-foot');
+    var tmr = document.getElementById('qr-timer');
+    var hint = document.getElementById('qr-hint');
+    if (wrap) wrap.hidden = true;
+    if (buktiBox) buktiBox.hidden = true;
+    if (tmr) tmr.hidden = true;
+    if (hint) hint.hidden = true;
+    if (foot) foot.hidden = true;
+    if (sukses) sukses.hidden = false;
+
+    setTimeout(function(){
+      window.location.href = base + '/status?id=' + id;
+    }, 1100);
+  }
+
+  // Kirim form beserta file bukti transfer menggunakan FormData
+  var form = document.getElementById('qr-foot');
+  if (form) {
+    form.addEventListener('submit', function(e){
+      if (!inputBukti || !inputBukti.files || !inputBukti.files[0]) {
+        e.preventDefault();
+        alert('Silakan unggah foto bukti pembayaran terlebih dahulu.');
+        return;
+      }
+      e.preventDefault();
+      btnOk.disabled = true;
+      btnOk.textContent = 'Mengunggah bukti...';
+
+      var fd = new FormData(form);
+      fetch(base + '/qris/bayar', {
+        method: 'POST',
+        body: fd
+      }).then(function(res){
+        if (res.ok) {
+          tampilkanSukses();
+        } else {
+          form.submit();
+        }
+      }).catch(function(){
+        form.submit();
+      });
+    });
+  }
+})();
+</script>
+<?php layout('QRIS', ob_get_clean());
+}
+
+function r_qris_bayar(): void {
+    $m = need('pelanggan');
+    $id = (int)($_POST['id'] ?? 0);
+    try {
+        bukti_simpan($id, (string)$m['id'], $_FILES['bukti'] ?? []);
+        db_rpc('saya_sudah_bayar', ['p_id' => $id]);
+    } catch (SbError $x) {
+        flash($x->getMessage());
+        redirect('/qris?id=' . $id);
+    }
+>>>>>>> 99ce109 (penambahan upload file qr)
     redirect('/status?id=' . $id);
   $exp = strtotime($o['created_at']) + 900;
 

@@ -243,6 +243,29 @@ function pdo(): PDO
     return $p;
 }
 
+/**
+ * Memastikan kolom bukti pembayaran sudah tersedia di tabel pesanan.
+ */
+function ensure_bukti_columns(): void
+{
+    static $checked = false;
+    if ($checked) {
+        return;
+    }
+    $checked = true;
+
+    try {
+        pdo()->exec(
+            'ALTER TABLE pesanan
+             ADD COLUMN IF NOT EXISTS bukti_data BYTEA,
+             ADD COLUMN IF NOT EXISTS bukti_mime TEXT,
+             ADD COLUMN IF NOT EXISTS bukti_url TEXT'
+        );
+    } catch (Throwable $x) {
+        // Abaikan jika sudah ada atau tidak memiliki hak DDL
+    }
+}
+
 function pg_ident(string $s): string
 {
     if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $s)) {
@@ -548,11 +571,15 @@ function pesanan_muat(
     array $par = [],
     string $tail = ''
 ): array {
+    ensure_bukti_columns();
+
     $rows = db_sql(
-        'SELECT p.id, p.kode, p.status, p.layanan, p.total, p.created_at,
-                s.nama AS stand_nama, s.kios AS stand_kios, s.qr_url AS stand_qr
+        'SELECT p.id, p.kode, p.status, p.layanan, p.total, p.created_at, p.bukti_url,
+                s.nama AS stand_nama, s.kios AS stand_kios, s.qr_url AS stand_qr,
+                u.nama AS pelanggan_nama
          FROM pesanan p
          LEFT JOIN stands s ON s.id = p.stand_id
+         LEFT JOIN profiles u ON u.id = p.pelanggan_id
          WHERE ' . $where . ' ' . $tail,
         $par
     );
@@ -929,7 +956,7 @@ function cart_detail(): array
 }
 
 // =====================================================================
-// FOTO MENU/STAND DISIMPAN DI DATABASE (kolom foto_data, foto_mime)
+// FOTO MENU/STAND/QR/BUKTI DISIMPAN DI DATABASE
 // =====================================================================
 
 function foto_simpan(string $tabel, int $id, array $file): void
@@ -976,9 +1003,14 @@ function foto_simpan(string $tabel, int $id, array $file): void
     }
 }
 
+<<<<<<< HEAD
 // Menyajikan foto di alamat /foto?t=menu&id=1 (dipasang langsung di sini,
 // jadi tidak perlu mendaftarkan rute di file lain).
 (function (): void{
+=======
+// Menyajikan foto di alamat /foto?t=menu&id=1 (termasuk qr, avatar, dan bukti)
+(function (): void {
+>>>>>>> 99ce109 (penambahan upload file qr)
     $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
     if (str_starts_with($path, '/PICO/')) {
         $path = substr($path, 5);
@@ -990,7 +1022,7 @@ function foto_simpan(string $tabel, int $id, array $file): void
 
     $t = $_GET['t'] ?? '';
 
-    if (!in_array($t, ['menu', 'stands', 'qr', 'avatar'], true)) {
+    if (!in_array($t, ['menu', 'stands', 'qr', 'avatar', 'bukti'], true)) {
         http_response_code(404);
         exit;
     }
@@ -1006,6 +1038,12 @@ function foto_simpan(string $tabel, int $id, array $file): void
                 'SELECT foto_data, foto_mime FROM profiles WHERE id = :id'
             );
             $st->execute([':id' => (string) ($_GET['id'] ?? '')]);
+        } elseif ($t === 'bukti') {
+            ensure_bukti_columns();
+            $st = pdo()->prepare(
+                'SELECT bukti_data AS foto_data, bukti_mime AS foto_mime FROM pesanan WHERE id = :id'
+            );
+            $st->execute([':id' => (int) ($_GET['id'] ?? 0)]);
         } else {
             $st = pdo()->prepare(
                 'SELECT foto_data, foto_mime FROM ' . $t . ' WHERE id = :id'
@@ -1065,6 +1103,58 @@ function qr_simpan(int $standId, array $file): void
     } finally {
         if (is_resource($fh))
             fclose($fh);
+    }
+}
+
+/**
+ * Menyimpan foto bukti pembayaran dari pembeli ke tabel pesanan.
+ */
+function bukti_simpan(int $pesananId, string $uid, array $file): void
+{
+    ensure_bukti_columns();
+
+    $err = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+    if ($err === UPLOAD_ERR_NO_FILE) {
+        throw new SbError('Wajib mengunggah foto bukti pembayaran terlebih dahulu.');
+    }
+    if ($err === UPLOAD_ERR_INI_SIZE || $err === UPLOAD_ERR_FORM_SIZE || ($file['size'] ?? 0) > 2097152) {
+        throw new SbError('Ukuran foto bukti pembayaran maksimal 2 MB.');
+    }
+    if ($err !== UPLOAD_ERR_OK) {
+        throw new SbError('Foto bukti pembayaran gagal diunggah.');
+    }
+
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+    if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+        throw new SbError('Bukti pembayaran harus berformat JPG, PNG, atau WebP.');
+    }
+
+    $fh = fopen($file['tmp_name'], 'rb');
+    $url = '/foto?t=bukti&id=' . $pesananId . '&v=' . time();
+
+    try {
+        $st = pdo()->prepare(
+            'UPDATE pesanan
+             SET bukti_data = :d, bukti_mime = :m, bukti_url = :u
+             WHERE id = :id AND pelanggan_id = :uid'
+        );
+        $st->bindValue(':d', $fh, PDO::PARAM_LOB);
+        $st->bindValue(':m', $mime);
+        $st->bindValue(':u', $url);
+        $st->bindValue(':id', $pesananId, PDO::PARAM_INT);
+        $st->bindValue(':uid', $uid);
+        $st->execute();
+
+        if ($st->rowCount() < 1) {
+            throw new SbError('Pesanan tidak ditemukan atau bukan milik Anda.');
+        }
+    } catch (PDOException $x) {
+        error_log('Simpan bukti gagal: ' . $x->getMessage());
+        throw new SbError('Gagal menyimpan bukti pembayaran.');
+    } finally {
+        if (is_resource($fh)) {
+            fclose($fh);
+        }
     }
 }
 

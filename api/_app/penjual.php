@@ -12,6 +12,7 @@ function stand_saya(array $m): array
   return $s;
 }
 
+<<<<<<< HEAD
 function r_pen_home(): void
 {
   $m = need('penjual');
@@ -28,6 +29,78 @@ function r_pen_home(): void
   <header class="seller-home-head">
     <div><small>Dashboard penjual</small>
       <h1><?= e($s['nama']) ?></h1><span>Kios <?= e($s['kios']) ?></span>
+=======
+/**
+ * Potongan HTML + Modal untuk menampilkan bukti pembayaran dari pembeli di setiap kartu pesanan penjual.
+ */
+function html_bukti_pembeli(array $o): string {
+    $url = trim((string)($o['bukti_url'] ?? ''));
+    $pembeli = trim((string)($o['pelanggan_nama'] ?? 'Pembeli'));
+    $kode = (string)($o['kode'] ?? '');
+
+    if ($url === '') {
+        return '<div style="margin-top:8px;padding:7px 10px;border-radius:8px;background:#f8fafc;border:1px dashed #cbd5e1;font-size:.78rem;color:#64748b">'
+             . '🧾 Belum ada foto bukti pembayaran'
+             . '</div>';
+    }
+
+    $dlgId = 'dlg-bukti-' . (int)$o['id'];
+    return '<div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0">'
+         .   '<div style="display:flex;align-items:center;gap:8px;min-width:0">'
+         .     '<img src="' . e($url) . '" alt="Bukti" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid #86efac;flex-shrink:0">'
+         .     '<div style="min-width:0">'
+         .       '<b style="display:block;font-size:.78rem;color:#14532d">Bukti Pembayaran</b>'
+         .       '<small style="display:block;font-size:.72rem;color:#15803d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' . e($pembeli) . '</small>'
+         .     '</div>'
+         .   '</div>'
+         .   '<button type="button" onclick="var d=document.getElementById(\'' . e($dlgId) . '\');if(d&&d.showModal)d.showModal();" '
+         .           'style="border:1px solid #16a34a;background:#fff;color:#15803d;padding:6px 10px;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;flex-shrink:0">'
+         .     'Lihat Bukti'
+         .   '</button>'
+         . '</div>'
+         . '<dialog id="' . e($dlgId) . '" onclick="if(event.target===this)this.close()" style="border:0;border-radius:16px;padding:16px;max-width:92vw;background:#fff;box-shadow:0 20px 40px rgba(0,0,0,.35)">'
+         .   '<div style="text-align:center">'
+         .     '<b style="display:block;font-size:.95rem;margin-bottom:2px">Bukti Pembayaran #' . e($kode) . '</b>'
+         .     '<small class="mut" style="display:block;margin-bottom:10px">' . e($pembeli) . ' · ' . rp($o['total']) . '</small>'
+         .     '<img src="' . e($url) . '" alt="Bukti Pembayaran #' . e($kode) . '" style="width:82vw;max-width:380px;max-height:70vh;object-fit:contain;display:block;margin:0 auto;border-radius:10px;border:1px solid #e2e8f0">'
+         .     '<div style="display:flex;gap:8px;justify-content:center;margin-top:12px">'
+         .       '<a href="' . e($url) . '" target="_blank" rel="noopener" class="btn sec sm" style="text-decoration:none">Buka Penuh</a>'
+         .       '<button type="button" onclick="this.closest(\'dialog\').close()" class="btn sm">Tutup</button>'
+         .     '</div>'
+         .   '</div>'
+         . '</dialog>';
+}
+
+function r_pen_home(): void {
+    $m = need('penjual'); $s = stand_saya($m);
+    $sid = (int)$s['id'];
+    $stats = db_sql("SELECT
+        COUNT(*) FILTER (WHERE status = 'baru') AS baru,
+        COUNT(*) FILTER (WHERE status = 'diproses') AS diproses,
+        COALESCE(SUM(total) FILTER (WHERE status = 'selesai' AND created_at::date = CURRENT_DATE), 0) AS pendapatan
+        FROM pesanan WHERE stand_id = :s", [':s' => $sid])[0] ?? ['baru'=>0,'diproses'=>0,'pendapatan'=>0];
+    $stock = db_sql('SELECT COUNT(*) AS jumlah FROM menu WHERE stand_id = :s AND tersedia = true AND stok > 0', [':s' => $sid])[0]['jumlah'] ?? 0;
+    $os = pesanan_muat('p.stand_id = :s', [':s' => $sid], 'ORDER BY p.created_at DESC LIMIT 3');
+    ob_start(); ?>
+<header class="seller-home-head"><div><small>Dashboard penjual</small><h1><?= e($s['nama']) ?></h1><span>Kios <?= e($s['kios']) ?></span></div>
+  <form method="post" action="/penjual/buka"><button class="seller-open <?= $s['buka'] ? 'is-open' : '' ?>"><i></i><?= $s['buka'] ? 'Buka' : 'Tutup' ?></button></form></header>
+<div class="bd seller-dashboard" id="live">
+  <section class="seller-stats" aria-label="Ringkasan penjualan">
+    <a class="seller-stat stat-new" href="/penjual/riwayat?status=baru"><small>Pesanan baru</small><b><?= (int)$stats['baru'] ?></b><span>Perlu diterima <i>→</i></span></a>
+    <a class="seller-stat stat-income" href="/penjual/riwayat?status=selesai"><small>Pendapatan hari ini</small><b><?= rp($stats['pendapatan']) ?></b><span>Pesanan selesai</span></a>
+    <a class="seller-stat stat-progress" href="/penjual/riwayat?status=diproses"><small>Sedang diproses</small><b><?= (int)$stats['diproses'] ?></b><span>Lihat pesanan <i>→</i></span></a>
+    <a class="seller-stat stat-stock" href="/penjual/menu"><small>Menu tersedia</small><b><?= (int)$stock ?></b><span>Kelola stok <i>→</i></span></a>
+  </section>
+  <section class="seller-recent"><div class="seller-section-title"><div><small>Aktivitas terbaru</small><h2>Pesanan terbaru</h2></div><a href="/penjual/riwayat">Lihat semua <span>→</span></a></div>
+    <div class="seller-order-list">
+    <?php foreach ($os as $o): ?>
+      <article class="box ocard seller-order"><div class="row"><div><small class="mut"><?= waktu($o['created_at']) ?><?= !empty($o['pelanggan_nama']) ? ' · ' . e($o['pelanggan_nama']) : '' ?></small><b>#<?= e($o['kode']) ?></b></div><?= tag($o['status']) ?></div>
+        <ul class="lines"><?php foreach (array_slice($o['pesanan_item'],0,2) as $i): ?><li><b><?= (int)$i['jumlah'] ?>×</b> <?= e($i['nama']) ?></li><?php endforeach; ?><?php if (count($o['pesanan_item']) > 2): ?><li class="mut">+<?= count($o['pesanan_item'])-2 ?> menu lainnya</li><?php endif; ?></ul>
+        <div class="row seller-order-foot"><span><?= e(LAY[$o['layanan']] ?? '') ?></span><b><?= rp($o['total']) ?></b></div>
+        <?= html_bukti_pembeli($o) ?>
+      </article>
+    <?php endforeach; if (!$os) echo empty_box('Belum ada aktivitas pesanan.'); ?>
+>>>>>>> 99ce109 (penambahan upload file qr)
     </div>
     <form method="post" action="/penjual/buka"><button
         class="seller-open <?= $s['buka'] ? 'is-open' : '' ?>"><i></i><?= $s['buka'] ? 'Buka' : 'Tutup' ?></button></form>
@@ -73,6 +146,7 @@ function r_pen_home(): void
   layout('Home Penjual', ob_get_clean(), ['live' => 10000]);
 }
 
+<<<<<<< HEAD
 function r_pen_riwayat(): void
 {
   $m = need('penjual');
@@ -126,6 +200,34 @@ function r_pen_riwayat(): void
     </div>
   </div><?= nav_pen('/penjual/riwayat');
   layout('Riwayat Pesanan', ob_get_clean(), ['live' => in_array($status, ['semua', 'baru', 'diproses', 'siap'], true) ? 6000 : 0]);
+=======
+function r_pen_riwayat(): void {
+    $m = need('penjual'); $s = stand_saya($m);
+    $filters = ['semua'=>'Semua', 'baru'=>'Baru', 'diproses'=>'Proses', 'siap'=>'Siap', 'selesai'=>'Selesai', 'batal'=>'Batal'];
+    $status = $_GET['status'] ?? 'baru';
+    if (!isset($filters[$status])) $status = 'baru';
+    $where = 'p.stand_id = :s'; $par = [':s' => (int)$s['id']];
+    if ($status !== 'semua') { $where .= ' AND p.status = :status'; $par[':status'] = $status; }
+    $os = pesanan_muat($where, $par, 'ORDER BY p.created_at DESC LIMIT 60');
+    $next = ['baru' => ['diproses', 'Terima & proses'], 'diproses' => ['siap', 'Siap diambil'], 'siap' => ['selesai', 'Selesai (sudah diambil)']];
+    ob_start(); ?>
+<?= hd('Riwayat Pesanan', e($s['nama']) . ' · Kios ' . e($s['kios'])) ?>
+<div class="bd seller-history"><nav class="seller-filters" aria-label="Filter status pesanan"><?php foreach ($filters as $key=>$label): ?><a href="/penjual/riwayat?status=<?= e($key) ?>" class="<?= $status === $key ? 'on' : '' ?>"><?= e($label) ?></a><?php endforeach; ?></nav>
+<div id="live" class="seller-order-list">
+<?php foreach ($os as $o): ?>
+  <div class="box ocard seller-order"><div class="row"><div><small class="mut"><?= waktu($o['created_at']) ?><?= !empty($o['pelanggan_nama']) ? ' · ' . e($o['pelanggan_nama']) : '' ?></small><b>#<?= e($o['kode']) ?> · <?= e(LAY[$o['layanan']] ?? '') ?></b></div><?= tag($o['status']) ?></div>
+    <ul class="lines"><?php foreach ($o['pesanan_item'] as $i): ?><li><b><?= (int)$i['jumlah'] ?> x</b> <?= e($i['nama']) ?><?= $i['catatan'] ? ' <small class="mut">(' . e($i['catatan']) . ')</small>' : '' ?></li><?php endforeach; ?></ul>
+    <div class="row seller-order-foot"><span><?= count($o['pesanan_item']) ?> item</span><b><?= rp($o['total']) ?></b></div>
+    <?= html_bukti_pembeli($o) ?>
+    <?php if (isset($next[$o['status']])): [$to, $lb] = $next[$o['status']]; ?>
+    <div class="btns" style="margin-top:12px">
+      <?php if ($o['status'] !== 'siap'): ?><form method="post" action="/penjual/status" data-confirm="Batalkan pesanan ini? Stok akan dikembalikan."><input type="hidden" name="id" value="<?= (int)$o['id'] ?>"><input type="hidden" name="status" value="batal"><button class="btn sm sec">Batalkan</button></form><?php endif; ?>
+      <form method="post" action="/penjual/status"><input type="hidden" name="id" value="<?= (int)$o['id'] ?>"><input type="hidden" name="status" value="<?= $to ?>"><button class="btn sm"><?= e($lb) ?></button></form>
+    </div><?php endif; ?></div>
+<?php endforeach; if (!$os) echo empty_box('Tidak ada pesanan untuk status ini.'); ?>
+</div></div><?= nav_pen('/penjual/riwayat');
+    layout('Riwayat Pesanan', ob_get_clean(), ['live' => in_array($status, ['semua','baru','diproses','siap'], true) ? 6000 : 0]);
+>>>>>>> 99ce109 (penambahan upload file qr)
 }
 
 function r_pen_status(): void
