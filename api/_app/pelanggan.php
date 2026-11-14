@@ -629,7 +629,11 @@ function r_qris(): void
           </a>
           <button type="button" id="btn-zoom-qr" aria-label="Perbesar QR"
             style="border:1px solid #e2e8f0;background:#f8fafc;color:#334155;padding:9px 12px;border-radius:10px;font-size:.82rem;font-weight:600;cursor:pointer">
-            🔍
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              xmlns="http://www.w3.org/2000/svg">
+              <circle cx="11" cy="11" r="6.5" stroke="#000" stroke-width="2.2"/>
+              <path d="M16 16L21 21" stroke="#000" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
           </button>
         </div>
       <?php else: ?>
