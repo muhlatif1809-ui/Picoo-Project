@@ -65,19 +65,25 @@ function r_pen_home(): void {
     $os = pesanan_muat('p.stand_id = :s', [':s' => $sid], 'ORDER BY p.created_at DESC LIMIT 3');
     
     ob_start(); ?>
-<header class="seller-home-head">
-  <div><small>Dashboard penjual</small><h1><?= e($s['nama']) ?></h1><span>Kios <?= e($s['kios']) ?></span></div>
-  <form method="post" action="/penjual/buka"><button class="seller-open <?= $s['buka'] ? 'is-open' : '' ?>"><i></i><?= $s['buka'] ? 'Buka' : 'Tutup' ?></button></form>
+<header class="sx-hero">
+  <div class="sx-id">
+    <?= kios_tile($s['kios']) ?>
+    <div class="sx-name"><span>Dashboard penjual</span><h1><?= e($s['nama']) ?></h1></div>
+  </div>
+  <form method="post" action="/penjual/buka" class="stand-switch <?= $s['buka'] ? 'is-open' : '' ?>"<?= $s['buka'] ? ' data-confirm="Tutup stand sekarang? Pelanggan tidak bisa memesan sampai kamu membukanya lagi."' : '' ?>>
+    <div class="ss-txt"><b><?= $s['buka'] ? 'Stand sedang buka' : 'Stand sedang tutup' ?></b><small><?= $s['buka'] ? 'Pelanggan bisa memesan' : 'Pelanggan belum bisa memesan' ?></small></div>
+    <?= saklar((bool) $s['buka'], 'Buka atau tutup stand') ?>
+  </form>
 </header>
 <div class="bd seller-dashboard" id="live">
   <section class="seller-stats" aria-label="Ringkasan penjualan">
-    <a class="seller-stat stat-new" href="/penjual/riwayat?status=baru"><small>Pesanan baru</small><b><?= (int)$stats['baru'] ?></b><span>Perlu diterima <i>→</i></span></a>
-    <a class="seller-stat stat-income" href="/penjual/riwayat?status=selesai"><small>Pendapatan hari ini</small><b><?= rp($stats['pendapatan']) ?></b><span>Pesanan selesai</span></a>
-    <a class="seller-stat stat-progress" href="/penjual/riwayat?status=diproses"><small>Sedang diproses</small><b><?= (int)$stats['diproses'] ?></b><span>Lihat pesanan <i>→</i></span></a>
-    <a class="seller-stat stat-stock" href="/penjual/menu"><small>Menu tersedia</small><b><?= (int)$stock ?></b><span>Kelola stok <i>→</i></span></a>
+    <a class="seller-stat stat-new" href="/penjual/riwayat?status=baru"><span class="st-ic"><?= ic('bell', 18) ?></span><b><?= (int)$stats['baru'] ?></b><small>Pesanan baru</small><span class="st-go">Perlu diterima <?= ic('arrow', 14) ?></span></a>
+    <a class="seller-stat stat-income" href="/penjual/riwayat?status=selesai"><span class="st-ic"><?= ic('wallet', 18) ?></span><b><?= rp($stats['pendapatan']) ?></b><small>Pendapatan hari ini</small><span class="st-go">Pesanan selesai</span></a>
+    <a class="seller-stat stat-progress" href="/penjual/riwayat?status=diproses"><span class="st-ic"><?= ic('flame', 18) ?></span><b><?= (int)$stats['diproses'] ?></b><small>Sedang diproses</small><span class="st-go">Lihat pesanan <?= ic('arrow', 14) ?></span></a>
+    <a class="seller-stat stat-stock" href="/penjual/menu"><span class="st-ic"><?= ic('bowl', 18) ?></span><b><?= (int)$stock ?></b><small>Menu tersedia</small><span class="st-go">Kelola stok <?= ic('arrow', 14) ?></span></a>
   </section>
   <section class="seller-recent">
-    <div class="seller-section-title"><div><small>Aktivitas terbaru</small><h2>Pesanan terbaru</h2></div><a href="/penjual/riwayat">Lihat semua <span>→</span></a></div>
+    <div class="seller-section-title"><h2><span class="sec-ic"><?= ic('clock', 16) ?></span>Pesanan terbaru</h2><a href="/penjual/riwayat">Lihat semua <?= ic('next', 16) ?></a></div>
     <div class="seller-order-list">
     <?php foreach ($os as $o): ?>
       <article class="box ocard seller-order">
@@ -86,7 +92,7 @@ function r_pen_home(): void {
         <div class="row seller-order-foot"><span><?= e(LAY[$o['layanan']] ?? '') ?></span><b><?= rp($o['total']) ?></b></div>
         <?= html_bukti_pembeli($o) ?>
       </article>
-    <?php endforeach; if (!$os) echo empty_box('Belum ada aktivitas pesanan.'); ?>
+    <?php endforeach; if (!$os) echo empty_state('receipt', 'Belum ada pesanan', 'Pesanan yang masuk akan muncul di sini.'); ?>
     </div>
   </section>
 </div>
@@ -104,10 +110,16 @@ function r_pen_riwayat(): void {
     $where = 'p.stand_id = :s'; $par = [':s' => (int)$s['id']];
     if ($status !== 'semua') { $where .= ' AND p.status = :status'; $par[':status'] = $status; }
     $os = pesanan_muat($where, $par, 'ORDER BY p.created_at DESC LIMIT 60');
+    $cnt = [];
+    foreach (db_sql('SELECT status, COUNT(*) AS n FROM pesanan WHERE stand_id = :s GROUP BY status', [':s' => (int)$s['id']]) as $r) {
+        $cnt[$r['status']] = (int)$r['n'];
+    }
+    $cnt['semua'] = array_sum($cnt);
+    $kosong = ['semua' => 'Belum ada pesanan masuk.', 'baru' => 'Tidak ada pesanan baru.', 'diproses' => 'Tidak ada pesanan yang sedang diproses.', 'siap' => 'Tidak ada pesanan yang siap diambil.', 'selesai' => 'Belum ada pesanan selesai.', 'batal' => 'Tidak ada pesanan dibatalkan.'];
     $next = ['baru' => ['diproses', 'Terima & proses'], 'diproses' => ['siap', 'Siap diambil'], 'siap' => ['selesai', 'Selesai (sudah diambil)']];
     ob_start(); ?>
-<?= hd('Riwayat Pesanan', e($s['nama']) . ' · Kios ' . e($s['kios'])) ?>
-<div class="bd seller-history"><nav class="seller-filters" aria-label="Filter status pesanan"><?php foreach ($filters as $key=>$label): ?><a href="/penjual/riwayat?status=<?= e($key) ?>" class="<?= $status === $key ? 'on' : '' ?>"><?= e($label) ?></a><?php endforeach; ?></nav>
+<?= hdx('Riwayat pesanan', ic('store', 15) . '<span>' . e($s['nama']) . '</span><i class="dot"></i><span>Kios ' . e($s['kios']) . '</span>', ['icon' => 'receipt']) ?>
+<div class="bd seller-history"><nav class="seller-filters" aria-label="Filter status pesanan"><?php foreach ($filters as $key=>$label): ?><a href="/penjual/riwayat?status=<?= e($key) ?>" class="<?= $status === $key ? 'on' : '' ?>"><?= e($label) ?><?php if (!empty($cnt[$key])): ?><em><?= (int)$cnt[$key] ?></em><?php endif; ?></a><?php endforeach; ?></nav>
 <div id="live" class="seller-order-list">
 <?php foreach ($os as $o): ?>
   <div class="box ocard seller-order"><div class="row"><div><small class="mut"><?= waktu($o['created_at']) ?><?= !empty($o['pelanggan_nama']) ? ' · ' . e($o['pelanggan_nama']) : '' ?></small><b>#<?= e($o['kode']) ?> · <?= e(LAY[$o['layanan']] ?? '') ?></b></div><?= tag($o['status']) ?></div>
@@ -119,7 +131,7 @@ function r_pen_riwayat(): void {
       <?php if ($o['status'] !== 'siap'): ?><form method="post" action="/penjual/status" data-confirm="Batalkan pesanan ini? Stok akan dikembalikan."><input type="hidden" name="id" value="<?= (int)$o['id'] ?>"><input type="hidden" name="status" value="batal"><button class="btn sm sec">Batalkan</button></form><?php endif; ?>
       <form method="post" action="/penjual/status"><input type="hidden" name="id" value="<?= (int)$o['id'] ?>"><input type="hidden" name="status" value="<?= $to ?>"><button class="btn sm"><?= e($lb) ?></button></form>
     </div><?php endif; ?></div>
-<?php endforeach; if (!$os) echo empty_box('Tidak ada pesanan untuk status ini.'); ?>
+<?php endforeach; if (!$os) echo empty_state('receipt', $kosong[$status], 'Pesanan akan muncul di sini otomatis.'); ?>
 </div></div><?= nav_pen('/penjual/riwayat');
     layout('Riwayat Pesanan', ob_get_clean(), ['live' => in_array($status, ['semua','baru','diproses','siap'], true) ? 6000 : 0]);
 }
@@ -153,14 +165,10 @@ function r_pen_menu(): void
   $menu = db_get('menu?select=id,nama,harga,stok,tersedia,foto_url,kategori_id&stand_id=eq.' . (int) $s['id'] . '&order=nama');
   $kat = db_get('kategori?select=id,nama&order=nama');
   $opt = fn($sel) => '<option value="">Tanpa kategori</option>' . implode('', array_map(fn($k) => '<option value="' . (int) $k['id'] . '"' . ((int) $sel === (int) $k['id'] ? ' selected' : '') . '>' . e($k['nama']) . '</option>', $kat));
+  $jmlAktif = count(array_filter($menu, fn($i) => $i['tersedia'] && $i['stok'] > 0));
   ob_start();
   ?>
-  <header class="seller-menu-head">
-    <div><small>Kelola dagangan</small>
-      <h1>Menu</h1>
-      <p><?= e($s['nama']) ?></p>
-    </div><a href="#tambah-menu" class="btn sm">+ Tambah menu</a>
-  </header>
+  <?= hdx('Menu', ic('store', 15) . '<span>' . e($s['nama']) . '</span><i class="dot"></i><span>' . count($menu) . ' menu, ' . $jmlAktif . ' tersedia</span>', ['extra' => '<a href="#tambah-menu" class="hx-add" data-details="tambah-menu">' . ic('plus', 18) . '<span>Tambah menu</span></a>']) ?>
   <div class="bd seller-menu-page">
     <details class="box seller-add-menu" id="tambah-menu">
       <summary><b>Tambah menu baru</b><span>＋</span></summary>
@@ -180,8 +188,8 @@ function r_pen_menu(): void
         <div class="seller-menu-preview">
           <div class="seller-menu-photo"><?= img($i['foto_url'] ?? null) ?></div>
           <div class="seller-menu-info">
-            <b><?= e($i['nama']) ?></b><strong><?= rp($i['harga']) ?></strong><small><?= (int) $i['stok'] ?> stok ·
-              <?= $i['stok'] > 0 && $i['tersedia'] ? 'Tersedia' : 'Habis / nonaktif' ?></small></div>
+            <b><?= e($i['nama']) ?></b><strong><?= rp($i['harga']) ?></strong><small><?= (int) $i['stok'] ?> stok</small>
+            <span class="mi-pill <?= $i['stok'] > 0 && $i['tersedia'] ? 'ok' : 'off' ?>"><?= $i['stok'] > 0 && $i['tersedia'] ? 'Tersedia' : 'Habis / nonaktif' ?></span></div>
         </div>
         <details class="seller-edit-menu">
           <summary>Edit menu <span>⌄</span></summary>
@@ -202,7 +210,7 @@ function r_pen_menu(): void
       </article>
     <?php endforeach;
     if (!$menu)
-      echo empty_box('Belum ada menu.'); ?>
+      echo empty_state('bowl', 'Belum ada menu', 'Tambahkan menu pertamamu supaya pelanggan bisa memesan.'); ?>
   </div><?= nav_pen('/penjual/menu');
   layout('Kelola Menu', ob_get_clean());
 }
@@ -329,19 +337,15 @@ function r_pen_profil(): void
           <b><?= e($s['nama']) ?></b>
           <span>Kios <?= e($s['kios']) ?> · Kantin AX</span>
         </div>
-        <span class="sp-active-badge <?= $buka ? '' : 'is-off' ?>"><?= $buka ? 'Aktif' : 'Tutup' ?></span>
       </div>
     </header>
 
     <div class="sp-body">
-      <div class="sp-status-bar">
-        <b>Status toko</b>
-        <form method="post" action="/penjual/buka" class="sp-toggle-form">
-          <input type="hidden" name="redirect" value="/penjual/profil">
-          <span class="sp-toggle-txt <?= $buka ? '' : 'is-off' ?>"><?= $buka ? 'Buka' : 'Tutup' ?></span>
-          <button type="submit" class="sp-switch <?= $buka ? 'on' : '' ?>" aria-label="Ubah status toko"></button>
-        </form>
-      </div>
+      <a class="sp-status-bar" href="/penjual">
+        <span class="sp-status-txt"><b>Status toko</b><small>Buka atau tutup lewat Home</small></span>
+        <span class="status-pill <?= $buka ? 'is-open' : 'is-closed' ?>"><i></i><?= $buka ? 'Buka' : 'Tutup' ?></span>
+        <?= ic('next', 18) ?>
+      </a>
 
       <div class="sp-metrics">
         <div class="sp-metric m-green">

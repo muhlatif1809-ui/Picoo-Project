@@ -248,12 +248,12 @@ function r_home(): void
   ob_start(); ?>
   <header class="hd"><small>Halo, <?= e($m['nama']) ?></small>
     <h1>Mau makan apa hari ini?</h1>
-    <form method="get" action="/home" data-live-search><label class="search"><span>🔍</span><input name="cari"
+    <form method="get" action="/home" data-live-search><label class="search"><span class="search-ic"><?= ic('search', 18) ?></span><input name="cari" type="search"
           value="<?= e($cari) ?>" placeholder="Cari stand atau menu" aria-label="Cari stand atau menu"
           autocomplete="off"></label></form>
   </header>
   <div class="bd">
-    <h3>Stand</h3>
+    <div class="sec-head"><h3>Stand</h3><small><?= count($stands) ?> stand</small></div>
     <?php foreach ($stands as $s):
       $buka = $s['buka']; ?>
       <a class="stand <?= $buka ? '' : 'off' ?>" href="/menu?stand=<?= (int) $s['id'] ?>">
@@ -281,7 +281,20 @@ function r_menu(): void
   $menu = db_get('menu?select=id,nama,harga,stok,tersedia,foto_url&stand_id=eq.' . $sid . '&order=nama');
   $cs = (int) (cart()['s'] ?? 0);
   ob_start();
-  echo hd(e($s['nama']), ($s['buka'] ? 'Buka' : 'Tutup') . '<br>Kios ' . e($s['kios']), '/home'); ?>
+  ?>
+  <header class="hx hx-stand">
+    <a class="hx-back" href="/home"><?= ic('back', 18) ?><span>Kembali</span></a>
+    <div class="hx-stand-row">
+      <?= kios_tile($s['kios']) ?>
+      <div class="hx-main">
+        <h1><?= e($s['nama']) ?></h1>
+        <div class="hx-meta">
+          <span class="status-pill <?= $s['buka'] ? 'is-open' : 'is-closed' ?>"><i></i><?= $s['buka'] ? 'Buka' : 'Tutup' ?></span>
+          <span class="hx-count-txt"><?= count($menu) ?> menu</span>
+        </div>
+      </div>
+    </div>
+  </header>
   <div class="bd">
     <?php if (!$s['buka'])
       echo '<div class="note" style="margin:0 0 14px">Stand sedang tutup, belum bisa memesan.</div>'; ?>
@@ -370,7 +383,7 @@ function r_cart(): void
   $d = cart_detail();
   $n = count($d['items']);
   ob_start();
-  echo hd('Keranjang', $n ? $n . ' menu dari ' . e($d['stand']['nama']) : 'Belum ada menu'); ?>
+  echo hdx('Keranjang', $n ? ic('store', 15) . '<span>' . e($d['stand']['nama']) . '</span>' : 'Belum ada menu', ['icon' => 'cart', 'count' => $n]); ?>
   <div class="bd">
     <?php foreach ($d['items'] as $x): ?>
       <div class="item">
@@ -386,12 +399,14 @@ function r_cart(): void
       </div>
     <?php endforeach;
     if (!$n)
-      echo empty_box('Keranjang masih kosong. Pilih stand di Home dulu.'); ?>
+      echo empty_state('cart', 'Keranjangmu masih kosong', 'Pilih stand di Home, lalu tambahkan menu yang kamu mau.', '/home', 'Lihat stand'); ?>
   </div>
+  <?php if ($n): ?>
   <div class="foot" style="bottom:64px">
-    <div class="row" style="margin-bottom:10px"><span class="mut">Total</span><b><?= rp($d['total']) ?></b></div>
-    <?= $n ? '<a class="btn" href="/opsi">Checkout</a>' : '<button class="btn" disabled>Checkout</button>' ?>
+    <div class="row" style="margin-bottom:10px"><span class="mut"><?= $n ?> menu · Total</span><b><?= rp($d['total']) ?></b></div>
+    <a class="btn" href="/opsi">Checkout</a>
   </div>
+  <?php endif; ?>
   <?= nav_pel('/keranjang');
   layout('Keranjang', ob_get_clean());
 }
@@ -868,15 +883,15 @@ function r_riwayat(): void
   }
   $l = pesanan_muat('p.pelanggan_id = :u', [':u' => $m['id']], 'ORDER BY p.created_at DESC LIMIT 30');
   ob_start();
-  echo hd('Riwayat', 'Pesanan 30 hari terakhir'); ?>
+  echo hdx('Riwayat', 'Pesanan 30 hari terakhir', ['icon' => 'receipt']); ?>
   <div class="bd">
     <?php foreach ($l as $o): ?>
-      <a class="item" href="/<?= $o['status'] === 'menunggu_bayar' ? 'qris' : 'status' ?>?id=<?= (int) $o['id'] ?>"
+      <a class="item order-item" href="/<?= $o['status'] === 'menunggu_bayar' ? 'qris' : 'status' ?>?id=<?= (int) $o['id'] ?>"
         style="display:flex">
         <div class="t"><b>#<?= e($o['kode']) ?> · <?= e($o['stands']['nama'] ?? '') ?></b>
           <small><?= e(implode(', ', array_map(fn($i) => $i['jumlah'] . ' ' . $i['nama'], $o['pesanan_item']))) ?></small>
         </div>
-        <div style="text-align:right"><b><?= rp($o['total']) ?></b><br><?= tag($o['status']) ?></div>
+        <div class="order-end"><b><?= rp($o['total']) ?></b><?= tag($o['status']) ?></div>
       </a>
     <?php endforeach;
     if (!$l)
@@ -928,7 +943,8 @@ function r_profil(): void
   <div class="pf-page">
     <header class="pf-hero">
       <div class="pf-topbar">
-        <a href="/home" class="pf-back" aria-label="Kembali">← <span>Profil</span></a>
+        <a href="/home" class="pf-back-btn" aria-label="Kembali"><?= ic('back', 20) ?></a>
+        <span class="pf-top-title">Profil</span>
       </div>
       <div class="pf-avatar-wrap">
         <div class="pf-avatar">

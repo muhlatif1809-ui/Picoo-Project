@@ -86,6 +86,19 @@
     });
   });
 
+  // tombol "+ Tambah menu": buka panel <details> tujuan lalu geser ke sana
+  $$("[data-details]").forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      var d = document.getElementById(a.dataset.details);
+      if (!d) return;
+      e.preventDefault();
+      d.open = true;
+      d.scrollIntoView({ behavior: "smooth", block: "start" });
+      var first = $("input", d);
+      if (first) first.focus({ preventScroll: true });
+    });
+  });
+
   // dialog menu
   $$("[data-open]").forEach(function (b) {
     b.onclick = function () {

@@ -48,6 +48,7 @@ $routes = [
     // admin
     'GET /admin' => 'r_adm_home',
     'GET /admin/stand' => 'r_adm_stand',
+    'POST /admin/stand/buka' => 'r_adm_stand_buka',
     'POST /admin/stand/tambah' => 'r_adm_stand_tambah',
     'POST /admin/stand/penjual' => 'r_adm_stand_penjual',
     'POST /admin/stand/reset' => 'r_adm_stand_reset',

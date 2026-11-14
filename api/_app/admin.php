@@ -2,10 +2,16 @@
 // admin.php : halaman admin. Akun penjual dibuat langsung di tabel profiles (password di-hash).
 
 function adm_layout(string $title, string $body, string $on): void {
-    $links = ['/admin' => 'Dashboard', '/admin/pengguna' => 'Pengguna', '/admin/stand' => 'Stand', '/admin/pesanan' => 'Pesanan'];
-    $nav = '<header class="adm-mobile-top"><a class="adm-brand" href="/admin"><img src="/img/pico-logo.png" alt="PICO"></a><a href="/keluar">Keluar</a></header><aside class="adm-side"><a class="adm-brand" href="/admin"><img src="/img/pico-logo.png" alt="PICO"></a><nav>';
-    foreach ($links as $h => $l) $nav .= '<a href="' . $h . '" class="' . ($on === $h ? 'on' : '') . '">' . $l . '</a>';
-    $nav .= '</nav><a href="/keluar" class="adm-logout">Keluar</a></aside>';
+    $links = [
+        '/admin' => ['Dashboard', 'grid'],
+        '/admin/pengguna' => ['Pengguna', 'users'],
+        '/admin/stand' => ['Stand', 'store'],
+        '/admin/pesanan' => ['Pesanan', 'orders'],
+    ];
+    $nav = '<header class="adm-mobile-top"><a class="adm-brand" href="/admin"><img src="/img/pico-logo.png" alt="PICO"></a><a href="/keluar">Keluar</a></header>'
+         . '<aside class="adm-side"><a class="adm-brand" href="/admin"><span class="adm-logo"><img src="/img/pico-logo.png" alt="PICO"></span><span class="adm-brand-txt"><b>PICO</b><small>Panel admin</small></span></a><nav>';
+    foreach ($links as $h => [$l, $i]) $nav .= '<a href="' . $h . '" class="' . ($on === $h ? 'on' : '') . '">' . ic($i, 18) . '<span>' . $l . '</span></a>';
+    $nav .= '</nav><div class="adm-side-foot"><a href="/keluar" class="adm-logout">' . ic('logout', 18) . '<span>Keluar</span></a></div></aside>';
     layout($title, $nav . '<main class="adm-main">' . $body . '</main>', ['css' => 'admin', 'wrap' => 'adm']);
 }
 
@@ -25,18 +31,25 @@ function r_adm_home(): void {
     $users = db_get('profiles?select=role'); $by = array_count_values(array_column($users, 'role'));
     $stands = db_get('stands?select=id,buka');
     ob_start(); ?>
-<h1>Dashboard</h1>
-<div class="cards">
-  <div class="card"><small>Pesanan hari ini</small><b><?= $today ?></b></div>
-  <div class="card"><small>Pendapatan hari ini</small><b><?= rp($incomeToday) ?></b></div>
-  <div class="card"><small>Total pendapatan</small><b><?= rp($incomeAll) ?></b></div>
-  <div class="card"><small>Stand buka / total</small><b><?= count(array_filter($stands, fn($s) => $s['buka'])) ?> / <?= count($stands) ?></b></div>
-  <div class="card"><small>Pelanggan</small><b><?= (int)($by['pelanggan'] ?? 0) ?></b></div>
-  <div class="card"><small>Penjual</small><b><?= (int)($by['penjual'] ?? 0) ?></b></div>
-</div>
-<h2>Penjualan per stand</h2>
-<div class="tw"><table><tr><th>Stand</th><th>Jumlah pesanan</th><th>Pendapatan</th></tr>
-<?php foreach ($per as $n => $v): ?><tr><td><?= e($n) ?></td><td><?= $v['n'] ?></td><td><?= rp($v['rp']) ?></td></tr><?php endforeach; if (!$per) echo '<tr><td colspan="3" class="mut">Belum ada pesanan dibayar.</td></tr>'; ?></table></div>
+<?php
+    uasort($per, fn($a, $b) => $b['rp'] <=> $a['rp']);
+    $standBuka = count(array_filter($stands, fn($s) => $s['buka']));
+    $standTotal = count($stands);
+    $pctBuka = $standTotal ? round($standBuka / $standTotal * 100) : 0;
+    $jmlPesanan = array_sum(array_column($per, 'n'));
+?>
+<div class="adm-page-head"><div><h1>Dashboard</h1><p>Ringkasan penjualan dan aktivitas Kantin AX.</p></div></div>
+<section class="kpis" aria-label="Ringkasan">
+  <article class="kpi kpi-main"><span class="kpi-ic"><?= ic('wallet', 22) ?></span><small>Total pendapatan</small><b><?= rp($incomeAll) ?></b><span class="kpi-note">dari <?= (int)$jmlPesanan ?> pesanan dibayar</span></article>
+  <article class="kpi"><span class="kpi-ic"><?= ic('clock', 20) ?></span><small>Pendapatan hari ini</small><b><?= rp($incomeToday) ?></b></article>
+  <article class="kpi"><span class="kpi-ic"><?= ic('orders', 20) ?></span><small>Pesanan hari ini</small><b><?= $today ?></b></article>
+  <article class="kpi kpi-wide"><span class="kpi-ic"><?= ic('store', 20) ?></span><small>Stand buka</small><b><?= $standBuka ?> <em>dari <?= $standTotal ?> stand</em></b><div class="kpi-bar"><i style="width:<?= $pctBuka ?>%"></i></div></article>
+  <article class="kpi"><span class="kpi-ic"><?= ic('users', 20) ?></span><small>Pelanggan</small><b><?= (int)($by['pelanggan'] ?? 0) ?></b></article>
+  <article class="kpi"><span class="kpi-ic"><?= ic('bowl', 20) ?></span><small>Penjual</small><b><?= (int)($by['penjual'] ?? 0) ?></b></article>
+</section>
+<div class="adm-sec-head"><h2>Penjualan per stand</h2><small><?= count($per) ?> stand punya pesanan</small></div>
+<div class="tw"><table class="tbl-stand"><tr><th>Stand</th><th class="num">Pesanan</th><th class="num">Pendapatan</th><th class="share-col">Kontribusi</th></tr>
+<?php foreach ($per as $n => $v): $pct = $incomeAll ? round($v['rp'] / $incomeAll * 100) : 0; ?><tr><td><b><?= e($n) ?></b></td><td class="num"><?= $v['n'] ?></td><td class="num"><?= rp($v['rp']) ?></td><td class="share-col"><div class="share"><div class="share-bar"><i style="width:<?= $pct ?>%"></i></div><span><?= $pct ?>%</span></div></td></tr><?php endforeach; if (!$per) echo '<tr><td colspan="4" class="mut">Belum ada pesanan dibayar.</td></tr>'; ?></table></div>
 <?php adm_layout('Dashboard', ob_get_clean(), '/admin');
 }
 
@@ -46,13 +59,21 @@ function r_adm_stand(): void {
                     FROM stands s LEFT JOIN profiles p ON p.id = s.penjual_id
                     ORDER BY s.kios');
     ob_start(); ?>
-<h1>Stand & Penjual</h1>
-<details class="panel"><summary><b>+ Tambah stand baru</b></summary>
-<form method="post" action="/admin/stand/tambah" class="frm"><input name="nama" placeholder="Nama stand" required><input name="kios" type="number" min="1" placeholder="No. kios" required><input name="lokasi" placeholder="Lokasi (opsional)"><button class="btn">Simpan stand</button></form></details>
-<div class="tw"><table><tr><th>Kios</th><th>Stand</th><th>Status</th><th>Penjual</th><th>Aksi</th></tr>
-<?php foreach ($stands as $s): ?><tr><td><?= e($s['kios']) ?></td><td><?= e($s['nama']) ?></td><td><?= $s['buka'] ? 'Buka' : 'Tutup' ?></td>
-<td><?php if ($s['penjual_id']): ?><?= e($s['penjual_nama'] ?? '') ?><br><small class="mut"><?= e($s['penjual_username'] ?? '') ?></small><?php else: ?><span class="mut">Belum ada</span><?php endif; ?></td>
-<td><details><summary><?= $s['penjual_id'] ? 'Reset password' : 'Buat akun penjual' ?></summary>
+<?php
+    $jmlBuka = count(array_filter($stands, fn($x) => $x['buka']));
+    $jmlPenjual = count(array_filter($stands, fn($x) => $x['penjual_id']));
+?>
+<div class="adm-page-head"><div><h1>Stand &amp; Penjual</h1><p>Atur stand kantin, akun penjual, dan status buka tutupnya.</p></div></div>
+<div class="adm-chips"><span class="chip"><b><?= count($stands) ?></b> stand</span><span class="chip ok"><b><?= $jmlBuka ?></b> buka</span><span class="chip"><b><?= $jmlPenjual ?></b> sudah ada penjual</span></div>
+<details class="adm-add">
+  <summary><?= ic('plus', 18) ?><span>Tambah stand baru</span></summary>
+  <form method="post" action="/admin/stand/tambah" class="frm"><input name="nama" placeholder="Nama stand" required><input name="kios" type="number" min="1" placeholder="No. kios" required><input name="lokasi" placeholder="Lokasi (opsional)"><button class="btn">Simpan stand</button></form>
+</details>
+<div class="tw"><table class="tbl-stand"><tr><th>Kios</th><th>Stand</th><th>Status</th><th>Penjual</th><th>Aksi</th></tr>
+<?php foreach ($stands as $s): ?><tr><td><?= kios_tile($s['kios'], 'xs') ?></td><td><b><?= e($s['nama']) ?></b></td>
+<td><form method="post" action="/admin/stand/buka" class="sw-cell"<?= $s['buka'] ? ' data-confirm="Tutup stand ' . e($s['nama']) . '? Pelanggan tidak bisa memesan sampai dibuka lagi."' : '' ?>><input type="hidden" name="stand" value="<?= (int)$s['id'] ?>"><?= saklar((bool)$s['buka'], 'Buka atau tutup ' . $s['nama']) ?><span class="sw-txt <?= $s['buka'] ? 'on' : '' ?>"><?= $s['buka'] ? 'Buka' : 'Tutup' ?></span></form></td>
+<td><?php if ($s['penjual_id']): ?><div class="who"><span class="av"><?= e(profil_inisial((string)($s['penjual_nama'] ?? ''))) ?></span><div><b><?= e($s['penjual_nama'] ?? '') ?></b><small class="mut">@<?= e($s['penjual_username'] ?? '') ?></small></div></div><?php else: ?><span class="mut">Belum ada</span><?php endif; ?></td>
+<td><details class="act"><summary><?= $s['penjual_id'] ? 'Reset password' : 'Buat akun penjual' ?></summary>
     <?php if ($s['penjual_id']): ?>
     <form method="post" action="/admin/stand/reset" class="frm"><input type="hidden" name="stand" value="<?= (int)$s['id'] ?>"><input name="password" type="password" minlength="6" placeholder="Password baru" required><button class="btn sm">Ganti</button></form>
     <?php else: ?>
@@ -60,6 +81,18 @@ function r_adm_stand(): void {
     <?php endif; ?></details></td></tr>
 <?php endforeach; ?></table></div>
 <?php adm_layout('Stand', ob_get_clean(), '/admin/stand');
+}
+
+function r_adm_stand_buka(): void {
+    need('admin');
+    try {
+        $id = (int)($_POST['stand'] ?? 0);
+        $s = db_get('stands?select=id,nama,buka&id=eq.' . $id)[0] ?? null;
+        if (!$s) throw new SbError('Stand tidak ditemukan.');
+        db_write('PATCH', 'stands?id=eq.' . $id, ['buka' => !$s['buka']]);
+        flash($s['buka'] ? 'Stand ' . $s['nama'] . ' ditutup' : 'Stand ' . $s['nama'] . ' dibuka');
+    } catch (SbError $x) { flash($x->getMessage()); }
+    redirect('/admin/stand');
 }
 
 function r_adm_stand_tambah(): void {
@@ -118,12 +151,12 @@ function r_adm_pengguna(): void {
     $lbl = ['menunggu' => 'Menunggu', 'disetujui' => 'Disetujui', 'ditolak' => 'Ditolak'];
     $bt = 'border:0;border-radius:8px;padding:5px 10px;font:inherit;font-size:.8rem;font-weight:600;cursor:pointer;';
     ob_start(); ?>
-<div class="adm-page-head"><div><small>Kelola akun PICO</small><h1>Pengguna</h1></div></div>
+<div class="adm-page-head"><div><h1>Pengguna</h1><p>Kelola akun pelanggan, penjual, dan admin PICO.</p></div></div>
 <div class="adm-user-tabs"><button type="button" class="on" data-role-filter="all">Semua</button><button type="button" data-role-filter="pelanggan">Pelanggan</button><button type="button" data-role-filter="penjual">Penjual</button><button type="button" data-role-filter="admin">Admin</button></div>
-<div class="adm-toolbar"><label class="adm-search">⌕ <input type="search" placeholder="Cari pengguna" data-table-search="users-table"></label><span><?= count($u) ?> akun</span>
+<div class="adm-toolbar"><label class="adm-search"><?= ic('search', 16) ?><input type="search" placeholder="Cari pengguna" data-table-search="users-table"></label><span class="count-txt"><b><?= count($u) ?></b> akun</span>
   <a href="/admin/pengguna<?= $f === 'menunggu' ? '' : '?ktm=menunggu' ?>" style="margin-left:auto;font-weight:600;color:#f28c28"><?= $f === 'menunggu' ? 'Tampilkan semua' : 'KTM menunggu verifikasi (' . $menunggu . ')' ?></a></div>
 <div class="tw"><table id="users-table"><tr><th>Nama Lengkap</th><th>Username</th><th>No. HP</th><th>Peran</th><th>KTM</th><th>Daftar</th></tr>
-<?php foreach ($u as $r): $ks = $r['ktm_status'] ?? ''; ?><tr data-user-role="<?= e($r['role']) ?>"><td><?= e($r['nama']) ?></td><td><?= e($r['username']) ?></td><td><?= e($r['no_hp'] ?? '-') ?></td><td><span class="tag r-<?= e($r['role']) ?>"><?= e($r['role']) ?></span></td>
+<?php foreach ($u as $r): $ks = $r['ktm_status'] ?? ''; ?><tr data-user-role="<?= e($r['role']) ?>"><td><div class="who"><span class="av"><?= e(profil_inisial((string)$r['nama'])) ?></span><b><?= e($r['nama']) ?></b></div></td><td class="mut">@<?= e($r['username']) ?></td><td><?= e($r['no_hp'] ?? '-') ?></td><td><span class="tag r-<?= e($r['role']) ?>"><?= e($r['role']) ?></span></td>
 <td><?php if ($ks === ''): ?><span class="mut">-</span><?php else: ?>
   <span style="<?= $warna[$ks] ?? '' ?>;padding:3px 10px;border-radius:99px;font-size:.75rem;font-weight:600"><?= e($lbl[$ks] ?? $ks) ?></span><br>
   <a href="/ktm?id=<?= e($r['id']) ?>" target="_blank" rel="noopener" style="font-size:.85rem;font-weight:600;color:#f28c28">Lihat KTM</a>
