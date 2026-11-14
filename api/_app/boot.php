@@ -266,6 +266,53 @@ function ensure_bukti_columns(): void
     }
 }
 
+/**
+ * Kolom "aktif" pada profiles: akun yang dinonaktifkan admin tidak bisa masuk.
+ * Dibuat otomatis (sama seperti kolom bukti). Kalau tidak punya hak DDL,
+ * jalankan sql/schema.sql secara manual.
+ */
+function ensure_profil_aktif(): void
+{
+    static $checked = false;
+    if ($checked) {
+        return;
+    }
+    $checked = true;
+
+    try {
+        pdo()->exec('ALTER TABLE profiles ADD COLUMN IF NOT EXISTS aktif BOOLEAN NOT NULL DEFAULT TRUE');
+    } catch (Throwable $x) {
+        // Abaikan jika sudah ada atau tidak memiliki hak DDL
+    }
+}
+
+/** Apakah kolom profiles.aktif sudah ada? (dicek sekali per permintaan) */
+function profil_punya_aktif(): bool
+{
+    static $ada = null;
+    if ($ada !== null) {
+        return $ada;
+    }
+
+    try {
+        $ada = (bool) pg_run(
+            "SELECT 1 FROM information_schema.columns
+             WHERE table_name = 'profiles' AND column_name = 'aktif' LIMIT 1"
+        )->fetch();
+    } catch (Throwable $x) {
+        $ada = false;
+    }
+
+    return $ada;
+}
+
+/** True jika baris profil ini sudah dinonaktifkan. */
+function profil_nonaktif(array $row): bool
+{
+    return array_key_exists('aktif', $row)
+        && in_array($row['aktif'], [false, 0, '0', 'f', 'false'], true);
+}
+
 function pg_ident(string $s): string
 {
     if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $s)) {
@@ -792,6 +839,13 @@ function auth_login(string $identifier, string $pw): array
         throw new SbError('Username atau password salah.', 400);
     }
 
+    if (profil_punya_aktif()) {
+        $a = pg_run('SELECT aktif FROM profiles WHERE id = :id', [':id' => $row['id']])->fetch();
+        if ($a && profil_nonaktif($a)) {
+            throw new SbError('Akun ini dinonaktifkan. Hubungi admin kantin.', 403);
+        }
+    }
+
     return ['user_id' => $row['id']];
 }
 
@@ -839,7 +893,15 @@ function me(): ?array
         return $m = null;
     }
 
-    return $m = ($r[0] ?? null);
+    $u = $r[0] ?? null;
+
+    // Akun yang dinonaktifkan admin langsung dikeluarkan dari sesi
+    if ($u && profil_nonaktif($u)) {
+        unset($_SESSION['uid']);
+        return $m = null;
+    }
+
+    return $m = $u;
 }
 
 function home_for(string $role): string

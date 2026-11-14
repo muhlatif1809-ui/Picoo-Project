@@ -67,7 +67,9 @@ function ico(string $k): string
     'cart' => 'M3 4h2l2.5 11h10l2-8H6.5M9 20h.01M17 20h.01',
     'book' => 'M5 3h14v18H5zM5 17h14',
     'user' => 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6',
-    'list' => 'M4 6h16M4 12h16M4 18h16'
+    'list' => 'M4 6h16M4 12h16M4 18h16',
+    'fork' => 'M7 3v8M4 3v5a3 3 0 006 0V3M7 11v10M17 3c-2 2-3 4-3 7h3v11',
+    'clock' => 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2'
     ];
 
     $path = $IC[$k] ?? $IC['home'];
@@ -85,7 +87,17 @@ function ic(string $k, int $size = 20): string
         'back' => 'M15 18l-6-6 6-6',
         'next' => 'M9 18l6-6-6-6',
         'arrow' => 'M5 12h14M13 6l6 6-6 6',
-        'search' => 'M11 4a7 7 0 100 14 7 7 0 000-14zM21 21l-4.3-4.3',
+        'search' => 'M10.5 4a6.5 6.5 0 110 13 6.5 6.5 0 010-13zM15.5 15.5l4.5 4.5',
+        'eye' => 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 100 6 3 3 0 000-6z',
+        'trash' => 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3',
+        'menu' => 'M4 7h16M4 12h16M4 17h16',
+        'download' => 'M12 4v11M7 11l5 5 5-5M5 20h14',
+        'tag' => 'M3 12V4h8l10 10-8 8zM7.5 8.5h.01',
+        'fork' => 'M7 3v8M4 3v5a3 3 0 006 0V3M7 11v10M17 3c-2 2-3 4-3 7h3v11',
+        'minus' => 'M5 12h14',
+        'calendar' => 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
+        'image' => 'M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M9 9.5h.01',
+        'user' => 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6',
         'cart' => 'M3 4h2l2.5 11h10l2-8H6.5M9 20h.01M17 20h.01',
         'store' => 'M3 9l1.5-5h15L21 9M3 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0M5 12v8h14v-8',
         'receipt' => 'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6',
@@ -106,11 +118,11 @@ function ic(string $k, int $size = 20): string
         'x' => 'M6 6l12 12M18 6L6 18',
     ];
     $path = $P[$k] ?? $P['store'];
-
-    $stroke = $k === 'search' ? '#1b2b48' : 'currentColor';
+    // kaca pembesar dibuat sedikit lebih tebal supaya tetap tegas di ukuran kecil
+    $sw = $k === 'search' ? '2.3' : '1.9';
 
     return '<svg class="ic" viewBox="0 0 24 24" width="' . $size . '" height="' . $size
-        . '" fill="none" stroke="' . $stroke . '" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="'
+        . '" fill="none" stroke="currentColor" stroke-width="' . $sw . '" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="'
         . $path . '"/></svg>';
 }
 
@@ -216,9 +228,10 @@ function nav_pel(string $on): string
 function nav_pen(string $on): string
 {
     return nav([
-        ['/penjual', 'home', 'Home'],
-        ['/penjual/riwayat', 'book', 'Riwayat'],
-        ['/penjual/menu', 'list', 'Menu'],
+        ['/penjual', 'home', 'Beranda'],
+        ['/penjual/pesanan', 'book', 'Pesanan'],
+        ['/penjual/menu', 'fork', 'Menu'],
+        ['/penjual/riwayat', 'clock', 'Riwayat'],
         ['/penjual/profil', 'user', 'Profil']
     ], $on);
 }

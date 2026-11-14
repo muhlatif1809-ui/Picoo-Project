@@ -1034,3 +1034,779 @@ details.adm-add[open] > summary {
     grid-column: auto;
   }
 }
+
+/* ==================================================================
+   13. REVISI LANJUTAN ADMIN: menu bertingkat, tabel & dialog, form,
+   laporan, grafik, login admin, dan tampilan HP (kartu).
+   ================================================================== */
+[hidden] {
+  display: none !important;
+}
+.adm-mobile-top,
+.adm-scrim {
+  display: none;
+}
+
+/* ---------- Sidebar bertingkat ---------- */
+.adm-side nav a.grp {
+  color: #fff;
+  font-weight: 600;
+}
+.adm-side nav a.sub {
+  padding: 8px 14px 8px 46px;
+  font-size: 0.86rem;
+}
+.adm-side nav a.sub.on {
+  background: var(--org);
+  color: #fff;
+}
+
+/* ---------- Judul halaman dengan tombol aksi ---------- */
+.adm-main .adm-page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.crumb {
+  color: var(--org);
+}
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  padding: 11px 18px 11px 14px;
+  border-radius: 12px;
+  background: var(--org);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  box-shadow: 0 6px 14px #f28c2838;
+  white-space: nowrap;
+}
+.adm-note {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #fff3cd;
+  color: #7a5b00;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.adm-note code {
+  font-size: 0.8rem;
+}
+
+/* ---------- Tab peran (hanya HP; di desktop ada di sidebar) ---------- */
+.adm-user-tabs {
+  display: none;
+}
+.adm-user-tabs a {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 0 0 1px var(--line);
+  text-align: center;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--mut);
+}
+.adm-user-tabs a.on {
+  background: var(--org);
+  color: #fff;
+  box-shadow: none;
+}
+.ktm-link {
+  margin-left: auto;
+  color: var(--org);
+  font-weight: 600;
+}
+
+/* ---------- Tombol ikon di tabel ---------- */
+.act-col {
+  width: 1%;
+  white-space: nowrap;
+}
+.ic-btns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ic-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px;
+  border: 0;
+  border-radius: 10px;
+  background: #f1f3f8;
+  color: #4b5469;
+  font: 600 0.82rem Inter, sans-serif;
+  cursor: pointer;
+}
+.ic-btn:hover {
+  background: #e6e9f1;
+}
+.ic-btn span {
+  display: none;
+}
+.ic-btn.danger {
+  background: #fdecec;
+  color: #d92d20;
+}
+.ic-btn.ok {
+  background: #e8f7ee;
+  color: #146c3b;
+}
+.ic-btn:focus-visible {
+  outline: 3px solid var(--org);
+  outline-offset: 2px;
+}
+.bukti-th {
+  width: 20px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+.pill-off {
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: #eceef2;
+  color: #6b7488;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+tr.is-off td {
+  opacity: 0.6;
+}
+tr.is-off td.act-col {
+  opacity: 1;
+}
+.ktm-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.ktm-view {
+  margin-left: 6px;
+  color: var(--org);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.ktm-act {
+  display: inline-flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.ktm-act button {
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 8px;
+  font: 600 0.78rem Inter, sans-serif;
+  cursor: pointer;
+}
+.ktm-act .ok {
+  background: #d6f3e1;
+  color: #146c3b;
+}
+.ktm-act .no {
+  background: #fde1e1;
+  color: #b42318;
+}
+.small {
+  font-size: 0.8rem;
+}
+.st-pill {
+  display: inline-block;
+  padding: 3px 11px;
+  border-radius: 99px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+.st-ok {
+  background: #d6f3e1;
+  color: #146c3b;
+}
+.st-warn {
+  background: #fff3cd;
+  color: #7a5b00;
+}
+.st-bad {
+  background: #fde1e1;
+  color: #b42318;
+}
+.st-off {
+  background: #eceef2;
+  color: #6b7488;
+}
+
+/* ---------- Dialog (lihat detail, konfirmasi, bukti) ---------- */
+.adm-dlg {
+  width: min(420px, 92vw);
+  padding: 24px;
+  border: 0;
+  border-radius: 20px;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 24px 48px #0000004d;
+}
+.adm-dlg::backdrop {
+  background: #1b2a4a99;
+}
+.adm-dlg h3 {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+.adm-dlg > p {
+  margin-top: 6px;
+  color: var(--mut);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.adm-dl {
+  margin: 16px 0 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.adm-dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eef0f5;
+  font-size: 0.9rem;
+}
+.adm-dl dt {
+  color: var(--mut);
+}
+.adm-dl dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  word-break: break-word;
+}
+.ask-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+.ask-btns .btn {
+  flex: 1;
+  width: auto;
+  text-align: center;
+}
+.adm-dlg-ask {
+  text-align: center;
+}
+.adm-dlg-ask form {
+  margin: 0;
+}
+.ask-ic {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 14px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fdecec;
+  color: #d92d20;
+}
+.btn.danger {
+  background: #d92d20;
+  color: #fff;
+}
+.adm-dlg-bukti {
+  text-align: center;
+}
+.bukti-big {
+  display: block;
+  width: 100%;
+  max-height: 60vh;
+  margin-top: 14px;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+/* ---------- Form tambah pengguna ---------- */
+.adm-form {
+  max-width: 760px;
+  padding: 24px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid #edf0f5;
+}
+.af-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.af-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #4b5469;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.af-grid input,
+.af-grid select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  font: 500 0.92rem Inter, sans-serif;
+}
+.af-wide {
+  grid-column: 1 / -1;
+}
+.af-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+.af-btns .btn {
+  width: auto;
+  padding: 12px 24px;
+}
+
+/* ---------- Dashboard & laporan ---------- */
+.kpis {
+  margin-bottom: 20px;
+}
+.kpi-main {
+  grid-column: auto;
+}
+.kpi-main b {
+  font-size: 2rem;
+}
+.kpi-note2 {
+  margin-top: auto;
+  color: var(--mut);
+  font-size: 0.82rem;
+}
+.kpis-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.dash-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: 16px;
+}
+.panel {
+  padding: 22px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid #edf0f5;
+}
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.panel-head h2 {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--navy);
+}
+.panel-head small {
+  color: var(--mut);
+  font-size: 0.82rem;
+}
+.panel-head a {
+  color: var(--org);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.tw-flat {
+  border: 0;
+  box-shadow: none;
+}
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 190px;
+}
+.bar-col {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.bar-track {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+.bar {
+  width: 100%;
+  max-width: 44px;
+  margin: 0 auto;
+  border-radius: 8px 8px 4px 4px;
+  background: #fde3c4;
+}
+.bar.peak {
+  background: var(--org);
+}
+.bar.nol {
+  height: 3px !important;
+  background: #eef0f4;
+}
+.bar-col span {
+  height: 14px;
+  line-height: 14px;
+  color: var(--mut);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.lap-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #edf0f5;
+}
+.lap-filter label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--mut);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.lap-filter input,
+.lap-filter select {
+  min-width: 160px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font: 500 0.9rem Inter, sans-serif;
+}
+.lap-filter .btn {
+  width: auto;
+  padding: 11px 22px;
+}
+
+/* ---------- Login admin ---------- */
+.adm-auth {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg);
+}
+.adm-auth-card {
+  width: min(400px, 100%);
+  padding: 32px 28px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 12px 40px #1b2a4a1a;
+}
+.adm-auth-logo {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 18px;
+}
+.adm-auth-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.adm-auth-card h1 {
+  font-family: var(--font-head);
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+.adm-auth-card > p {
+  margin: 4px 0 22px;
+  color: var(--mut);
+  font-size: 0.9rem;
+}
+.adm-auth-card label {
+  display: block;
+  margin-bottom: 14px;
+  color: #4b5469;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.adm-auth-card input {
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font: 500 0.95rem Inter, sans-serif;
+}
+.adm-auth-err {
+  min-height: 1.2em;
+  margin-bottom: 8px;
+  color: #b42318;
+  font-size: 0.85rem;
+}
+.adm-auth-card .btn {
+  width: 100%;
+}
+
+/* ---------- Tampilan HP: bar atas, menu geser, tabel jadi kartu ---------- */
+@media (max-width: 760px) {
+  .adm-mobile-top {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--navy);
+    color: #fff;
+  }
+  .adm-burger {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 12px;
+    background: #ffffff1a;
+    color: #fff;
+    cursor: pointer;
+  }
+  .adm-mobile-title {
+    font-family: var(--font-head);
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #fff;
+  }
+  .adm-avatar {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--org);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .adm-side {
+    display: none;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    bottom: 0;
+    z-index: 40;
+    width: min(300px, 82vw);
+    height: auto;
+    padding: 14px 12px 18px;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  body.nav-open .adm-side {
+    display: flex;
+  }
+  .adm-side .adm-brand {
+    display: none;
+  }
+  .adm-side nav {
+    flex-direction: column;
+    overflow: visible;
+    gap: 4px;
+    padding: 0;
+  }
+  .adm-side nav a {
+    flex: none;
+    padding: 12px 14px;
+    font-size: 0.93rem;
+  }
+  .adm-side nav a.sub {
+    padding: 9px 14px 9px 46px;
+    font-size: 0.86rem;
+  }
+  .adm-side-foot {
+    display: block;
+  }
+  .adm-scrim {
+    position: fixed;
+    inset: 60px 0 0 0;
+    z-index: 35;
+    border: 0;
+    background: #1b2a4a80;
+  }
+  body.nav-open .adm-scrim {
+    display: block;
+  }
+  .adm-main {
+    margin: 0;
+    padding: 20px 14px 40px;
+    min-height: calc(100vh - 60px);
+  }
+  .adm-main .adm-page-head {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .adm-head-act,
+  .add-btn {
+    width: 100%;
+  }
+  .add-btn {
+    justify-content: center;
+  }
+  .adm-user-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    border: 0;
+  }
+  .adm-toolbar {
+    flex-wrap: wrap;
+  }
+  .adm-main .adm-search {
+    flex: 1 1 100%;
+  }
+  .kpis,
+  .kpis-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .kpis-3 .kpi:last-child {
+    grid-column: span 2;
+  }
+  .dash-grid {
+    grid-template-columns: 1fr;
+  }
+  .af-grid {
+    grid-template-columns: 1fr;
+  }
+  .adm-form {
+    padding: 18px;
+  }
+  .lap-filter label,
+  .lap-filter input,
+  .lap-filter select {
+    width: 100%;
+  }
+  .bars {
+    height: 150px;
+    gap: 5px;
+  }
+
+  /* tabel -> kartu */
+  .adm-main table.mcards {
+    min-width: 0;
+    width: 100%;
+  }
+  table.mcards tr:first-child {
+    display: none;
+  }
+  table.mcards,
+  table.mcards tbody {
+    display: block;
+  }
+  table.mcards tr {
+    display: block;
+    margin-bottom: 10px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid #edf0f5;
+  }
+  table.mcards td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 5px 0;
+    border: 0;
+    background: none;
+    text-align: right;
+    font-size: 0.88rem;
+  }
+  table.mcards td::before {
+    content: attr(data-l);
+    flex: none;
+    color: var(--mut);
+    font-size: 0.8rem;
+    text-align: left;
+  }
+  table.mcards td[colspan] {
+    display: block;
+    text-align: center;
+  }
+  table.mcards td[colspan]::before {
+    content: none;
+  }
+  table.mcards td[data-l="Nama"],
+  table.mcards td[data-l="Menu"],
+  table.mcards td[data-l="Stand"] b {
+    font-weight: 700;
+  }
+  table.mcards .act-col {
+    width: auto;
+    padding-top: 10px;
+  }
+  .ic-btn {
+    padding: 8px 12px;
+  }
+  .ic-btn span {
+    display: inline;
+  }
+  .tw {
+    overflow: visible;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+  .share-col {
+    min-width: 0;
+    width: auto;
+  }
+  .share {
+    width: 60%;
+  }
+}
+
+/* perbaikan kecil */
+.adm-main .adm-user-tabs {
+  display: none;
+}
+.kpi small {
+  padding-right: 52px;
+}
+.kpi-main b {
+  font-size: 1.6rem;
+}
+@media (max-width: 760px) {
+  .adm-main .adm-user-tabs {
+    display: flex;
+  }
+  .kpi-main b {
+    font-size: 1.2rem;
+  }
+  .kpi b {
+    font-size: 1.45rem;
+  }
+}

@@ -363,3 +363,5 @@ ORDER BY table_name, column_name;
 SELECT * FROM v_menu_stand;
 SELECT * FROM v_rekap_penjualan_stand;
 SELECT * FROM v_pengguna;
+-- Akun bisa dinonaktifkan admin (tidak dihapus)
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS aktif BOOLEAN NOT NULL DEFAULT TRUE;

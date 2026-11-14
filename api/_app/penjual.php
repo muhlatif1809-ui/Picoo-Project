@@ -15,185 +15,219 @@ function stand_saya(array $m): array
 /**
  * Potongan HTML + Modal untuk menampilkan bukti pembayaran dari pembeli di setiap kartu pesanan penjual.
  */
-function html_bukti_pembeli(array $o): string
-{
-  $url = trim((string) ($o['bukti_url'] ?? ''));
-  $pembeli = trim((string) ($o['pelanggan_nama'] ?? 'Pembeli'));
-  $kode = (string) ($o['kode'] ?? '');
+function html_bukti_pembeli(array $o): string {
+    $url = trim((string)($o['bukti_url'] ?? ''));
+    $pembeli = trim((string)($o['pelanggan_nama'] ?? 'Pembeli'));
+    $kode = (string)($o['kode'] ?? '');
 
-  if ($url === '') {
-    return '<div style="margin-top:8px;padding:7px 10px;border-radius:8px;background:#f8fafc;border:1px dashed #cbd5e1;font-size:.78rem;color:#64748b">'
-      . '🧾 Belum ada foto bukti pembayaran'
-      . '</div>';
-  }
+    if ($url === '') {
+        return '<div style="margin-top:8px;padding:7px 10px;border-radius:8px;background:#f8fafc;border:1px dashed #cbd5e1;font-size:.78rem;color:#64748b">'
+             . '🧾 Belum ada foto bukti pembayaran'
+             . '</div>';
+    }
 
-  $dlgId = 'dlg-bukti-' . (int) $o['id'];
-  return '<div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0">'
-    . '<div style="display:flex;align-items:center;gap:8px;min-width:0">'
-    . '<img src="' . e($url) . '" alt="Bukti" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid #86efac;flex-shrink:0">'
-    . '<div style="min-width:0">'
-    . '<b style="display:block;font-size:.78rem;color:#14532d">Bukti Pembayaran</b>'
-    . '<small style="display:block;font-size:.72rem;color:#15803d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' . e($pembeli) . '</small>'
-    . '</div>'
-    . '</div>'
-    . '<button type="button" onclick="var d=document.getElementById(\'' . e($dlgId) . '\');if(d&&d.showModal)d.showModal();" '
-    . 'style="border:1px solid #16a34a;background:#fff;color:#15803d;padding:6px 10px;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;flex-shrink:0">'
-    . 'Lihat Bukti'
-    . '</button>'
-    . '</div>'
-    . '<dialog id="' . e($dlgId) . '" onclick="if(event.target===this)this.close()" style="border:0;border-radius:16px;padding:16px;max-width:92vw;background:#fff;box-shadow:0 20px 40px rgba(0,0,0,.35)">'
-    . '<div style="text-align:center">'
-    . '<b style="display:block;font-size:.95rem;margin-bottom:2px">Bukti Pembayaran #' . e($kode) . '</b>'
-    . '<small class="mut" style="display:block;margin-bottom:10px">' . e($pembeli) . ' · ' . rp($o['total']) . '</small>'
-    . '<img src="' . e($url) . '" alt="Bukti Pembayaran #' . e($kode) . '" style="width:82vw;max-width:380px;max-height:70vh;object-fit:contain;display:block;margin:0 auto;border-radius:10px;border:1px solid #e2e8f0">'
-    . '<div style="display:flex;gap:8px;justify-content:center;margin-top:12px">'
-    . '<a href="' . e($url) . '" target="_blank" rel="noopener" class="btn sec sm" style="text-decoration:none">Buka Penuh</a>'
-    . '<button type="button" onclick="this.closest(\'dialog\').close()" class="btn sm">Tutup</button>'
-    . '</div>'
-    . '</div>'
-    . '</dialog>';
+    $dlgId = 'dlg-bukti-' . (int)$o['id'];
+    return '<div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0">'
+         .   '<div style="display:flex;align-items:center;gap:8px;min-width:0">'
+         .     '<img src="' . e($url) . '" alt="Bukti" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid #86efac;flex-shrink:0">'
+         .     '<div style="min-width:0">'
+         .       '<b style="display:block;font-size:.78rem;color:#14532d">Bukti Pembayaran</b>'
+         .       '<small style="display:block;font-size:.72rem;color:#15803d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' . e($pembeli) . '</small>'
+         .     '</div>'
+         .   '</div>'
+         .   '<button type="button" onclick="var d=document.getElementById(\'' . e($dlgId) . '\');if(d&&d.showModal)d.showModal();" '
+         .           'style="border:1px solid #16a34a;background:#fff;color:#15803d;padding:6px 10px;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;flex-shrink:0">'
+         .     'Lihat Bukti'
+         .   '</button>'
+         . '</div>'
+         . '<dialog id="' . e($dlgId) . '" onclick="if(event.target===this)this.close()" style="border:0;border-radius:16px;padding:16px;max-width:92vw;background:#fff;box-shadow:0 20px 40px rgba(0,0,0,.35)">'
+         .   '<div style="text-align:center">'
+         .     '<b style="display:block;font-size:.95rem;margin-bottom:2px">Bukti Pembayaran #' . e($kode) . '</b>'
+         .     '<small class="mut" style="display:block;margin-bottom:10px">' . e($pembeli) . ' · ' . rp($o['total']) . '</small>'
+         .     '<img src="' . e($url) . '" alt="Bukti Pembayaran #' . e($kode) . '" style="width:82vw;max-width:380px;max-height:70vh;object-fit:contain;display:block;margin:0 auto;border-radius:10px;border:1px solid #e2e8f0">'
+         .     '<div style="display:flex;gap:8px;justify-content:center;margin-top:12px">'
+         .       '<a href="' . e($url) . '" target="_blank" rel="noopener" class="btn sec sm" style="text-decoration:none">Buka Penuh</a>'
+         .       '<button type="button" onclick="this.closest(\'dialog\').close()" class="btn sm">Tutup</button>'
+         .     '</div>'
+         .   '</div>'
+         . '</dialog>';
 }
 
+/** Kartu pesanan ringkas (Beranda & daftar Pesanan). Ketuk untuk membuka detail. */
+function pen_kartu(array $o): string
+{
+  $item = array_map(fn($i) => (int) $i['jumlah'] . ' ' . e($i['nama']), array_slice($o['pesanan_item'], 0, 3));
+  $lebih = count($o['pesanan_item']) - 3;
+
+  return '<a class="box ocard so" href="/penjual/pesanan/detail?id=' . (int) $o['id'] . '">'
+    . '<div class="so-top"><b>#' . e($o['kode']) . '</b>' . tag($o['status']) . '</div>'
+    . '<p class="so-items">' . implode(', ', $item) . ($lebih > 0 ? ' <em>+' . $lebih . ' lainnya</em>' : '') . '</p>'
+    . '<div class="so-foot"><span class="mut">' . waktu($o['created_at'])
+    . (!empty($o['pelanggan_nama']) ? ' · ' . e($o['pelanggan_nama']) : '') . '</span>'
+    . '<span class="so-end"><span class="lay lay-' . e($o['layanan']) . '">' . e(LAY[$o['layanan']] ?? '') . '</span>'
+    . '<strong>' . rp($o['total']) . '</strong></span></div></a>';
+}
+
+/** Angka uang singkat untuk ringkasan: Rp2,9 jt / Rp850 rb / Rp900 */
+function rp_ringkas($n): string
+{
+  $n = (int) $n;
+  if ($n >= 1000000) {
+    return 'Rp' . rtrim(rtrim(number_format($n / 1000000, 1, ',', '.'), '0'), ',') . ' jt';
+  }
+  if ($n >= 1000) {
+    return 'Rp' . round($n / 1000) . ' rb';
+  }
+
+  return 'Rp' . $n;
+}
+
+// ------------------------------------------------------------------ BERANDA
 function r_pen_home(): void
 {
   $m = need('penjual');
   $s = stand_saya($m);
   $sid = (int) $s['id'];
-  $stats = db_sql("SELECT
+  $st = db_sql("SELECT
         COUNT(*) FILTER (WHERE status = 'baru') AS baru,
         COUNT(*) FILTER (WHERE status = 'diproses') AS diproses,
-        COALESCE(SUM(total) FILTER (WHERE status = 'selesai' AND created_at::date = CURRENT_DATE), 0) AS pendapatan
-        FROM pesanan WHERE stand_id = :s", [':s' => $sid])[0] ?? ['baru' => 0, 'diproses' => 0, 'pendapatan' => 0];
-  $stock = db_sql('SELECT COUNT(*) AS jumlah FROM menu WHERE stand_id = :s AND tersedia = true AND stok > 0', [':s' => $sid])[0]['jumlah'] ?? 0;
-  $os = pesanan_muat('p.stand_id = :s', [':s' => $sid], 'ORDER BY p.created_at DESC LIMIT 3');
+        COUNT(*) FILTER (WHERE status = 'selesai' AND created_at::date = CURRENT_DATE) AS selesai
+        FROM pesanan WHERE stand_id = :s", [':s' => $sid])[0] ?? ['baru' => 0, 'diproses' => 0, 'selesai' => 0];
+  $terjual = (int) (db_sql("SELECT COALESCE(SUM(i.jumlah), 0) AS n
+        FROM pesanan_item i JOIN pesanan p ON p.id = i.pesanan_id
+        WHERE p.stand_id = :s AND p.status = 'selesai' AND p.created_at::date = CURRENT_DATE", [':s' => $sid])[0]['n'] ?? 0);
+  $os = pesanan_muat("p.stand_id = :s AND p.status <> 'menunggu_bayar'", [':s' => $sid], 'ORDER BY p.created_at DESC LIMIT 3');
 
   ob_start(); ?>
-  <header class="sx-hero">
-    <div class="sx-id">
-      <?= kios_tile($s['kios']) ?>
-      <div class="sx-name"><span>Dashboard penjual</span>
-        <h1><?= e($s['nama']) ?></h1>
-      </div>
-    </div>
-    <form method="post" action="/penjual/buka" class="stand-switch <?= $s['buka'] ? 'is-open' : '' ?>" <?= $s['buka'] ? ' data-confirm="Tutup stand sekarang? Pelanggan tidak bisa memesan sampai kamu membukanya lagi."' : '' ?>>
-      <div class="ss-txt">
-        <b><?= $s['buka'] ? 'Stand sedang buka' : 'Stand sedang tutup' ?></b><small><?= $s['buka'] ? 'Pelanggan bisa memesan' : 'Pelanggan belum bisa memesan' ?></small>
-      </div>
-      <?= saklar((bool) $s['buka'], 'Buka atau tutup stand') ?>
-    </form>
-  </header>
-  <div class="bd seller-dashboard" id="live">
-    <section class="seller-stats" aria-label="Ringkasan penjualan">
-      <a class="seller-stat stat-new" href="/penjual/riwayat?status=baru"><span
-          class="st-ic"><?= ic('bell', 18) ?></span><b><?= (int) $stats['baru'] ?></b><small>Pesanan baru</small><span
-          class="st-go">Perlu diterima <?= ic('arrow', 14) ?></span></a>
-      <a class="seller-stat stat-income" href="/penjual/riwayat?status=selesai"><span
-          class="st-ic"><?= ic('wallet', 18) ?></span><b><?= rp($stats['pendapatan']) ?></b><small>Pendapatan hari
-          ini</small><span class="st-go">Pesanan selesai</span></a>
-      <a class="seller-stat stat-progress" href="/penjual/riwayat?status=diproses"><span
-          class="st-ic"><?= ic('flame', 18) ?></span><b><?= (int) $stats['diproses'] ?></b><small>Sedang
-          diproses</small><span class="st-go">Lihat pesanan <?= ic('arrow', 14) ?></span></a>
-      <a class="seller-stat stat-stock" href="/penjual/menu"><span
-          class="st-ic"><?= ic('bowl', 18) ?></span><b><?= (int) $stock ?></b><small>Menu tersedia</small><span
-          class="st-go">Kelola stok <?= ic('arrow', 14) ?></span></a>
-    </section>
-    <section class="seller-recent">
-      <div class="seller-section-title">
-        <h2><span class="sec-ic"><?= ic('clock', 16) ?></span>Pesanan terbaru</h2><a href="/penjual/riwayat">Lihat semua
-          <?= ic('next', 16) ?></a>
-      </div>
-      <div class="seller-order-list">
-        <?php foreach ($os as $o): ?>
-          <article class="box ocard seller-order">
-            <div class="row">
-              <div><small
-                  class="mut"><?= waktu($o['created_at']) ?><?= !empty($o['pelanggan_nama']) ? ' · ' . e($o['pelanggan_nama']) : '' ?></small><b>#<?= e($o['kode']) ?></b>
-              </div><?= tag($o['status']) ?>
-            </div>
-            <ul class="lines"><?php foreach (array_slice($o['pesanan_item'], 0, 2) as $i): ?>
-                <li><b><?= (int) $i['jumlah'] ?>×</b> <?= e($i['nama']) ?></li>
-              <?php endforeach; ?>     <?php if (count($o['pesanan_item']) > 2): ?>
-                <li class="mut">+<?= count($o['pesanan_item']) - 2 ?> menu lainnya</li><?php endif; ?>
-            </ul>
-            <div class="row seller-order-foot"><span><?= e(LAY[$o['layanan']] ?? '') ?></span><b><?= rp($o['total']) ?></b>
-            </div>
-            <?= html_bukti_pembeli($o) ?>
-          </article>
-        <?php endforeach;
-        if (!$os)
-          echo empty_state('receipt', 'Belum ada pesanan', 'Pesanan yang masuk akan muncul di sini.'); ?>
-      </div>
-    </section>
+<header class="sx-hero">
+  <div class="sx-id">
+    <?= kios_tile($s['kios']) ?>
+    <div class="sx-name"><span>Beranda penjual</span><h1><?= e($s['nama']) ?></h1></div>
   </div>
-  <?= nav_pen('/penjual'); ?>
-  <?php
-  $body = ob_get_clean();
-  layout('Home Penjual', $body, ['live' => 10000]);
+  <form method="post" action="/penjual/buka" class="stand-switch <?= $s['buka'] ? 'is-open' : '' ?>"<?= $s['buka'] ? ' data-confirm="Tutup stand sekarang? Pelanggan tidak bisa memesan sampai kamu membukanya lagi."' : '' ?>>
+    <div class="ss-txt"><b><?= $s['buka'] ? 'Stand sedang buka' : 'Stand sedang tutup' ?></b><small><?= $s['buka'] ? 'Pelanggan bisa memesan' : 'Pelanggan belum bisa memesan' ?></small></div>
+    <?= saklar((bool) $s['buka'], 'Buka atau tutup stand') ?>
+  </form>
+</header>
+<div class="bd seller-dashboard" id="live">
+  <?php if (!$s['buka']): ?>
+    <div class="closed-note"><?= ic('store', 20) ?><div><b>Stand sedang tutup</b><span>Pelanggan tidak bisa memesan sampai stand dibuka lagi.</span></div></div>
+  <?php endif; ?>
+  <section class="seller-stats <?= $s['buka'] ? '' : 'is-off' ?>" aria-label="Ringkasan hari ini">
+    <a class="seller-stat stat-new" href="/penjual/pesanan?status=baru"><span class="st-ic"><?= ic('bell', 18) ?></span><b><?= (int) $st['baru'] ?></b><small>Pesanan baru</small><span class="st-go">Perlu diterima <?= ic('arrow', 14) ?></span></a>
+    <a class="seller-stat stat-progress" href="/penjual/pesanan?status=diproses"><span class="st-ic"><?= ic('flame', 18) ?></span><b><?= (int) $st['diproses'] ?></b><small>Diproses</small><span class="st-go">Lihat pesanan <?= ic('arrow', 14) ?></span></a>
+    <a class="seller-stat stat-income" href="/penjual/pesanan?status=selesai"><span class="st-ic"><?= ic('check', 18) ?></span><b><?= (int) $st['selesai'] ?></b><small>Selesai</small><span class="st-go">Hari ini</span></a>
+    <a class="seller-stat stat-stock" href="/penjual/riwayat"><span class="st-ic"><?= ic('bowl', 18) ?></span><b><?= $terjual ?></b><small>Terjual hari ini</small><span class="st-go">Porsi <?= ic('arrow', 14) ?></span></a>
+  </section>
+  <section class="seller-recent">
+    <div class="seller-section-title"><h2><span class="sec-ic"><?= ic('clock', 16) ?></span>Pesanan terbaru</h2><a href="/penjual/pesanan">Lihat semua <?= ic('next', 16) ?></a></div>
+    <div class="seller-order-list">
+    <?php foreach ($os as $o) echo pen_kartu($o);
+    if (!$os) echo empty_state('receipt', 'Belum ada pesanan', 'Pesanan yang masuk akan muncul di sini.'); ?>
+    </div>
+  </section>
+</div>
+<?= nav_pen('/penjual') ?>
+<?php
+  layout('Beranda Penjual', ob_get_clean(), ['live' => 10000]);
 }
 
-function r_pen_riwayat(): void
+// ------------------------------------------------------------------ PESANAN (kelola pesanan masuk)
+function r_pen_pesanan(): void
 {
   $m = need('penjual');
   $s = stand_saya($m);
-  $filters = ['semua' => 'Semua', 'baru' => 'Baru', 'diproses' => 'Proses', 'siap' => 'Siap', 'selesai' => 'Selesai', 'batal' => 'Batal'];
+  $sid = (int) $s['id'];
+  $tabs = ['baru' => 'Baru', 'diproses' => 'Proses', 'siap' => 'Siap', 'selesai' => 'Selesai'];
   $status = $_GET['status'] ?? 'baru';
-  if (!isset($filters[$status]))
-    $status = 'baru';
-  $where = 'p.stand_id = :s';
-  $par = [':s' => (int) $s['id']];
-  if ($status !== 'semua') {
-    $where .= ' AND p.status = :status';
-    $par[':status'] = $status;
-  }
-  $os = pesanan_muat($where, $par, 'ORDER BY p.created_at DESC LIMIT 60');
+  if (!isset($tabs[$status])) $status = 'baru';
   $cnt = [];
-  foreach (db_sql('SELECT status, COUNT(*) AS n FROM pesanan WHERE stand_id = :s GROUP BY status', [':s' => (int) $s['id']]) as $r) {
+  foreach (db_sql("SELECT status, COUNT(*) AS n FROM pesanan WHERE stand_id = :s AND (status <> 'selesai' OR created_at::date = CURRENT_DATE) GROUP BY status", [':s' => $sid]) as $r) {
     $cnt[$r['status']] = (int) $r['n'];
   }
-  $cnt['semua'] = array_sum($cnt);
-  $kosong = ['semua' => 'Belum ada pesanan masuk.', 'baru' => 'Tidak ada pesanan baru.', 'diproses' => 'Tidak ada pesanan yang sedang diproses.', 'siap' => 'Tidak ada pesanan yang siap diambil.', 'selesai' => 'Belum ada pesanan selesai.', 'batal' => 'Tidak ada pesanan dibatalkan.'];
-  $next = ['baru' => ['diproses', 'Terima & proses'], 'diproses' => ['siap', 'Siap diambil'], 'siap' => ['selesai', 'Selesai (sudah diambil)']];
+  $where = 'p.stand_id = :s AND p.status = :st';
+  if ($status === 'selesai') $where .= ' AND p.created_at::date = CURRENT_DATE';
+  $os = pesanan_muat($where, [':s' => $sid, ':st' => $status], 'ORDER BY p.created_at DESC LIMIT 60');
+  $kosong = [
+    'baru' => ['Tidak ada pesanan baru', 'Pesanan yang baru dibayar pelanggan akan muncul di sini.'],
+    'diproses' => ['Tidak ada pesanan diproses', 'Pesanan yang sedang kamu siapkan tampil di sini.'],
+    'siap' => ['Tidak ada pesanan siap', 'Pesanan yang menunggu diambil pelanggan tampil di sini.'],
+    'selesai' => ['Belum ada pesanan selesai hari ini', 'Pesanan lama bisa dilihat di tab Riwayat.'],
+  ];
   ob_start(); ?>
-  <?= hdx('Riwayat pesanan', ic('store', 15) . '<span>' . e($s['nama']) . '</span><i class="dot"></i><span>Kios ' . e($s['kios']) . '</span>', ['icon' => 'receipt']) ?>
-  <div class="bd seller-history">
-    <nav class="seller-filters" aria-label="Filter status pesanan"><?php foreach ($filters as $key => $label): ?><a
-          href="/penjual/riwayat?status=<?= e($key) ?>"
-          class="<?= $status === $key ? 'on' : '' ?>"><?= e($label) ?><?php if (!empty($cnt[$key])): ?><em><?= (int) $cnt[$key] ?></em><?php endif; ?></a><?php endforeach; ?>
-    </nav>
-    <div id="live" class="seller-order-list">
-      <?php foreach ($os as $o): ?>
-        <div class="box ocard seller-order">
-          <div class="row">
-            <div><small
-                class="mut"><?= waktu($o['created_at']) ?><?= !empty($o['pelanggan_nama']) ? ' · ' . e($o['pelanggan_nama']) : '' ?></small><b>#<?= e($o['kode']) ?>
-                · <?= e(LAY[$o['layanan']] ?? '') ?></b></div><?= tag($o['status']) ?>
-          </div>
-          <ul class="lines"><?php foreach ($o['pesanan_item'] as $i): ?>
-              <li><b><?= (int) $i['jumlah'] ?> x</b>
-                <?= e($i['nama']) ?>       <?= $i['catatan'] ? ' <small class="mut">(' . e($i['catatan']) . ')</small>' : '' ?>
-              </li>
-            <?php endforeach; ?>
-          </ul>
-          <div class="row seller-order-foot"><span><?= count($o['pesanan_item']) ?> item</span><b><?= rp($o['total']) ?></b>
-          </div>
-          <?= html_bukti_pembeli($o) ?>
-          <?php if (isset($next[$o['status']])):
-            [$to, $lb] = $next[$o['status']]; ?>
-            <div class="btns" style="margin-top:12px">
-              <?php if ($o['status'] !== 'siap'): ?>
-                <form method="post" action="/penjual/status" data-confirm="Batalkan pesanan ini? Stok akan dikembalikan."><input
-                    type="hidden" name="id" value="<?= (int) $o['id'] ?>"><input type="hidden" name="status"
-                    value="batal"><button class="btn sm sec">Batalkan</button></form><?php endif; ?>
-              <form method="post" action="/penjual/status"><input type="hidden" name="id" value="<?= (int) $o['id'] ?>"><input
-                  type="hidden" name="status" value="<?= $to ?>"><button class="btn sm"><?= e($lb) ?></button></form>
-            </div><?php endif; ?>
-        </div>
-      <?php endforeach;
-      if (!$os)
-        echo empty_state('receipt', $kosong[$status], 'Pesanan akan muncul di sini otomatis.'); ?>
-    </div>
-  </div><?= nav_pen('/penjual/riwayat');
-  layout('Riwayat Pesanan', ob_get_clean(), ['live' => in_array($status, ['semua', 'baru', 'diproses', 'siap'], true) ? 6000 : 0]);
+<?= hdx('Pesanan', ic('store', 15) . '<span>' . e($s['nama']) . '</span><i class="dot"></i><span>Kios ' . e($s['kios']) . '</span>', ['icon' => 'bell', 'count' => $cnt['baru'] ?? 0]) ?>
+<div class="bd seller-history">
+  <nav class="seller-filters" aria-label="Filter status pesanan"><?php foreach ($tabs as $key => $label): ?><a href="/penjual/pesanan?status=<?= e($key) ?>" class="<?= $status === $key ? 'on' : '' ?>"><?= e($label) ?><?php if (!empty($cnt[$key])): ?><em><?= (int) $cnt[$key] ?></em><?php endif; ?></a><?php endforeach; ?></nav>
+  <div id="live" class="seller-order-list">
+    <?php foreach ($os as $o) echo pen_kartu($o);
+    if (!$os) echo empty_state('receipt', $kosong[$status][0], $kosong[$status][1]); ?>
+  </div>
+</div>
+<?= nav_pen('/penjual/pesanan');
+  layout('Pesanan', ob_get_clean(), ['live' => $status === 'selesai' ? 0 : 6000]);
+}
+
+// ------------------------------------------------------------------ DETAIL PESANAN
+function r_pen_pesanan_detail(): void
+{
+  $m = need('penjual');
+  $s = stand_saya($m);
+  $id = (int) ($_GET['id'] ?? 0);
+  $o = pesanan_muat("p.id = :id AND p.stand_id = :s AND p.status <> 'menunggu_bayar'", [':id' => $id, ':s' => (int) $s['id']])[0] ?? null;
+  if (!$o) {
+    flash('Pesanan tidak ditemukan.');
+    redirect('/penjual/pesanan');
+  }
+  $st = $o['status'];
+  $langkah = ['Masuk', 'Diproses', 'Siap', 'Selesai'];
+  $idx = ['baru' => 0, 'diproses' => 1, 'siap' => 2, 'selesai' => 3][$st] ?? -1;
+  $next = ['baru' => ['diproses', 'Terima pesanan'], 'diproses' => ['siap', 'Siap diambil'], 'siap' => ['selesai', 'Selesai (sudah diambil)']];
+  $back = '/penjual/pesanan/detail?id=' . (int) $o['id'];
+  $aksi = isset($next[$st]);
+  ob_start(); ?>
+<?= hdx('Pesanan #' . e($o['kode']), tag($st) . '<span>' . waktu($o['created_at']) . '</span>', ['back' => '/penjual/pesanan']) ?>
+<div class="bd pd-page <?= $aksi ? 'has-foot' : '' ?>">
+  <section class="box pd-card">
+    <h2>Item pesanan</h2>
+    <ul class="pd-lines">
+      <?php foreach ($o['pesanan_item'] as $i): ?>
+        <li><div><b><?= (int) $i['jumlah'] ?> ×</b> <?= e($i['nama']) ?><?= $i['catatan'] ? '<small>Catatan: ' . e($i['catatan']) . '</small>' : '' ?></div><span><?= rp($i['harga'] * $i['jumlah']) ?></span></li>
+      <?php endforeach; ?>
+    </ul>
+    <div class="pd-total"><span>Total</span><b><?= rp($o['total']) ?></b></div>
+  </section>
+  <section class="box pd-card">
+    <h2>Pelanggan</h2>
+    <dl class="pd-info">
+      <div><dt>Nama</dt><dd><?= e($o['pelanggan_nama'] ?? '-') ?></dd></div>
+      <div><dt>Layanan</dt><dd><?= e(LAY[$o['layanan']] ?? '') ?></dd></div>
+      <div><dt>Pembayaran</dt><dd>QRIS</dd></div>
+    </dl>
+    <?= html_bukti_pembeli($o) ?>
+  </section>
+  <section class="box pd-card">
+    <h2>Status pesanan</h2>
+    <?php if ($st === 'batal'): ?>
+      <div class="pd-batal"><?= ic('x', 18) ?>Pesanan ini dibatalkan.</div>
+    <?php else: ?>
+      <ol class="stepper">
+        <?php foreach ($langkah as $n => $l):
+          $kls = ($n < $idx || $st === 'selesai') ? 'done' : ($n === $idx ? 'on' : ''); ?>
+          <li class="<?= $kls ?>"><i><?= $kls === 'done' ? ic('check', 14) : $n + 1 ?></i><span><?= $l ?></span></li>
+        <?php endforeach; ?>
+      </ol>
+    <?php endif; ?>
+  </section>
+</div>
+<?php if ($aksi): [$to, $lb] = $next[$st]; ?>
+<div class="foot pd-foot">
+  <?php if ($st !== 'siap'): ?>
+    <form method="post" action="/penjual/status" data-confirm="Batalkan pesanan ini? Stok akan dikembalikan."><input type="hidden" name="id" value="<?= (int) $o['id'] ?>"><input type="hidden" name="status" value="batal"><input type="hidden" name="back" value="<?= e($back) ?>"><button class="btn sec">Batalkan</button></form>
+  <?php endif; ?>
+  <form method="post" action="/penjual/status"><input type="hidden" name="id" value="<?= (int) $o['id'] ?>"><input type="hidden" name="status" value="<?= e($to) ?>"><input type="hidden" name="back" value="<?= e($back) ?>"><button class="btn"><?= e($lb) ?></button></form>
+</div>
+<?php endif;
+  layout('Pesanan #' . $o['kode'], ob_get_clean(), ['live' => $aksi ? 8000 : 0]);
 }
 
 function r_pen_status(): void
@@ -205,7 +239,90 @@ function r_pen_status(): void
   } catch (SbError $x) {
     flash($x->getMessage());
   }
-  redirect('/penjual');
+  // kembali ke halaman asal (hanya halaman penjual yang diizinkan)
+  $back = (string) ($_POST['back'] ?? '');
+  redirect(preg_match('#^/penjual/pesanan(/detail\?id=\d+)?$#', $back) ? $back : '/penjual/pesanan');
+}
+
+// ------------------------------------------------------------------ RIWAYAT PENJUALAN
+function r_pen_riwayat(): void
+{
+  $m = need('penjual');
+  $s = stand_saya($m);
+  $sid = (int) $s['id'];
+  $tabs = ['hari' => 'Hari ini', '7' => '7 Hari', 'bulan' => 'Bulan ini'];
+  $r = $_GET['r'] ?? 'hari';
+  if (!isset($tabs[$r])) $r = 'hari';
+  $bln = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  $ini = ['S', 'S', 'R', 'K', 'J', 'S', 'M']; // Senin..Minggu
+  $today = new DateTime(db_sql('SELECT CURRENT_DATE::text AS t')[0]['t']);
+  $tg = fn(DateTime $d) => $d->format('j') . ' ' . $bln[(int) $d->format('n') - 1];
+
+  if ($r === 'hari') {
+    $cond = 'created_at::date = CURRENT_DATE';
+    $kunci = "EXTRACT(HOUR FROM created_at)::int::text";
+    $bar = [];
+    for ($h = 7; $h <= 20; $h++) $bar[(string) $h] = ['l' => (string) $h, 'n' => 0, 'rp' => 0];
+    $label = $tg($today);
+  } elseif ($r === '7') {
+    $cond = 'created_at::date >= CURRENT_DATE - 6';
+    $kunci = 'created_at::date::text';
+    $bar = [];
+    for ($i = 6; $i >= 0; $i--) {
+      $d = (clone $today)->modify("-$i day");
+      $bar[$d->format('Y-m-d')] = ['l' => $ini[(int) $d->format('N') - 1], 'n' => 0, 'rp' => 0];
+    }
+    $label = $tg((clone $today)->modify('-6 day')) . ' – ' . $tg($today);
+  } else {
+    $cond = "created_at::date >= date_trunc('month', CURRENT_DATE)::date";
+    $kunci = 'created_at::date::text';
+    $bar = [];
+    for ($i = 1; $i <= (int) $today->format('j'); $i++) {
+      $d = new DateTime($today->format('Y-m-') . sprintf('%02d', $i));
+      $bar[$d->format('Y-m-d')] = ['l' => ($i === 1 || $i % 5 === 0) ? (string) $i : '', 'n' => 0, 'rp' => 0];
+    }
+    $label = $bln[(int) $today->format('n') - 1] . ' ' . $today->format('Y');
+  }
+  foreach (db_sql("SELECT $kunci AS k, COUNT(*) AS n, COALESCE(SUM(total), 0) AS rp
+        FROM pesanan WHERE stand_id = :s AND status = 'selesai' AND $cond GROUP BY 1", [':s' => $sid]) as $row) {
+    if (isset($bar[$row['k']])) {
+      $bar[$row['k']]['n'] = (int) $row['n'];
+      $bar[$row['k']]['rp'] = (int) $row['rp'];
+    }
+  }
+  $totN = array_sum(array_column($bar, 'n'));
+  $totRp = array_sum(array_column($bar, 'rp'));
+  $maks = max(1, max(array_column($bar, 'rp')));
+  $os = pesanan_muat("p.stand_id = :s AND p.status = 'selesai' AND p." . $cond, [':s' => $sid], 'ORDER BY p.created_at DESC LIMIT 30');
+  ob_start(); ?>
+<?= hdx('Riwayat', ic('store', 15) . '<span>' . e($s['nama']) . '</span><i class="dot"></i><span>Kios ' . e($s['kios']) . '</span>', ['icon' => 'clock']) ?>
+<div class="bd seller-history">
+  <nav class="seller-filters" aria-label="Rentang waktu"><?php foreach ($tabs as $k => $l): ?><a href="/penjual/riwayat?r=<?= e((string) $k) ?>" class="<?= $r === (string) $k ? 'on' : '' ?>"><?= e($l) ?></a><?php endforeach; ?></nav>
+  <section class="box chart-card">
+    <div class="chart-head"><div><small>Pendapatan</small><span class="mut"><?= ic('calendar', 13) ?><?= e($label) ?></span></div><b><?= rp_ringkas($totRp) ?></b></div>
+    <div class="bars" role="img" aria-label="Grafik pendapatan <?= e($label) ?>">
+      <?php foreach ($bar as $b): $pct = $b['rp'] > 0 ? max(6, round($b['rp'] / $maks * 100)) : 0; ?>
+        <div class="bar-col" title="<?= e(rp($b['rp'])) ?> · <?= (int) $b['n'] ?> pesanan"><div class="bar-track"><div class="bar <?= ($b['rp'] === $maks && $maks > 1) ? 'peak' : '' ?> <?= $pct ? '' : 'nol' ?>" style="height:<?= $pct ?>%"></div></div><span><?= e($b['l']) ?></span></div>
+      <?php endforeach; ?>
+    </div>
+  </section>
+  <section class="sum-row">
+    <div class="sum sum-green"><small>Pesanan selesai</small><b><?= $totN ?></b></div>
+    <div class="sum sum-amber"><small>Pendapatan</small><b><?= rp_ringkas($totRp) ?></b></div>
+  </section>
+  <div class="seller-section-title"><h2><span class="sec-ic"><?= ic('receipt', 16) ?></span>Pesanan selesai</h2></div>
+  <div class="seller-order-list">
+    <?php foreach ($os as $o): ?>
+      <a class="box ocard so" href="/penjual/pesanan/detail?id=<?= (int) $o['id'] ?>">
+        <div class="so-top"><b>#<?= e($o['kode']) ?></b><strong><?= rp($o['total']) ?></strong></div>
+        <div class="so-foot"><span class="mut"><?= waktu($o['created_at']) ?><?= !empty($o['pelanggan_nama']) ? ' · ' . e($o['pelanggan_nama']) : '' ?></span><span class="lay lay-<?= e($o['layanan']) ?>"><?= e(LAY[$o['layanan']] ?? '') ?></span></div>
+      </a>
+    <?php endforeach;
+    if (!$os) echo empty_state('receipt', 'Belum ada penjualan', 'Pesanan yang sudah selesai akan tercatat di sini.'); ?>
+  </div>
+</div>
+<?= nav_pen('/penjual/riwayat');
+  layout('Riwayat Penjualan', ob_get_clean());
 }
 
 function r_pen_buka(): void
@@ -218,63 +335,112 @@ function r_pen_buka(): void
   redirect($to);
 }
 
+// ------------------------------------------------------------------ MENU
 function r_pen_menu(): void
 {
   $m = need('penjual');
   $s = stand_saya($m);
-  $menu = db_get('menu?select=id,nama,harga,stok,tersedia,foto_url,kategori_id&stand_id=eq.' . (int) $s['id'] . '&order=nama');
-  $kat = db_get('kategori?select=id,nama&order=nama');
-  $opt = fn($sel) => '<option value="">Tanpa kategori</option>' . implode('', array_map(fn($k) => '<option value="' . (int) $k['id'] . '"' . ((int) $sel === (int) $k['id'] ? ' selected' : '') . '>' . e($k['nama']) . '</option>', $kat));
+  $menu = db_sql('SELECT m.id, m.nama, m.harga, m.stok, m.tersedia, m.foto_url, k.nama AS kategori
+                  FROM menu m LEFT JOIN kategori k ON k.id = m.kategori_id
+                  WHERE m.stand_id = :s ORDER BY m.nama', [':s' => (int) $s['id']]);
   $jmlAktif = count(array_filter($menu, fn($i) => $i['tersedia'] && $i['stok'] > 0));
   ob_start();
   ?>
-  <?= hdx('Menu', ic('store', 15) . '<span>' . e($s['nama']) . '</span><i class="dot"></i><span>' . count($menu) . ' menu, ' . $jmlAktif . ' tersedia</span>', ['extra' => '<a href="#tambah-menu" class="hx-add" data-details="tambah-menu">' . ic('plus', 18) . '<span>Tambah menu</span></a>']) ?>
+  <?= hdx('Menu', ic('store', 15) . '<span>' . e($s['nama']) . '</span><i class="dot"></i><span>' . count($menu) . ' menu, ' . $jmlAktif . ' tersedia</span>', ['extra' => '<a href="/penjual/menu/edit" class="hx-add">' . ic('plus', 18) . '<span>Tambah menu</span></a>']) ?>
   <div class="bd seller-menu-page">
-    <details class="box seller-add-menu" id="tambah-menu">
-      <summary><b>Tambah menu baru</b><span>＋</span></summary>
-      <form method="post" action="/penjual/menu/tambah" class="frm" enctype="multipart/form-data">
-        <label>Nama menu<input name="nama" placeholder="Contoh: Nasi ayam" required
-            maxlength="60"></label><label>Harga<input name="harga" type="number" min="0" placeholder="Harga (Rp)"
-            required></label><label>Stok<input name="stok" type="number" min="0" placeholder="Jumlah stok"
-            required></label>
-        <select name="kategori_id"><?= $opt(0) ?></select>
-        <label>Foto (JPG/PNG/WebP, maks 2 MB)<input name="foto" type="file"
-            accept="image/jpeg,image/png,image/webp"></label>
-        <button class="btn sm">Simpan menu</button>
-      </form>
-    </details>
-    <?php foreach ($menu as $i): ?>
-      <article class="box seller-menu-item">
-        <div class="seller-menu-preview">
+    <?php if ($menu): ?>
+      <label class="search search-flat"><span class="search-ic"><?= ic('search', 18) ?></span><input type="search" placeholder="Cari menu" aria-label="Cari menu" autocomplete="off" data-list-search="menu-list"></label>
+    <?php endif; ?>
+    <div id="menu-list">
+    <?php foreach ($menu as $i): $habis = (int) $i['stok'] <= 0; ?>
+      <article class="box mrow" data-row>
+        <a class="mrow-main" href="/penjual/menu/edit?id=<?= (int) $i['id'] ?>">
           <div class="seller-menu-photo"><?= img($i['foto_url'] ?? null) ?></div>
           <div class="seller-menu-info">
-            <b><?= e($i['nama']) ?></b><strong><?= rp($i['harga']) ?></strong><small><?= (int) $i['stok'] ?> stok</small>
-            <span
-              class="mi-pill <?= $i['stok'] > 0 && $i['tersedia'] ? 'ok' : 'off' ?>"><?= $i['stok'] > 0 && $i['tersedia'] ? 'Tersedia' : 'Habis / nonaktif' ?></span>
+            <b><?= e($i['nama']) ?></b>
+            <strong><?= rp($i['harga']) ?></strong>
+            <small>Stok <?= (int) $i['stok'] ?><?= !empty($i['kategori']) ? ' · ' . e($i['kategori']) : '' ?></small>
+            <?php if ($habis): ?><span class="mi-pill off">Stok habis</span><?php endif; ?>
           </div>
-        </div>
-        <details class="seller-edit-menu">
-          <summary>Edit menu <span>⌄</span></summary>
-          <form method="post" action="/penjual/menu/simpan" class="frm" enctype="multipart/form-data">
-            <input type="hidden" name="id" value="<?= (int) $i['id'] ?>">
-            <label>Harga<input name="harga" type="number" min="0" value="<?= (int) $i['harga'] ?>" required></label>
-            <label>Stok<input name="stok" type="number" min="0" value="<?= (int) $i['stok'] ?>" required></label>
-            <label>Kategori<select name="kategori_id"><?= $opt($i['kategori_id'] ?? 0) ?></select></label>
-            <label>Ganti foto (kosongkan jika tidak diganti)<input name="foto" type="file"
-                accept="image/jpeg,image/png,image/webp"></label>
-            <label class="chk"><input type="checkbox" name="tersedia" value="1" <?= $i['tersedia'] ? 'checked' : '' ?>>
-              Tampilkan di menu</label>
-            <div class="btns"><button class="btn sm">Simpan perubahan</button></div>
-          </form>
-          <form method="post" action="/penjual/menu/hapus" data-confirm="Hapus menu ini?" style="margin-top:8px"><input
-              type="hidden" name="id" value="<?= (int) $i['id'] ?>"><button class="btn sm sec">Hapus menu</button></form>
-        </details>
+        </a>
+        <form method="post" action="/penjual/menu/toggle" class="mrow-sw">
+          <input type="hidden" name="id" value="<?= (int) $i['id'] ?>">
+          <?= saklar((bool) $i['tersedia'], 'Tampilkan ' . $i['nama'] . ' di menu') ?>
+        </form>
       </article>
-    <?php endforeach;
-    if (!$menu)
-      echo empty_state('bowl', 'Belum ada menu', 'Tambahkan menu pertamamu supaya pelanggan bisa memesan.'); ?>
+    <?php endforeach; ?>
+    </div>
+    <?php if (!$menu)
+      echo empty_state('bowl', 'Belum ada menu', 'Tambahkan menu pertamamu supaya pelanggan bisa memesan.', '/penjual/menu/edit', 'Tambah menu'); ?>
   </div><?= nav_pen('/penjual/menu');
   layout('Kelola Menu', ob_get_clean());
+}
+
+function r_pen_menu_edit(): void
+{
+  $m = need('penjual');
+  $s = stand_saya($m);
+  $id = (int) ($_GET['id'] ?? 0);
+  $i = null;
+  if ($id) {
+    $i = db_get('menu?select=id,nama,harga,stok,tersedia,foto_url,kategori_id&id=eq.' . $id . '&stand_id=eq.' . (int) $s['id'])[0] ?? null;
+    if (!$i) {
+      flash('Menu tidak ditemukan.');
+      redirect('/penjual/menu');
+    }
+  }
+  $kat = db_get('kategori?select=id,nama&order=nama');
+  $sel = (int) ($i['kategori_id'] ?? 0);
+  $opt = '<option value="">Tanpa kategori</option>' . implode('', array_map(fn($k) => '<option value="' . (int) $k['id'] . '"' . ($sel === (int) $k['id'] ? ' selected' : '') . '>' . e($k['nama']) . '</option>', $kat));
+  ob_start(); ?>
+<?= hdx($i ? 'Edit menu' : 'Tambah menu', ic('store', 15) . '<span>' . e($s['nama']) . '</span>', ['back' => '/penjual/menu']) ?>
+<form method="post" action="/penjual/menu/<?= $i ? 'simpan' : 'tambah' ?>" enctype="multipart/form-data" class="bd edit-menu">
+  <?php if ($i): ?><input type="hidden" name="id" value="<?= (int) $i['id'] ?>"><?php endif; ?>
+  <label class="em-photo" data-preview>
+    <span class="em-photo-img"><?= $i ? img($i['foto_url'] ?? null) : '<span class="ph">' . ic('image', 34) . '</span>' ?></span>
+    <span class="em-photo-btn"><?= ic('image', 16) ?><?= $i ? 'Ganti foto' : 'Tambah foto' ?></span>
+    <input name="foto" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+  </label>
+  <small class="mut em-hint">JPG, PNG, atau WebP, maksimal 2 MB.</small>
+  <label class="em-f">Nama menu<input name="nama" maxlength="60" required placeholder="Contoh: Nasi goreng" value="<?= e($i['nama'] ?? '') ?>"></label>
+  <div class="em-2">
+    <label class="em-f">Harga<input name="harga" type="number" min="0" required placeholder="12000" inputmode="numeric" value="<?= $i ? (int) $i['harga'] : '' ?>"></label>
+    <label class="em-f">Kategori<select name="kategori_id"><?= $opt ?></select></label>
+  </div>
+  <div class="em-card em-stok">
+    <div><b>Stok online</b><small>Jatah untuk pesanan PICO</small></div>
+    <div class="stepper-in" data-stepper>
+      <button type="button" data-step="-1" aria-label="Kurangi stok"><?= ic('minus', 16) ?></button>
+      <input name="stok" type="number" min="0" required inputmode="numeric" value="<?= $i ? (int) $i['stok'] : 10 ?>" aria-label="Stok">
+      <button type="button" data-step="1" aria-label="Tambah stok"><?= ic('plus', 16) ?></button>
+    </div>
+  </div>
+  <div class="em-card em-tersedia">
+    <div><b>Tersedia</b><small>Tampilkan menu ini ke pelanggan</small></div>
+    <label class="tgl"><input type="checkbox" name="tersedia" value="1" <?= (!$i || $i['tersedia']) ? 'checked' : '' ?>><span class="sw-vis"><i></i></span></label>
+  </div>
+  <div class="foot pd-foot"><button class="btn"><?= $i ? 'Simpan perubahan' : 'Simpan menu' ?></button></div>
+</form>
+<?php if ($i): ?>
+  <form method="post" action="/penjual/menu/hapus" data-confirm="Hapus menu ini? Tindakan ini tidak bisa dibatalkan." class="em-del"><input type="hidden" name="id" value="<?= (int) $i['id'] ?>"><button class="link-danger"><?= ic('trash', 16) ?>Hapus menu</button></form>
+<?php endif;
+  layout($i ? 'Edit Menu' : 'Tambah Menu', ob_get_clean());
+}
+
+function r_pen_menu_toggle(): void
+{
+  $m = need('penjual');
+  $s = stand_saya($m);
+  $id = (int) ($_POST['id'] ?? 0);
+  try {
+    $cur = db_get('menu?select=tersedia&id=eq.' . $id . '&stand_id=eq.' . (int) $s['id'])[0] ?? null;
+    if (!$cur) throw new SbError('Menu tidak ditemukan.');
+    db_write('PATCH', 'menu?id=eq.' . $id . '&stand_id=eq.' . (int) $s['id'], ['tersedia' => !$cur['tersedia']]);
+    flash($cur['tersedia'] ? 'Menu disembunyikan dari pelanggan' : 'Menu ditampilkan');
+  } catch (SbError $x) {
+    flash($x->getMessage());
+  }
+  redirect('/penjual/menu');
 }
 
 function r_pen_menu_tambah(): void
@@ -289,7 +455,7 @@ function r_pen_menu_tambah(): void
       'harga' => max(0, (int) ($_POST['harga'] ?? 0)),
       'stok' => max(0, (int) ($_POST['stok'] ?? 0)),
       'kategori_id' => $k ?: null,
-      'tersedia' => true,
+      'tersedia' => ($_POST['tersedia'] ?? '') === '1',
     ]);
     flash('Menu ditambahkan');
     if (($_FILES['foto']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK && !empty($r[0]['id'])) {
@@ -311,13 +477,16 @@ function r_pen_menu_simpan(): void
   $s = stand_saya($m);
   $k = (int) ($_POST['kategori_id'] ?? 0);
   $id = (int) ($_POST['id'] ?? 0);
+  $nama = trim($_POST['nama'] ?? '');
   try {
-    $r = db_write('PATCH', 'menu?id=eq.' . $id . '&stand_id=eq.' . (int) $s['id'], [
+    $data = [
       'harga' => max(0, (int) ($_POST['harga'] ?? 0)),
       'stok' => max(0, (int) ($_POST['stok'] ?? 0)),
       'kategori_id' => $k ?: null,
       'tersedia' => ($_POST['tersedia'] ?? '') === '1',
-    ]);
+    ];
+    if ($nama !== '') $data['nama'] = $nama;
+    $r = db_write('PATCH', 'menu?id=eq.' . $id . '&stand_id=eq.' . (int) $s['id'], $data);
     flash('Menu disimpan');
     if ($r && ($_FILES['foto']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
       try {
@@ -559,7 +728,7 @@ function r_pen_profil(): void
       </div>
     </div>
     <div class="sp-dlg-btns">
-      <a href="/penjual/riwayat?status=selesai" class="btn" style="text-align:center;text-decoration:none">Lihat Riwayat
+      <a href="/penjual/riwayat?r=7" class="btn" style="text-align:center;text-decoration:none">Lihat Riwayat
         Selesai</a>
       <button type="button" class="btn sec" data-sp-close>Tutup</button>
     </div>

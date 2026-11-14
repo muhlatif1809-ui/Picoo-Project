@@ -84,7 +84,7 @@ function r_login_post(): void
   try {
     save_session(auth_login((string) $email, $pw));
   } catch (SbError $x) {
-    flash('Username atau password salah.');
+    flash($x->getCode() === 403 ? $x->getMessage() : 'Username atau password salah.');
     redirect($back);
   }
   $m = me();
@@ -239,32 +239,66 @@ function r_home(): void
   $cari = trim($_GET['cari'] ?? '');
   $stands = db_sql('SELECT s.id, s.nama, s.kios, s.buka, s.foto_url, (SELECT count(*) FROM menu m WHERE m.stand_id = s.id) AS jml_menu
                       FROM stands s ORDER BY s.kios');
+  $items = [];
   if ($cari !== '') {
+    // Mencari: tampilkan makanannya langsung (satu menu bisa muncul dari beberapa kedai),
+    // lalu stand yang namanya cocok.
     $t = lc($cari);
-    $safe = str_replace(['*', '(', ')', ',', '%'], '', $cari);
-    $hit = array_column(db_get('menu?select=stand_id&nama=ilike.' . rawurlencode('*' . $safe . '*')), 'stand_id');
-    $stands = array_values(array_filter($stands, fn($s) => str_contains(lc($s['nama']), $t) || in_array($s['id'], $hit)));
+    $safe = str_replace(['%', '_', '\\'], '', $cari);
+    $stands = array_values(array_filter($stands, fn($s) => str_contains(lc($s['nama']), $t)));
+    $items = db_sql('SELECT m.id, m.nama, m.harga, m.stok, m.tersedia, m.foto_url,
+                            s.id AS stand_id, s.nama AS stand_nama, s.kios, s.buka
+                     FROM menu m JOIN stands s ON s.id = m.stand_id
+                     WHERE m.nama ILIKE :q
+                     ORDER BY (s.buka AND m.tersedia AND m.stok > 0) DESC, m.nama, s.kios
+                     LIMIT 40', [':q' => '%' . $safe . '%']);
   }
   ob_start(); ?>
   <header class="hd"><small>Halo, <?= e($m['nama']) ?></small>
     <h1>Mau makan apa hari ini?</h1>
-    <form method="get" action="/home" data-live-search><label class="search"><span class="search-ic search-icon"><?= ic('search', 18) ?></span><input name="cari" type="search"
+    <form method="get" action="/home" data-live-search><label class="search"><span class="search-ic"><?= ic('search', 18) ?></span><input name="cari" type="search"
           value="<?= e($cari) ?>" placeholder="Cari stand atau menu" aria-label="Cari stand atau menu"
           autocomplete="off"></label></form>
   </header>
   <div class="bd">
-    <div class="sec-head"><h3>Stand</h3><small><?= count($stands) ?> stand</small></div>
-    <?php foreach ($stands as $s):
-      $buka = $s['buka']; ?>
-      <a class="stand <?= $buka ? '' : 'off' ?>" href="/menu?stand=<?= (int) $s['id'] ?>">
-        <div class="thumb"><?= img($s['foto_url']) ?></div>
-        <div><b><?= e($s['nama']) ?></b><small>Kios
-            <?= e($s['kios']) ?></small><small><?= $buka ? (int) $s['jml_menu'] . ' Menu' : 'sedang tutup' ?></small></div>
-        <span class="badge <?= $buka ? '' : 'off' ?>"><?= $buka ? 'Buka' : 'Tutup' ?></span>
-      </a>
-    <?php endforeach;
-    if (!$stands)
-      echo empty_box('Stand tidak ditemukan.'); ?>
+    <?php if ($cari !== ''): ?>
+      <?php if ($items): ?>
+        <div class="sec-head"><h3>Menu</h3><small><?= count($items) ?> menu</small></div>
+        <?php foreach ($items as $i):
+          $ada = $i['buka'] && $i['tersedia'] && (int) $i['stok'] > 0; ?>
+          <a class="mres <?= $ada ? '' : 'off' ?>" href="/menu?stand=<?= (int) $i['stand_id'] ?>">
+            <div class="thumb"><?= img($i['foto_url']) ?></div>
+            <div class="mres-info"><b><?= e($i['nama']) ?></b>
+              <span class="mres-stand"><?= ic('store', 13) ?><?= e($i['stand_nama']) ?> · Kios <?= e($i['kios']) ?></span>
+              <strong><?= rp($i['harga']) ?></strong></div>
+            <span class="badge <?= $ada ? '' : 'off' ?>"><?= !$i['buka'] ? 'Tutup' : ($ada ? 'Tersedia' : 'Habis') ?></span>
+          </a>
+        <?php endforeach; endif; ?>
+      <?php if ($stands): ?>
+        <div class="sec-head"><h3>Stand</h3><small><?= count($stands) ?> stand</small></div>
+        <?php foreach ($stands as $s): $buka = $s['buka']; ?>
+          <a class="stand <?= $buka ? '' : 'off' ?>" href="/menu?stand=<?= (int) $s['id'] ?>">
+            <div class="thumb"><?= img($s['foto_url']) ?></div>
+            <div><b><?= e($s['nama']) ?></b><small>Kios <?= e($s['kios']) ?></small><small><?= $buka ? (int) $s['jml_menu'] . ' Menu' : 'sedang tutup' ?></small></div>
+            <span class="badge <?= $buka ? '' : 'off' ?>"><?= $buka ? 'Buka' : 'Tutup' ?></span>
+          </a>
+        <?php endforeach; endif; ?>
+      <?php if (!$items && !$stands)
+        echo empty_state('search', 'Tidak ditemukan', 'Coba kata kunci lain, misalnya nama makanan atau nama stand.'); ?>
+    <?php else: ?>
+      <div class="sec-head"><h3>Stand</h3><small><?= count($stands) ?> stand</small></div>
+      <?php foreach ($stands as $s):
+        $buka = $s['buka']; ?>
+        <a class="stand <?= $buka ? '' : 'off' ?>" href="/menu?stand=<?= (int) $s['id'] ?>">
+          <div class="thumb"><?= img($s['foto_url']) ?></div>
+          <div><b><?= e($s['nama']) ?></b><small>Kios
+              <?= e($s['kios']) ?></small><small><?= $buka ? (int) $s['jml_menu'] . ' Menu' : 'sedang tutup' ?></small></div>
+          <span class="badge <?= $buka ? '' : 'off' ?>"><?= $buka ? 'Buka' : 'Tutup' ?></span>
+        </a>
+      <?php endforeach;
+      if (!$stands)
+        echo empty_box('Belum ada stand.'); ?>
+    <?php endif; ?>
   </div><?= nav_pel('/home') ?>
   <?php layout('Home', ob_get_clean());
 }
@@ -629,11 +663,7 @@ function r_qris(): void
           </a>
           <button type="button" id="btn-zoom-qr" aria-label="Perbesar QR"
             style="border:1px solid #e2e8f0;background:#f8fafc;color:#334155;padding:9px 12px;border-radius:10px;font-size:.82rem;font-weight:600;cursor:pointer">
-            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none"
-              xmlns="http://www.w3.org/2000/svg">
-              <circle cx="11" cy="11" r="6.5" stroke="#000" stroke-width="2.2"/>
-              <path d="M16 16L21 21" stroke="#000" stroke-width="2.2" stroke-linecap="round"/>
-            </svg>
+            <?= ic('search', 18) ?>
           </button>
         </div>
       <?php else: ?>
