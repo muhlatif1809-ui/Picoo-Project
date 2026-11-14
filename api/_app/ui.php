@@ -107,7 +107,7 @@ function ic(string $k, int $size = 20): string
     ];
     $path = $P[$k] ?? $P['store'];
 
-    $stroke = $k === 'search' ? '#000' : 'currentColor';
+    $stroke = $k === 'search' ? '#1b2b48' : 'currentColor';
 
     return '<svg class="ic" viewBox="0 0 24 24" width="' . $size . '" height="' . $size
         . '" fill="none" stroke="' . $stroke . '" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="'

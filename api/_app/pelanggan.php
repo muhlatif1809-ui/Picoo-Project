@@ -248,7 +248,7 @@ function r_home(): void
   ob_start(); ?>
   <header class="hd"><small>Halo, <?= e($m['nama']) ?></small>
     <h1>Mau makan apa hari ini?</h1>
-    <form method="get" action="/home" data-live-search><label class="search"><span class="search-ic"><?= ic('search', 18) ?></span><input name="cari" type="search"
+    <form method="get" action="/home" data-live-search><label class="search"><span class="search-ic search-icon"><?= ic('search', 18) ?></span><input name="cari" type="search"
           value="<?= e($cari) ?>" placeholder="Cari stand atau menu" aria-label="Cari stand atau menu"
           autocomplete="off"></label></form>
   </header>

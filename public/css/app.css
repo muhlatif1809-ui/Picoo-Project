@@ -1974,7 +1974,10 @@ fieldset:disabled .btn {
 .search-ic {
   display: grid;
   place-items: center;
-  color: #000;
+  color: #1b2b48;
+}
+.search-icon .ic {
+  stroke: #1b2b48;
 }
 .search input {
   -webkit-appearance: none;
@@ -1990,7 +1993,7 @@ fieldset:disabled .btn {
     0 0 0 3px #f28c2880;
 }
 .search:focus-within .search-ic {
-  color: #000;
+  color: #1b2b48;
 }
 .search input:focus-visible {
   outline: 0;
