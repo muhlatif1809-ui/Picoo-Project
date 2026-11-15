@@ -256,37 +256,46 @@ function r_home(): void
   ob_start(); ?>
   <header class="hd"><small>Halo, <?= e($m['nama']) ?></small>
     <h1>Mau makan apa hari ini?</h1>
-    <form method="get" action="/home" data-live-search><label class="search"><span class="search-ic"><?= ic('search', 18) ?></span><input name="cari" type="search"
-          value="<?= e($cari) ?>" placeholder="Cari stand atau menu" aria-label="Cari stand atau menu"
-          autocomplete="off"></label></form>
+    <form method="get" action="/home" data-live-search><label class="search"><span
+          class="search-ic"><?= ic('search', 18) ?></span><input name="cari" type="search" value="<?= e($cari) ?>"
+          placeholder="Cari stand atau menu" aria-label="Cari stand atau menu" autocomplete="off"></label></form>
   </header>
   <div class="bd">
     <?php if ($cari !== ''): ?>
       <?php if ($items): ?>
-        <div class="sec-head"><h3>Menu</h3><small><?= count($items) ?> menu</small></div>
+        <div class="sec-head">
+          <h3>Menu</h3><small><?= count($items) ?> menu</small>
+        </div>
         <?php foreach ($items as $i):
           $ada = $i['buka'] && $i['tersedia'] && (int) $i['stok'] > 0; ?>
           <a class="mres <?= $ada ? '' : 'off' ?>" href="/menu?stand=<?= (int) $i['stand_id'] ?>">
             <div class="thumb"><?= img($i['foto_url']) ?></div>
             <div class="mres-info"><b><?= e($i['nama']) ?></b>
               <span class="mres-stand"><?= ic('store', 13) ?><?= e($i['stand_nama']) ?> · Kios <?= e($i['kios']) ?></span>
-              <strong><?= rp($i['harga']) ?></strong></div>
+              <strong><?= rp($i['harga']) ?></strong>
+            </div>
             <span class="badge <?= $ada ? '' : 'off' ?>"><?= !$i['buka'] ? 'Tutup' : ($ada ? 'Tersedia' : 'Habis') ?></span>
           </a>
         <?php endforeach; endif; ?>
       <?php if ($stands): ?>
-        <div class="sec-head"><h3>Stand</h3><small><?= count($stands) ?> stand</small></div>
-        <?php foreach ($stands as $s): $buka = $s['buka']; ?>
+        <div class="sec-head">
+          <h3>Stand</h3><small><?= count($stands) ?> stand</small>
+        </div>
+        <?php foreach ($stands as $s):
+          $buka = $s['buka']; ?>
           <a class="stand <?= $buka ? '' : 'off' ?>" href="/menu?stand=<?= (int) $s['id'] ?>">
             <div class="thumb"><?= img($s['foto_url']) ?></div>
-            <div><b><?= e($s['nama']) ?></b><small>Kios <?= e($s['kios']) ?></small><small><?= $buka ? (int) $s['jml_menu'] . ' Menu' : 'sedang tutup' ?></small></div>
+            <div><b><?= e($s['nama']) ?></b><small>Kios
+                <?= e($s['kios']) ?></small><small><?= $buka ? (int) $s['jml_menu'] . ' Menu' : 'sedang tutup' ?></small></div>
             <span class="badge <?= $buka ? '' : 'off' ?>"><?= $buka ? 'Buka' : 'Tutup' ?></span>
           </a>
         <?php endforeach; endif; ?>
       <?php if (!$items && !$stands)
         echo empty_state('search', 'Tidak ditemukan', 'Coba kata kunci lain, misalnya nama makanan atau nama stand.'); ?>
     <?php else: ?>
-      <div class="sec-head"><h3>Stand</h3><small><?= count($stands) ?> stand</small></div>
+      <div class="sec-head">
+        <h3>Stand</h3><small><?= count($stands) ?> stand</small>
+      </div>
       <?php foreach ($stands as $s):
         $buka = $s['buka']; ?>
         <a class="stand <?= $buka ? '' : 'off' ?>" href="/menu?stand=<?= (int) $s['id'] ?>">
@@ -323,7 +332,8 @@ function r_menu(): void
       <div class="hx-main">
         <h1><?= e($s['nama']) ?></h1>
         <div class="hx-meta">
-          <span class="status-pill <?= $s['buka'] ? 'is-open' : 'is-closed' ?>"><i></i><?= $s['buka'] ? 'Buka' : 'Tutup' ?></span>
+          <span
+            class="status-pill <?= $s['buka'] ? 'is-open' : 'is-closed' ?>"><i></i><?= $s['buka'] ? 'Buka' : 'Tutup' ?></span>
           <span class="hx-count-txt"><?= count($menu) ?> menu</span>
         </div>
       </div>
@@ -436,10 +446,11 @@ function r_cart(): void
       echo empty_state('cart', 'Keranjangmu masih kosong', 'Pilih stand di Home, lalu tambahkan menu yang kamu mau.', '/home', 'Lihat stand'); ?>
   </div>
   <?php if ($n): ?>
-  <div class="foot" style="bottom:64px">
-    <div class="row" style="margin-bottom:10px"><span class="mut"><?= $n ?> menu · Total</span><b><?= rp($d['total']) ?></b></div>
-    <a class="btn" href="/opsi">Checkout</a>
-  </div>
+    <div class="foot" style="bottom:64px">
+      <div class="row" style="margin-bottom:10px"><span class="mut"><?= $n ?> menu ·
+          Total</span><b><?= rp($d['total']) ?></b></div>
+      <a class="btn" href="/opsi">Checkout</a>
+    </div>
   <?php endif; ?>
   <?= nav_pel('/keranjang');
   layout('Keranjang', ob_get_clean());
@@ -920,8 +931,8 @@ function r_riwayat(): void
   echo hdx('Riwayat', 'Pesanan 30 hari terakhir', ['icon' => 'receipt']); ?>
   <div class="bd">
     <?php foreach ($l as $o): ?>
-      <a class="item order-item" href="/<?= $o['status'] === 'menunggu_bayar' ? 'qris' : 'status' ?>?id=<?= (int) $o['id'] ?>"
-        style="display:flex">
+      <a class="item order-item"
+        href="/<?= $o['status'] === 'menunggu_bayar' ? 'qris' : 'status' ?>?id=<?= (int) $o['id'] ?>" style="display:flex">
         <div class="t"><b>#<?= e($o['kode']) ?> · <?= e($o['stands']['nama'] ?? '') ?></b>
           <small><?= e(implode(', ', array_map(fn($i) => $i['jumlah'] . ' ' . $i['nama'], $o['pesanan_item']))) ?></small>
         </div>

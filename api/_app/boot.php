@@ -1033,7 +1033,7 @@ function foto_simpan(string $tabel, int $id, array $file): void
 }
 
 // Menyajikan foto di alamat /foto?t=menu&id=1 (termasuk qr, avatar, dan bukti)
-(function (): void {
+(function (): void{
     $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
     if (str_starts_with($path, '/PICO/')) {
         $path = substr($path, 5);

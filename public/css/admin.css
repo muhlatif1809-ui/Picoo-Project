@@ -1143,7 +1143,9 @@ details.adm-add[open] > summary {
   border-radius: 10px;
   background: #f1f3f8;
   color: #4b5469;
-  font: 600 0.82rem Inter, sans-serif;
+  font:
+    600 0.82rem Inter,
+    sans-serif;
   cursor: pointer;
 }
 .ic-btn:hover {
@@ -1207,7 +1209,9 @@ tr.is-off td.act-col {
   padding: 5px 10px;
   border: 0;
   border-radius: 8px;
-  font: 600 0.78rem Inter, sans-serif;
+  font:
+    600 0.78rem Inter,
+    sans-serif;
   cursor: pointer;
 }
 .ktm-act .ok {
@@ -1364,7 +1368,9 @@ tr.is-off td.act-col {
   border-radius: 12px;
   background: #fff;
   color: var(--ink);
-  font: 500 0.92rem Inter, sans-serif;
+  font:
+    500 0.92rem Inter,
+    sans-serif;
 }
 .af-wide {
   grid-column: 1 / -1;
@@ -1504,7 +1510,9 @@ tr.is-off td.act-col {
   border-radius: 10px;
   background: #fff;
   color: var(--ink);
-  font: 500 0.9rem Inter, sans-serif;
+  font:
+    500 0.9rem Inter,
+    sans-serif;
 }
 .lap-filter .btn {
   width: auto;
@@ -1559,7 +1567,9 @@ tr.is-off td.act-col {
   padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  font: 500 0.95rem Inter, sans-serif;
+  font:
+    500 0.95rem Inter,
+    sans-serif;
 }
 .adm-auth-err {
   min-height: 1.2em;

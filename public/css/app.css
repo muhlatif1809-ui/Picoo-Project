@@ -2915,7 +2915,9 @@ fieldset:disabled .btn {
   border-radius: 14px;
   background: #fff;
   color: var(--ink);
-  font: 500 0.95rem Inter, sans-serif;
+  font:
+    500 0.95rem Inter,
+    sans-serif;
 }
 .em-2 {
   display: grid;
@@ -2963,7 +2965,9 @@ fieldset:disabled .btn {
   border: 0;
   background: transparent;
   text-align: center;
-  font: 700 1.05rem Inter, sans-serif;
+  font:
+    700 1.05rem Inter,
+    sans-serif;
   color: var(--ink);
   -moz-appearance: textfield;
   appearance: textfield;
@@ -3031,7 +3035,9 @@ fieldset:disabled .btn {
   border: 0;
   background: none;
   color: #b42318;
-  font: 600 0.9rem Inter, sans-serif;
+  font:
+    600 0.9rem Inter,
+    sans-serif;
   cursor: pointer;
 }
 @media (prefers-reduced-motion: reduce) {
