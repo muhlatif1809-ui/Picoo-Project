@@ -44,7 +44,7 @@ function layout(string $title, string $body, array $o = []): void
         . '<meta charset="utf-8">'
         . '<meta name="viewport" content="width=device-width,initial-scale=1">'
         . '<title>' . e($title) . ' · PICO</title>'
-        . '<link rel="stylesheet" href="' . $base . '/css/' . e($css) . '.css">'
+        . '<link rel="stylesheet" href="' . $base . '/css/' . e($css) . '.css?v=' . aset_versi('css/' . $css . '.css') . '">'
         . '</head>'
         . '<body' . (!empty($o['live']) ? ' data-live="' . (int) $o['live'] . '"' : '') . '>'
         . '<div class="' . e($wrap) . '">' . $body . '</div>';
@@ -53,7 +53,7 @@ function layout(string $title, string $body, array $o = []): void
         echo '<div class="toast">' . e($fl) . '</div>';
     }
 
-    echo '<script src="' . $base . '/js/app.js"></script>'
+    echo '<script src="' . $base . '/js/app.js?v=' . aset_versi('js/app.js') . '"></script>'
         . '</body></html>';
 }
 
@@ -192,6 +192,18 @@ function empty_state(string $icon, string $title, string $text, string $href = '
     return '<div class="es"><div class="es-ic">' . ic($icon, 30) . '</div><h2>' . e($title) . '</h2><p>' . e($text) . '</p>'
         . ($href !== '' ? '<a class="btn es-btn" href="' . $href . '">' . e($btn) . '</a>' : '')
         . '</div>';
+}
+
+/**
+ * Penanda versi untuk file CSS/JS supaya browser memuat ulang setelah deploy.
+ * Memakai waktu ubah file; jika tidak terbaca di hosting, pakai angka cadangan
+ * (naikkan angkanya setiap kali CSS/JS berubah).
+ */
+function aset_versi(string $file): string
+{
+    $t = @filemtime(dirname(__DIR__, 2) . '/public/' . $file);
+
+    return $t ? (string) $t : 'r3';
 }
 
 /**
