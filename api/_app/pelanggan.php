@@ -1377,7 +1377,7 @@ function r_lupa_post(): void
     }
 
     pg_run(
-      'UPDATE profiles SET password_hash = :pw WHERE id = :id',
+      "UPDATE profiles SET password_hash = :pw WHERE id = :id AND LEFT(password_hash, 1) <> '!'",
       [':pw' => password_hash($p, PASSWORD_DEFAULT), ':id' => $row['id']]
     );
   } catch (SbError $x) {

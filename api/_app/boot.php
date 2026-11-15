@@ -267,50 +267,17 @@ function ensure_bukti_columns(): void
 }
 
 /**
- * Kolom "aktif" pada profiles: akun yang dinonaktifkan admin tidak bisa masuk.
- * Dibuat otomatis (sama seperti kolom bukti). Kalau tidak punya hak DDL,
- * jalankan sql/schema.sql secara manual.
+ * Akun yang dinonaktifkan admin: hash password diberi awalan "!" (seperti
+ * penguncian akun di Linux). Tidak butuh kolom atau tabel baru, tidak ada data
+ * yang hilang, dan bisa dibalik dengan melepas tanda "!".
  */
-function ensure_profil_aktif(): void
-{
-    static $checked = false;
-    if ($checked) {
-        return;
-    }
-    $checked = true;
-
-    try {
-        pdo()->exec('ALTER TABLE profiles ADD COLUMN IF NOT EXISTS aktif BOOLEAN NOT NULL DEFAULT TRUE');
-    } catch (Throwable $x) {
-        // Abaikan jika sudah ada atau tidak memiliki hak DDL
-    }
-}
-
-/** Apakah kolom profiles.aktif sudah ada? (dicek sekali per permintaan) */
-function profil_punya_aktif(): bool
-{
-    static $ada = null;
-    if ($ada !== null) {
-        return $ada;
-    }
-
-    try {
-        $ada = (bool) pg_run(
-            "SELECT 1 FROM information_schema.columns
-             WHERE table_name = 'profiles' AND column_name = 'aktif' LIMIT 1"
-        )->fetch();
-    } catch (Throwable $x) {
-        $ada = false;
-    }
-
-    return $ada;
-}
-
-/** True jika baris profil ini sudah dinonaktifkan. */
 function profil_nonaktif(array $row): bool
 {
-    return array_key_exists('aktif', $row)
-        && in_array($row['aktif'], [false, 0, '0', 'f', 'false'], true);
+    if (isset($row['password_hash']) && str_starts_with((string) $row['password_hash'], '!')) {
+        return true;
+    }
+
+    return in_array($row['nonaktif'] ?? false, [true, 1, '1', 't', 'true'], true);
 }
 
 function pg_ident(string $s): string
@@ -802,7 +769,8 @@ function auth_login(string $identifier, string $pw): array
 
     $row = pg_run(
         "SELECT id, password_hash,
-                (password_hash = crypt(:pw, password_hash)) AS crypt_ok
+                (CASE WHEN LEFT(password_hash, 1) = '!' THEN FALSE
+                      ELSE password_hash = crypt(:pw, password_hash) END) AS crypt_ok
          FROM profiles
          WHERE LOWER(username) = LOWER(:username)
             OR LOWER(email) = LOWER(:email)
@@ -831,19 +799,18 @@ function auth_login(string $identifier, string $pw): array
         true
     );
 
-    $phpOk = $row &&
-        !empty($row['password_hash']) &&
-        password_verify($pw, $row['password_hash']);
+    // Akun yang dikunci admin: cocokkan password dengan hash tanpa tanda "!"
+    $kunci = $row && str_starts_with((string) ($row['password_hash'] ?? ''), '!');
+    $hash = $kunci ? substr((string) $row['password_hash'], 1) : (string) ($row['password_hash'] ?? '');
+
+    $phpOk = $row && $hash !== '' && password_verify($pw, $hash);
 
     if (!$row || (!$phpOk && !$cryptOk)) {
         throw new SbError('Username atau password salah.', 400);
     }
 
-    if (profil_punya_aktif()) {
-        $a = pg_run('SELECT aktif FROM profiles WHERE id = :id', [':id' => $row['id']])->fetch();
-        if ($a && profil_nonaktif($a)) {
-            throw new SbError('Akun ini dinonaktifkan. Hubungi admin kantin.', 403);
-        }
+    if ($kunci) {
+        throw new SbError('Akun ini dinonaktifkan. Hubungi admin kantin.', 403);
     }
 
     return ['user_id' => $row['id']];

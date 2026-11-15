@@ -197,13 +197,11 @@ if (!$per) echo '<tr><td colspan="4" class="mut">Belum ada pesanan dibayar.</td>
 function r_adm_pengguna(): void
 {
     $me = adm_need();
-    ensure_profil_aktif();
     $role = $_GET['role'] ?? 'pelanggan';
     if (!in_array($role, ['pelanggan', 'penjual', 'admin'], true)) $role = 'pelanggan';
-    $bisaNonaktif = profil_punya_aktif();
-    $ak = $bisaNonaktif ? ', p.aktif' : '';
     $f = $_GET['ktm'] ?? '';
-    $u = db_sql("SELECT p.id, p.nama, p.username, p.email, p.no_hp, p.nim, p.role, p.created_at, p.ktm_status, s.nama AS stand_nama $ak
+    $u = db_sql("SELECT p.id, p.nama, p.username, p.email, p.no_hp, p.nim, p.role, p.created_at, p.ktm_status, s.nama AS stand_nama,
+                        (LEFT(p.password_hash, 1) = '!') AS nonaktif
                  FROM profiles p LEFT JOIN stands s ON s.penjual_id = p.id
                  WHERE p.role = :r ORDER BY p.created_at DESC LIMIT 500", [':r' => $role]);
     $menunggu = count(array_filter($u, fn($r) => ($r['ktm_status'] ?? '') === 'menunggu'));
@@ -217,7 +215,6 @@ function r_adm_pengguna(): void
     $dlg = '';
     ob_start(); ?>
 <?= adm_head('<span class="crumb">Pengguna</span> / ' . $judul, 'Kelola akun ' . strtolower($judul) . ' PICO.', '<a class="btn add-btn" href="/admin/pengguna/tambah">' . ic('plus', 18) . '<span>Tambah pengguna</span></a>') ?>
-<?php if (!$bisaNonaktif): ?><div class="adm-note">Fitur nonaktifkan akun belum aktif di database. Jalankan baris <code>ALTER TABLE profiles ADD COLUMN IF NOT EXISTS aktif BOOLEAN NOT NULL DEFAULT TRUE;</code> (ada di sql/schema.sql), lalu muat ulang halaman ini.</div><?php endif; ?>
 <div class="adm-user-tabs"><?php foreach (['pelanggan' => 'Pelanggan', 'penjual' => 'Penjual', 'admin' => 'Admin'] as $k => $l): ?><a href="/admin/pengguna?role=<?= $k ?>" class="<?= $role === $k ? 'on' : '' ?>"><?= $l ?></a><?php endforeach; ?></div>
 <div class="adm-toolbar"><label class="adm-search"><?= ic('search', 18) ?><input type="search" placeholder="Cari <?= e(strtolower($judul)) ?>" data-table-search="users-table"></label><span class="count-txt"><b><?= count($u) ?></b> akun</span>
   <?php if ($role === 'pelanggan'): ?><a class="ktm-link" href="/admin/pengguna?role=pelanggan<?= $f === 'menunggu' ? '' : '&amp;ktm=menunggu' ?>"><?= $f === 'menunggu' ? 'Tampilkan semua' : 'KTM menunggu verifikasi (' . $menunggu . ')' ?></a><?php endif; ?></div>
@@ -229,7 +226,7 @@ function r_adm_pengguna(): void
     <th class="act-col">Aksi</th></tr>
 <?php foreach ($u as $r):
     $ks = $r['ktm_status'] ?? '';
-    $nonaktif = $bisaNonaktif && profil_nonaktif($r);
+    $nonaktif = profil_nonaktif($r);
     $diri = (string) $r['id'] === (string) $me['id'];
     $vid = 'dlg-v-' . preg_replace('/[^a-zA-Z0-9]/', '', (string) $r['id']);
     $nid = 'dlg-n-' . preg_replace('/[^a-zA-Z0-9]/', '', (string) $r['id']);
@@ -243,10 +240,10 @@ function r_adm_pengguna(): void
     <?php if ($role === 'pelanggan'): ?><div><dt>NIM</dt><dd><?= e($r['nim'] ?: '-') ?></dd></div><?php endif; ?>
     <?php if ($role === 'penjual'): ?><div><dt>Stand</dt><dd><?= e($r['stand_nama'] ?: 'Belum terhubung') ?></dd></div><?php endif; ?>
     <div><dt>Terdaftar</dt><dd><?= waktu($r['created_at']) ?></dd></div>
-    <?php if ($bisaNonaktif): ?><div><dt>Status akun</dt><dd><?= $nonaktif ? 'Nonaktif' : 'Aktif' ?></dd></div><?php endif; ?>
+    <div><dt>Status akun</dt><dd><?= $nonaktif ? 'Nonaktif' : 'Aktif' ?></dd></div>
   </dl>
   <div class="ask-btns"><button type="button" class="btn" onclick="this.closest('dialog').close()">Tutup</button></div></dialog>
-<?php if ($bisaNonaktif && !$diri) echo adm_dialog_konfirmasi($nid, $nonaktif ? 'Aktifkan akun?' : 'Nonaktifkan akun?',
+<?php if (!$diri) echo adm_dialog_konfirmasi($nid, $nonaktif ? 'Aktifkan akun?' : 'Nonaktifkan akun?',
         $nonaktif ? $r['nama'] . ' akan bisa masuk lagi ke PICO.' : $r['nama'] . ' tidak akan bisa masuk sampai akunnya diaktifkan kembali. Datanya tetap tersimpan.',
         '/admin/pengguna/status', ['id' => $r['id'], 'aksi' => $nonaktif ? 'aktif' : 'nonaktif', 'role' => $role], $nonaktif ? 'Ya, aktifkan' : 'Ya, nonaktifkan');
     $dlg .= ob_get_clean(); ?>
@@ -270,7 +267,7 @@ function r_adm_pengguna(): void
     <?php endif; ?>
     <td data-l="Aksi" class="act-col"><div class="ic-btns">
       <button type="button" class="ic-btn" data-open="<?= $vid ?>" aria-label="Lihat <?= e($r['nama']) ?>"><?= ic('eye', 17) ?><span>Lihat</span></button>
-      <?php if ($bisaNonaktif && !$diri): ?><button type="button" class="ic-btn <?= $nonaktif ? 'ok' : 'danger' ?>" data-open="<?= $nid ?>" aria-label="<?= $nonaktif ? 'Aktifkan' : 'Nonaktifkan' ?> <?= e($r['nama']) ?>"><?= ic($nonaktif ? 'check' : 'trash', 17) ?><span><?= $nonaktif ? 'Aktifkan' : 'Nonaktifkan' ?></span></button><?php endif; ?>
+      <?php if (!$diri): ?><button type="button" class="ic-btn <?= $nonaktif ? 'ok' : 'danger' ?>" data-open="<?= $nid ?>" aria-label="<?= $nonaktif ? 'Aktifkan' : 'Nonaktifkan' ?> <?= e($r['nama']) ?>"><?= ic($nonaktif ? 'check' : 'trash', 17) ?><span><?= $nonaktif ? 'Aktifkan' : 'Nonaktifkan' ?></span></button><?php endif; ?>
     </div></td>
   </tr>
 <?php endforeach; if (!$u) echo '<tr><td colspan="' . $kolom . '" class="mut">Belum ada ' . e(strtolower($judul)) . '.</td></tr>'; ?></table></div>
@@ -345,16 +342,17 @@ function r_adm_pengguna_simpan(): void
 function r_adm_pengguna_status(): void
 {
     $me = adm_need();
-    ensure_profil_aktif();
     $role = in_array($_POST['role'] ?? '', ['pelanggan', 'penjual', 'admin'], true) ? $_POST['role'] : 'pelanggan';
     try {
-        if (!profil_punya_aktif()) throw new SbError('Kolom "aktif" belum ada di database. Jalankan sql/schema.sql dulu.');
         $id = (string) ($_POST['id'] ?? '');
         if ($id === (string) $me['id']) throw new SbError('Akun yang sedang kamu pakai tidak bisa dinonaktifkan.');
-        $aktif = ($_POST['aksi'] ?? '') === 'aktif';
-        $r = db_write('PATCH', 'profiles?id=eq.' . rawurlencode($id), ['aktif' => $aktif]);
-        if (!$r) throw new SbError('Pengguna tidak ditemukan.');
-        flash($aktif ? 'Akun diaktifkan' : 'Akun dinonaktifkan');
+        if (($_POST['aksi'] ?? '') === 'aktif') {
+            $n = pg_run("UPDATE profiles SET password_hash = SUBSTR(password_hash, 2) WHERE id = :id AND LEFT(password_hash, 1) = '!'", [':id' => $id])->rowCount();
+            flash($n ? 'Akun diaktifkan' : 'Akun sudah aktif');
+        } else {
+            $n = pg_run("UPDATE profiles SET password_hash = '!' || password_hash WHERE id = :id AND password_hash IS NOT NULL AND LEFT(password_hash, 1) <> '!'", [':id' => $id])->rowCount();
+            flash($n ? 'Akun dinonaktifkan' : 'Akun tidak ditemukan atau sudah nonaktif');
+        }
     } catch (SbError $x) {
         flash($x->getMessage());
     }
