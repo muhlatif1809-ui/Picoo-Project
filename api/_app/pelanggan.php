@@ -12,7 +12,7 @@ function r_root(): void
     <p class="mut">Pesan makanan Kantin AX tanpa antre</p>
     <div class="pilih">
       <a href="/login?sebagai=pembeli"><span class="ic">🍽️</span><span><b>Saya Pembeli</b><small>Pesan makanan dari stand
-            kantin</small></span></a>
+            kantin yahaha hayyuk</small></span></a>
       <a href="/login?sebagai=penjual"><span class="ic">🏪</span><span><b>Saya Penjual</b><small>Kelola pesanan dan menu
             stand</small></span></a>
     </div>
