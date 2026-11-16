@@ -289,6 +289,20 @@ function ensure_avatar_columns(): void
     }
 }
 
+/**
+ * Akun yang dinonaktifkan admin: hash password diberi awalan "!" (seperti
+ * penguncian akun di Linux). Tidak butuh kolom atau tabel baru, tidak ada data
+ * yang hilang, dan bisa dibalik dengan melepas tanda "!".
+ */
+function profil_nonaktif(array $row): bool
+{
+    if (isset($row['password_hash']) && str_starts_with((string) $row['password_hash'], '!')) {
+        return true;
+    }
+
+    return in_array($row['nonaktif'] ?? false, [true, 1, '1', 't', 'true'], true);
+}
+
 function pg_ident(string $s): string
 {
     if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $s)) {
@@ -778,7 +792,8 @@ function auth_login(string $identifier, string $pw): array
 
     $row = pg_run(
         "SELECT id, password_hash,
-                (password_hash = crypt(:pw, password_hash)) AS crypt_ok
+                (CASE WHEN LEFT(password_hash, 1) = '!' THEN FALSE
+                      ELSE password_hash = crypt(:pw, password_hash) END) AS crypt_ok
          FROM profiles
          WHERE LOWER(username) = LOWER(:username)
             OR LOWER(email) = LOWER(:email)
@@ -807,12 +822,18 @@ function auth_login(string $identifier, string $pw): array
         true
     );
 
-    $phpOk = $row &&
-        !empty($row['password_hash']) &&
-        password_verify($pw, $row['password_hash']);
+    // Akun yang dikunci admin: cocokkan password dengan hash tanpa tanda "!"
+    $kunci = $row && str_starts_with((string) ($row['password_hash'] ?? ''), '!');
+    $hash = $kunci ? substr((string) $row['password_hash'], 1) : (string) ($row['password_hash'] ?? '');
+
+    $phpOk = $row && $hash !== '' && password_verify($pw, $hash);
 
     if (!$row || (!$phpOk && !$cryptOk)) {
         throw new SbError('Username atau password salah.', 400);
+    }
+
+    if ($kunci) {
+        throw new SbError('Akun ini dinonaktifkan. Hubungi admin kantin.', 403);
     }
 
     return ['user_id' => $row['id']];
@@ -862,7 +883,15 @@ function me(): ?array
         return $m = null;
     }
 
-    return $m = ($r[0] ?? null);
+    $u = $r[0] ?? null;
+
+    // Akun yang dinonaktifkan admin langsung dikeluarkan dari sesi
+    if ($u && profil_nonaktif($u)) {
+        unset($_SESSION['uid']);
+        return $m = null;
+    }
+
+    return $m = $u;
 }
 
 function home_for(string $role): string

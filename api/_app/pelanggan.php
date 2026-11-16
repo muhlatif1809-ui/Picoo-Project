@@ -12,7 +12,7 @@ function r_root(): void
     <p class="mut">Pesan makanan Kantin AX tanpa antre</p>
     <div class="pilih">
       <a href="/login?sebagai=pembeli"><span class="ic">🍽️</span><span><b>Saya Pembeli</b><small>Pesan makanan dari stand
-            kantin</small></span></a>
+            kantin yahaha hayyuk</small></span></a>
       <a href="/login?sebagai=penjual"><span class="ic">🏪</span><span><b>Saya Penjual</b><small>Kelola pesanan dan menu
             stand</small></span></a>
     </div>
@@ -84,7 +84,7 @@ function r_login_post(): void
   try {
     save_session(auth_login((string) $email, $pw));
   } catch (SbError $x) {
-    flash('Username atau password salah.');
+    flash($x->getCode() === 403 ? $x->getMessage() : 'Username atau password salah.');
     redirect($back);
   }
   $m = me();
@@ -239,32 +239,75 @@ function r_home(): void
   $cari = trim($_GET['cari'] ?? '');
   $stands = db_sql('SELECT s.id, s.nama, s.kios, s.buka, s.foto_url, (SELECT count(*) FROM menu m WHERE m.stand_id = s.id) AS jml_menu
                       FROM stands s ORDER BY s.kios');
+  $items = [];
   if ($cari !== '') {
+    // Mencari: tampilkan makanannya langsung (satu menu bisa muncul dari beberapa kedai),
+    // lalu stand yang namanya cocok.
     $t = lc($cari);
-    $safe = str_replace(['*', '(', ')', ',', '%'], '', $cari);
-    $hit = array_column(db_get('menu?select=stand_id&nama=ilike.' . rawurlencode('*' . $safe . '*')), 'stand_id');
-    $stands = array_values(array_filter($stands, fn($s) => str_contains(lc($s['nama']), $t) || in_array($s['id'], $hit)));
+    $safe = str_replace(['%', '_', '\\'], '', $cari);
+    $stands = array_values(array_filter($stands, fn($s) => str_contains(lc($s['nama']), $t)));
+    $items = db_sql('SELECT m.id, m.nama, m.harga, m.stok, m.tersedia, m.foto_url,
+                            s.id AS stand_id, s.nama AS stand_nama, s.kios, s.buka
+                     FROM menu m JOIN stands s ON s.id = m.stand_id
+                     WHERE m.nama ILIKE :q
+                     ORDER BY (s.buka AND m.tersedia AND m.stok > 0) DESC, m.nama, s.kios
+                     LIMIT 40', [':q' => '%' . $safe . '%']);
   }
   ob_start(); ?>
   <header class="hd"><small>Halo, <?= e($m['nama']) ?></small>
     <h1>Mau makan apa hari ini?</h1>
-    <form method="get" action="/home" data-live-search><label class="search"><span>🔍</span><input name="cari"
-          value="<?= e($cari) ?>" placeholder="Cari stand atau menu" aria-label="Cari stand atau menu"
-          autocomplete="off"></label></form>
+    <form method="get" action="/home" data-live-search><label class="search"><span
+          class="search-ic"><?= ic('search', 18) ?></span><input name="cari" type="search" value="<?= e($cari) ?>"
+          placeholder="Cari stand atau menu" aria-label="Cari stand atau menu" autocomplete="off"></label></form>
   </header>
   <div class="bd">
-    <h3>Stand</h3>
-    <?php foreach ($stands as $s):
-      $buka = $s['buka']; ?>
-      <a class="stand <?= $buka ? '' : 'off' ?>" href="/menu?stand=<?= (int) $s['id'] ?>">
-        <div class="thumb"><?= img($s['foto_url']) ?></div>
-        <div><b><?= e($s['nama']) ?></b><small>Kios
-            <?= e($s['kios']) ?></small><small><?= $buka ? (int) $s['jml_menu'] . ' Menu' : 'sedang tutup' ?></small></div>
-        <span class="badge <?= $buka ? '' : 'off' ?>"><?= $buka ? 'Buka' : 'Tutup' ?></span>
-      </a>
-    <?php endforeach;
-    if (!$stands)
-      echo empty_box('Stand tidak ditemukan.'); ?>
+    <?php if ($cari !== ''): ?>
+      <?php if ($items): ?>
+        <div class="sec-head">
+          <h3>Menu</h3><small><?= count($items) ?> menu</small>
+        </div>
+        <?php foreach ($items as $i):
+          $ada = $i['buka'] && $i['tersedia'] && (int) $i['stok'] > 0; ?>
+          <a class="mres <?= $ada ? '' : 'off' ?>" href="/menu?stand=<?= (int) $i['stand_id'] ?>">
+            <div class="thumb"><?= img($i['foto_url']) ?></div>
+            <div class="mres-info"><b><?= e($i['nama']) ?></b>
+              <span class="mres-stand"><?= ic('store', 13) ?><?= e($i['stand_nama']) ?> · Kios <?= e($i['kios']) ?></span>
+              <strong><?= rp($i['harga']) ?></strong>
+            </div>
+            <span class="badge <?= $ada ? '' : 'off' ?>"><?= !$i['buka'] ? 'Tutup' : ($ada ? 'Tersedia' : 'Habis') ?></span>
+          </a>
+        <?php endforeach; endif; ?>
+      <?php if ($stands): ?>
+        <div class="sec-head">
+          <h3>Stand</h3><small><?= count($stands) ?> stand</small>
+        </div>
+        <?php foreach ($stands as $s):
+          $buka = $s['buka']; ?>
+          <a class="stand <?= $buka ? '' : 'off' ?>" href="/menu?stand=<?= (int) $s['id'] ?>">
+            <div class="thumb"><?= img($s['foto_url']) ?></div>
+            <div><b><?= e($s['nama']) ?></b><small>Kios
+                <?= e($s['kios']) ?></small><small><?= $buka ? (int) $s['jml_menu'] . ' Menu' : 'sedang tutup' ?></small></div>
+            <span class="badge <?= $buka ? '' : 'off' ?>"><?= $buka ? 'Buka' : 'Tutup' ?></span>
+          </a>
+        <?php endforeach; endif; ?>
+      <?php if (!$items && !$stands)
+        echo empty_state('search', 'Tidak ditemukan', 'Coba kata kunci lain, misalnya nama makanan atau nama stand.'); ?>
+    <?php else: ?>
+      <div class="sec-head">
+        <h3>Stand</h3><small><?= count($stands) ?> stand</small>
+      </div>
+      <?php foreach ($stands as $s):
+        $buka = $s['buka']; ?>
+        <a class="stand <?= $buka ? '' : 'off' ?>" href="/menu?stand=<?= (int) $s['id'] ?>">
+          <div class="thumb"><?= img($s['foto_url']) ?></div>
+          <div><b><?= e($s['nama']) ?></b><small>Kios
+              <?= e($s['kios']) ?></small><small><?= $buka ? (int) $s['jml_menu'] . ' Menu' : 'sedang tutup' ?></small></div>
+          <span class="badge <?= $buka ? '' : 'off' ?>"><?= $buka ? 'Buka' : 'Tutup' ?></span>
+        </a>
+      <?php endforeach;
+      if (!$stands)
+        echo empty_box('Belum ada stand.'); ?>
+    <?php endif; ?>
   </div><?= nav_pel('/home') ?>
   <?php layout('Home', ob_get_clean());
 }
@@ -281,7 +324,21 @@ function r_menu(): void
   $menu = db_get('menu?select=id,nama,harga,stok,tersedia,foto_url&stand_id=eq.' . $sid . '&order=nama');
   $cs = (int) (cart()['s'] ?? 0);
   ob_start();
-  echo hd(e($s['nama']), ($s['buka'] ? 'Buka' : 'Tutup') . '<br>Kios ' . e($s['kios']), '/home'); ?>
+  ?>
+  <header class="hx hx-stand">
+    <a class="hx-back" href="/home"><?= ic('back', 18) ?><span>Kembali</span></a>
+    <div class="hx-stand-row">
+      <?= kios_tile($s['kios']) ?>
+      <div class="hx-main">
+        <h1><?= e($s['nama']) ?></h1>
+        <div class="hx-meta">
+          <span
+            class="status-pill <?= $s['buka'] ? 'is-open' : 'is-closed' ?>"><i></i><?= $s['buka'] ? 'Buka' : 'Tutup' ?></span>
+          <span class="hx-count-txt"><?= count($menu) ?> menu</span>
+        </div>
+      </div>
+    </div>
+  </header>
   <div class="bd">
     <?php if (!$s['buka'])
       echo '<div class="note" style="margin:0 0 14px">Stand sedang tutup, belum bisa memesan.</div>'; ?>
@@ -370,7 +427,7 @@ function r_cart(): void
   $d = cart_detail();
   $n = count($d['items']);
   ob_start();
-  echo hd('Keranjang', $n ? $n . ' menu dari ' . e($d['stand']['nama']) : 'Belum ada menu'); ?>
+  echo hdx('Keranjang', $n ? ic('store', 15) . '<span>' . e($d['stand']['nama']) . '</span>' : 'Belum ada menu', ['icon' => 'cart', 'count' => $n]); ?>
   <div class="bd">
     <?php foreach ($d['items'] as $x): ?>
       <div class="item">
@@ -386,12 +443,15 @@ function r_cart(): void
       </div>
     <?php endforeach;
     if (!$n)
-      echo empty_box('Keranjang masih kosong. Pilih stand di Home dulu.'); ?>
+      echo empty_state('cart', 'Keranjangmu masih kosong', 'Pilih stand di Home, lalu tambahkan menu yang kamu mau.', '/home', 'Lihat stand'); ?>
   </div>
-  <div class="foot" style="bottom:64px">
-    <div class="row" style="margin-bottom:10px"><span class="mut">Total</span><b><?= rp($d['total']) ?></b></div>
-    <?= $n ? '<a class="btn" href="/opsi">Checkout</a>' : '<button class="btn" disabled>Checkout</button>' ?>
-  </div>
+  <?php if ($n): ?>
+    <div class="foot" style="bottom:64px">
+      <div class="row" style="margin-bottom:10px"><span class="mut"><?= $n ?> menu ·
+          Total</span><b><?= rp($d['total']) ?></b></div>
+      <a class="btn" href="/opsi">Checkout</a>
+    </div>
+  <?php endif; ?>
   <?= nav_pel('/keranjang');
   layout('Keranjang', ob_get_clean());
 }
@@ -614,7 +674,7 @@ function r_qris(): void
           </a>
           <button type="button" id="btn-zoom-qr" aria-label="Perbesar QR"
             style="border:1px solid #e2e8f0;background:#f8fafc;color:#334155;padding:9px 12px;border-radius:10px;font-size:.82rem;font-weight:600;cursor:pointer">
-            🔍
+            <?= ic('search', 18) ?>
           </button>
         </div>
       <?php else: ?>
@@ -868,15 +928,15 @@ function r_riwayat(): void
   }
   $l = pesanan_muat('p.pelanggan_id = :u', [':u' => $m['id']], 'ORDER BY p.created_at DESC LIMIT 30');
   ob_start();
-  echo hd('Riwayat', 'Pesanan 30 hari terakhir'); ?>
+  echo hdx('Riwayat', 'Pesanan 30 hari terakhir', ['icon' => 'receipt']); ?>
   <div class="bd">
     <?php foreach ($l as $o): ?>
-      <a class="item" href="/<?= $o['status'] === 'menunggu_bayar' ? 'qris' : 'status' ?>?id=<?= (int) $o['id'] ?>"
-        style="display:flex">
+      <a class="item order-item"
+        href="/<?= $o['status'] === 'menunggu_bayar' ? 'qris' : 'status' ?>?id=<?= (int) $o['id'] ?>" style="display:flex">
         <div class="t"><b>#<?= e($o['kode']) ?> · <?= e($o['stands']['nama'] ?? '') ?></b>
           <small><?= e(implode(', ', array_map(fn($i) => $i['jumlah'] . ' ' . $i['nama'], $o['pesanan_item']))) ?></small>
         </div>
-        <div style="text-align:right"><b><?= rp($o['total']) ?></b><br><?= tag($o['status']) ?></div>
+        <div class="order-end"><b><?= rp($o['total']) ?></b><?= tag($o['status']) ?></div>
       </a>
     <?php endforeach;
     if (!$l)
@@ -928,7 +988,8 @@ function r_profil(): void
   <div class="pf-page">
     <header class="pf-hero">
       <div class="pf-topbar">
-        <a href="/home" class="pf-back" aria-label="Kembali">← <span>Profil</span></a>
+        <a href="/home" class="pf-back-btn" aria-label="Kembali"><?= ic('back', 20) ?></a>
+        <span class="pf-top-title">Profil</span>
       </div>
       <div class="pf-avatar-wrap">
         <div class="pf-avatar">
@@ -1344,7 +1405,7 @@ function r_lupa_post(): void
     }
 
     pg_run(
-      'UPDATE profiles SET password_hash = :pw WHERE id = :id',
+      "UPDATE profiles SET password_hash = :pw WHERE id = :id AND LEFT(password_hash, 1) <> '!'",
       [':pw' => password_hash($p, PASSWORD_DEFAULT), ':id' => $row['id']]
     );
   } catch (SbError $x) {

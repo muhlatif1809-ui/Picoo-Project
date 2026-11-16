@@ -86,6 +86,19 @@
     });
   });
 
+  // tombol "+ Tambah menu": buka panel <details> tujuan lalu geser ke sana
+  $$("[data-details]").forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      var d = document.getElementById(a.dataset.details);
+      if (!d) return;
+      e.preventDefault();
+      d.open = true;
+      d.scrollIntoView({ behavior: "smooth", block: "start" });
+      var first = $("input", d);
+      if (first) first.focus({ preventScroll: true });
+    });
+  });
+
   // dialog menu
   $$("[data-open]").forEach(function (b) {
     b.onclick = function () {
@@ -154,6 +167,56 @@
     tick();
     setInterval(tick, 1000);
   }
+
+  // angka dengan tombol - / + : <div data-stepper><button data-step="-1">..<input type="number">..
+  $$("[data-stepper]").forEach(function (w) {
+    var inp = $("input", w);
+    if (!inp) return;
+    $$("[data-step]", w).forEach(function (b) {
+      b.addEventListener("click", function () {
+        var v = parseInt(inp.value, 10);
+        if (isNaN(v)) v = 0;
+        inp.value = Math.max(+inp.min || 0, v + +b.dataset.step);
+      });
+    });
+  });
+
+  // cari di dalam daftar tanpa muat ulang: <input data-list-search="id-daftar">, baris diberi data-row
+  $$("[data-list-search]").forEach(function (inp) {
+    var list = document.getElementById(inp.dataset.listSearch);
+    if (!list) return;
+    inp.addEventListener("input", function () {
+      var q = inp.value.trim().toLocaleLowerCase();
+      $$("[data-row]", list).forEach(function (r) {
+        r.hidden = q !== "" && !r.textContent.toLocaleLowerCase().includes(q);
+      });
+    });
+  });
+
+  // pratinjau foto menu sebelum disimpan
+  $$("[data-preview]").forEach(function (lab) {
+    var f = $("input[type=file]", lab),
+      box = $(".em-photo-img", lab);
+    if (!f || !box) return;
+    f.addEventListener("change", function () {
+      var file = f.files && f.files[0];
+      if (!file) return;
+      var im = document.createElement("img");
+      im.alt = "";
+      im.src = URL.createObjectURL(file);
+      box.innerHTML = "";
+      box.appendChild(im);
+    });
+  });
+
+  // menu admin versi HP (tombol ☰ dan latar gelap)
+  $$("[data-nav-toggle]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var open = document.body.classList.toggle("nav-open");
+      var burger = $(".adm-burger");
+      if (burger) burger.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  });
 
   // auto-refresh isi <div id="live"> (status pesanan, daftar pesanan penjual)
   var ms = +document.body.dataset.live;
