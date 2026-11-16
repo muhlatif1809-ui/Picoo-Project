@@ -59,7 +59,7 @@ function layout(string $title, string $body, array $o = []): void
 }
 
 /**
- * CSS & JS Efek UI Global (Button Animation, Card Hover, & Skeleton Shimmer)
+ * CSS & JS Efek UI Global (Button Animation, Card Hover, Skeleton Shimmer, & Responsif)
  * Berlaku otomatis untuk Pembeli, Penjual, dan Admin.
  */
 function pico_ui_effects(): string
@@ -101,7 +101,6 @@ function pico_ui_effects(): string
   #btn-zoom-qr,
   .sw,
   .sp-switch {
-    position: relative;
     overflow: hidden;
     transition:
       transform 0.22s var(--pico-ease),
@@ -273,7 +272,6 @@ function pico_ui_effects(): string
   }
 
   @media (hover: hover) {
-    /* Kartu interaktif Pembeli, Penjual, & KPI Admin */
     .stand:not(.off):hover,
     .mres:not(.off):hover,
     .pc:not(.out):hover,
@@ -298,7 +296,6 @@ function pico_ui_effects(): string
       border-color: rgba(242, 140, 40, 0.38);
     }
 
-    /* Panel & kontainer kartu statis */
     .pf-card:hover,
     .sp-card:hover,
     .pd-card:hover,
@@ -311,7 +308,6 @@ function pico_ui_effects(): string
       box-shadow: 0 10px 24px -8px rgba(15, 23, 42, 0.09);
     }
 
-    /* Zoom halus pada gambar di dalam kartu saat di-hover */
     .stand:not(.off):hover .thumb img,
     .mres:not(.off):hover .thumb img,
     .pc:not(.out):hover .im img,
@@ -320,7 +316,6 @@ function pico_ui_effects(): string
       transform: scale(1.06);
     }
 
-    /* Hover baris tabel Admin */
     .mcards tr:not(:first-child) {
       transition: background-color 0.18s ease, transform 0.18s var(--pico-ease);
     }
@@ -329,7 +324,6 @@ function pico_ui_effects(): string
     }
   }
 
-  /* Efek tekan pada kartu yang bisa diklik */
   a.stand:not(.off):active,
   a.mres:not(.off):active,
   a.order-item:active,
@@ -354,7 +348,6 @@ function pico_ui_effects(): string
     }
   }
 
-  /* Shimmer untuk gambar yang sedang dimuat atau class .skeleton */
   .pico-skel,
   .skeleton {
     position: relative;
@@ -377,7 +370,6 @@ function pico_ui_effects(): string
     opacity: 1 !important;
   }
 
-  /* Shimmer overlay untuk kartu/KPI/baris saat halaman dimuat atau berpindah */
   .pico-card-shimmer {
     position: relative !important;
     overflow: hidden !important;
@@ -408,6 +400,69 @@ function pico_ui_effects(): string
     transition: opacity 0.28s ease, filter 0.28s ease;
   }
 
+  /* ===================================================================
+     4. POSISI TOMBOL PLUS DI KANAN & RESPONSIF
+     =================================================================== */
+  .pc {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pc .plus {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+  }
+
+  .pc .pr {
+    padding-right: 38px;
+  }
+
+  .app,
+  .adm {
+    overflow-x: clip;
+  }
+
+  dialog {
+    max-width: min(92vw, 420px);
+  }
+
+  @media (max-width: 380px) {
+    .grid2 {
+      gap: 10px;
+    }
+    .pc {
+      padding: 8px 8px 12px;
+    }
+    .pc b {
+      font-size: 0.88rem;
+    }
+    .pc .pr {
+      font-size: 0.84rem;
+      padding-right: 34px;
+    }
+    .pc .plus {
+      width: 30px;
+      height: 30px;
+      right: 8px;
+      bottom: 8px;
+      font-size: 1.1rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .app {
+      max-width: 480px;
+      margin: 0 auto;
+      box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+    }
+    .app .nav,
+    .app .foot {
+      max-width: 480px;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .pico-skel,
     .skeleton,
@@ -435,7 +490,6 @@ function pico_ui_effects(): string
     '.ktm-act button', '.adm-logout', '.bukti-upload-btn', '#btn-zoom-qr'
   ].join(',');
 
-  // 1. Skeleton Shimmer untuk semua gambar (menu, stand, avatar, QRIS, bukti)
   function initImageSkeletons(root) {
     var imgs = (root || document).querySelectorAll(
       '.thumb img, .pc .im img, .seller-menu-photo img, .em-photo-img img, .pf-avatar img, #img-qr-stand, .bukti-th'
@@ -458,7 +512,6 @@ function pico_ui_effects(): string
     });
   }
 
-  // 2. Skeleton Shimmer pada Kartu saat pemuatan awal & saat berpindah halaman
   function triggerCardShimmer(duration) {
     var cards = document.querySelectorAll(CARD_SEL);
     if (!cards.length) return;
@@ -476,10 +529,12 @@ function pico_ui_effects(): string
     }, duration || 340);
   }
 
-  // 3. Button Ripple Effect saat diklik
   document.addEventListener('pointerdown', function (e) {
     var btn = e.target.closest(BTN_SEL);
     if (!btn || btn.disabled) return;
+    if (window.getComputedStyle(btn).position === 'static') {
+      btn.style.position = 'relative';
+    }
     var rect = btn.getBoundingClientRect();
     var size = Math.max(rect.width, rect.height, 28);
     var ripple = document.createElement('span');
@@ -493,7 +548,6 @@ function pico_ui_effects(): string
     }, 600);
   }, { passive: true });
 
-  // 4. Aktifkan Skeleton Shimmer saat pengguna klik navigasi / filter tab / submit
   document.addEventListener('click', function (e) {
     var a = e.target.closest('a[href]');
     if (!a) return;
@@ -512,7 +566,6 @@ function pico_ui_effects(): string
     triggerCardShimmer(1200);
   });
 
-  // Inisialisasi saat halaman tampil
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
       initImageSkeletons(document);
@@ -523,7 +576,6 @@ function pico_ui_effects(): string
     triggerCardShimmer(320);
   }
 
-  // Pantau perubahan DOM otomatis (mis. auto-refresh data-live di penjual/pembeli)
   if (typeof MutationObserver !== 'undefined') {
     var obs = new MutationObserver(function (mutations) {
       mutations.forEach(function (m) {
