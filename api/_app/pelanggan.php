@@ -108,7 +108,7 @@ function r_daftar(): void
           <div><b>Civitas Polinema</b><small>Wajib upload KTM/Kartu Dosen</small></div>
         </label>
         <label class="opt"><input type="radio" name="s" value="umum">
-          <div><b>Bukan mahasiswa Polinema</b><small>Pengunjung umum</small></div>
+          <div><b>Bukan civitas Polinema</b><small>Pengunjung umum</small></div>
         </label>
       </div>
       <div class="fld" id="ktm-w" hidden>
