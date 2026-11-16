@@ -105,7 +105,7 @@ function r_daftar(): void
     <form method="post" action="/daftar" enctype="multipart/form-data" id="fd">
       <div class="stat">
         <label class="opt"><input type="radio" name="s" value="polinema" required>
-          <div><b>Mahasiswa Polinema</b><small>Wajib upload KTM</small></div>
+          <div><b>Civitas Polinema</b><small>Wajib upload KTM/Kartu Dosen</small></div>
         </label>
         <label class="opt"><input type="radio" name="s" value="umum">
           <div><b>Bukan mahasiswa Polinema</b><small>Pengunjung umum</small></div>
