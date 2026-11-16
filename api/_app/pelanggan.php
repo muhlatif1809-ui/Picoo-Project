@@ -1062,7 +1062,7 @@ function r_profil(): void
     <form method="post" action="/profil/avatar" enctype="multipart/form-data">
       <h3>Ubah Foto Profil</h3>
       <div class="fld">
-        <label>Pilih Foto (JPG/PNG/WebP, maks. 1 MB)</label>
+        <label>Pilih Foto (JPG/PNG/WebP, maks. 2 MB)</label>
         <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" required>
       </div>
       <div class="pf-dlg-btns">
@@ -1182,17 +1182,27 @@ function r_profil_avatar(): void
   $m = need('pelanggan');
   $file = $_FILES['avatar'] ?? null;
   try {
-    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+    if (function_exists('ensure_avatar_columns')) {
+      ensure_avatar_columns();
+    }
+    $err = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+    if (!$file || $err === UPLOAD_ERR_NO_FILE) {
       throw new SbError('Pilih foto terlebih dahulu.');
     }
-    if (($file['size'] ?? 0) > 1048576) {
-      throw new SbError('Ukuran foto profil maksimal 1 MB.');
+    if ($err === UPLOAD_ERR_INI_SIZE || $err === UPLOAD_ERR_FORM_SIZE || ($file['size'] ?? 0) > 2097152) {
+      throw new SbError('Ukuran foto profil maksimal 2 MB.');
+    }
+    if ($err !== UPLOAD_ERR_OK) {
+      throw new SbError('Foto profil gagal diunggah.');
     }
     $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
     if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
       throw new SbError('Foto harus berformat JPG, PNG, atau WebP.');
     }
     $fh = fopen($file['tmp_name'], 'rb');
+    if ($fh === false) {
+      throw new SbError('File foto sementara tidak dapat dibaca.');
+    }
     $url = '/foto?t=avatar&id=' . rawurlencode((string) $m['id']) . '&v=' . time();
     try {
       $st = pdo()->prepare(
@@ -1203,13 +1213,20 @@ function r_profil_avatar(): void
       $st->bindValue(':u', $url);
       $st->bindValue(':id', $m['id']);
       $st->execute();
+      if ($st->rowCount() < 1) {
+        throw new SbError('Akun profil tidak ditemukan.');
+      }
       flash('Foto profil diperbarui.');
     } finally {
       if (is_resource($fh))
         fclose($fh);
     }
   } catch (Throwable $x) {
-    flash($x instanceof SbError ? $x->getMessage() : 'Gagal menyimpan foto profil.');
+    error_log('Simpan avatar gagal: ' . $x->getMessage());
+    $msg = $x instanceof SbError
+      ? $x->getMessage()
+      : (env('APP_DEBUG') === '1' ? 'Gagal menyimpan foto profil: ' . $x->getMessage() : 'Gagal menyimpan foto profil.');
+    flash($msg);
   }
   redirect('/profil');
 }

@@ -266,6 +266,29 @@ function ensure_bukti_columns(): void
     }
 }
 
+/**
+ * Memastikan kolom foto profil (avatar) sudah tersedia di tabel profiles.
+ */
+function ensure_avatar_columns(): void
+{
+    static $checked = false;
+    if ($checked) {
+        return;
+    }
+    $checked = true;
+
+    try {
+        pdo()->exec(
+            'ALTER TABLE profiles
+             ADD COLUMN IF NOT EXISTS foto_data BYTEA,
+             ADD COLUMN IF NOT EXISTS foto_mime TEXT,
+             ADD COLUMN IF NOT EXISTS foto_url TEXT'
+        );
+    } catch (Throwable $x) {
+        // Abaikan jika sudah ada atau tidak memiliki hak DDL
+    }
+}
+
 function pg_ident(string $s): string
 {
     if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $s)) {
@@ -1028,6 +1051,7 @@ function foto_simpan(string $tabel, int $id, array $file): void
             );
             $st->execute([':id' => (int) ($_GET['id'] ?? 0)]);
         } elseif ($t === 'avatar') {
+            ensure_avatar_columns();
             $st = pdo()->prepare(
                 'SELECT foto_data, foto_mime FROM profiles WHERE id = :id'
             );
