@@ -3066,7 +3066,7 @@ fieldset:disabled .btn {
 
 /* ==================================================================
    21. MODIFIKASI UI PICO:
-   1) Tampilan Awal (Pilih Peran) tanpa logo atas + kartu fitur baru
+   1) Tampilan Awal (Pilih Peran) tanpa logo atas + kartu fitur ringkas + oranye saat hover
    2) Status Pesanan baru + Bukti Pembayaran & Nomor Pesanan + Struk Selesai
    3) Profil Penjual dengan Upload Foto Avatar & Stand + Toggle Status
    4) Header Flat Solid (Anti AI-Slop / Tanpa Gradasi Glow Berlebihan)
@@ -3102,11 +3102,10 @@ fieldset:disabled .btn {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 36px 24px 28px;
+  padding: 34px 24px 24px;
   text-align: center;
   z-index: 1;
 }
-/* Lingkaran dekoratif halus sesuai mockup (bukan gradasi neon AI) */
 .role-hero::before {
   content: "";
   position: absolute;
@@ -3136,7 +3135,7 @@ fieldset:disabled .btn {
 }
 .role-brand h1 {
   font-family: var(--font-head);
-  font-size: 2.55rem;
+  font-size: 2.45rem;
   font-weight: 800;
   letter-spacing: 0.03em;
   line-height: 1.05;
@@ -3145,23 +3144,23 @@ fieldset:disabled .btn {
 }
 .role-brand p {
   margin-top: 8px;
-  font-size: 0.96rem;
+  font-size: 0.94rem;
   font-weight: 400;
   color: #cbd5e1;
 }
 .role-art {
   position: relative;
   width: 100%;
-  max-width: 340px;
-  margin: 26px auto 10px;
+  max-width: 296px;
+  margin: 24px auto 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 228px;
+  min-height: 212px;
 }
 .role-circle {
-  width: 204px;
-  height: 204px;
+  width: 192px;
+  height: 192px;
   border-radius: 50%;
   background: #f28c28;
   display: flex;
@@ -3169,107 +3168,156 @@ fieldset:disabled .btn {
   justify-content: center;
   position: relative;
   z-index: 1;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.role-art:hover .role-circle {
+  transform: scale(1.03);
 }
 .role-bowl-svg {
-  width: 172px;
-  height: 158px;
+  width: 162px;
+  height: 148px;
   display: block;
+}
+@keyframes picoSteam {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.92;
+  }
+  50% {
+    transform: translateY(-4px);
+    opacity: 0.55;
+  }
+}
+.bowl-steam {
+  animation: picoSteam 2.6s ease-in-out infinite;
+}
+.bowl-steam.s2 {
+  animation-delay: 0.4s;
+}
+.bowl-steam.s3 {
+  animation-delay: 0.8s;
+}
+
+/* Dua kartu melayang: ukuran kecil & proporsional seperti mockup */
+@keyframes picoFloatLeft {
+  0%, 100% {
+    transform: rotate(-6deg) translateY(0);
+  }
+  50% {
+    transform: rotate(-6deg) translateY(-4px);
+  }
+}
+@keyframes picoFloatRight {
+  0%, 100% {
+    transform: rotate(4deg) translateY(0);
+  }
+  50% {
+    transform: rotate(4deg) translateY(-4px);
+  }
 }
 .role-card-float {
   position: absolute;
   z-index: 3;
   background: #ffffff;
   color: #162542;
-  border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(10, 18, 36, 0.22);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(10, 18, 36, 0.22);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
 }
 .role-card-left {
   left: -4px;
-  top: 24px;
-  padding: 11px 14px;
+  top: 40px;
+  padding: 7px 11px;
   text-align: left;
   transform: rotate(-6deg);
-  min-width: 138px;
+  animation: picoFloatLeft 3.6s ease-in-out infinite;
+}
+.role-card-left:hover {
+  transform: rotate(-3deg) scale(1.05);
+  box-shadow: 0 12px 24px rgba(10, 18, 36, 0.3);
 }
 .rcf-title {
   display: block;
   font-family: var(--font-head);
-  font-size: 0.95rem;
+  font-size: 0.76rem;
   font-weight: 800;
   color: #162542;
   line-height: 1.2;
+  white-space: nowrap;
 }
 .rcf-sub {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 5px;
-  font-size: 0.76rem;
+  gap: 5px;
+  margin-top: 3px;
+  font-size: 0.64rem;
   font-weight: 700;
   color: #15803d;
+  white-space: nowrap;
 }
 .rcf-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #16a34a;
   display: inline-block;
   flex-shrink: 0;
 }
 .role-card-right {
-  right: -6px;
-  bottom: 24px;
-  padding: 10px 14px 10px 11px;
-  display: flex;
+  right: -4px;
+  bottom: 30px;
+  padding: 7px 11px 7px 8px;
+  display: inline-flex;
   align-items: center;
-  gap: 9px;
+  gap: 7px;
   text-align: left;
   transform: rotate(4deg);
+  animation: picoFloatRight 3.8s ease-in-out infinite 0.5s;
+}
+.role-card-right:hover {
+  transform: rotate(2deg) scale(1.05);
+  box-shadow: 0 12px 24px rgba(10, 18, 36, 0.3);
 }
 .rcf-check {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
   background: #dcfce7;
   color: #15803d;
   display: grid;
   place-items: center;
   flex-shrink: 0;
 }
-.rcf-right-txt b {
+.rcf-right-title {
   display: block;
   font-family: var(--font-head);
-  font-size: 0.86rem;
+  font-size: 0.74rem;
   font-weight: 800;
   color: #162542;
   line-height: 1.15;
+  white-space: nowrap;
 }
-.rcf-right-txt small {
-  display: block;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #64748b;
-  margin-top: 2px;
-}
+
+/* Bottom sheet & Kartu Pilih Peran (Putih saat normal, Oranye saat Hover/Focus/Active) */
 .role-sheet {
   position: relative;
   z-index: 2;
   background: #f4f6f9;
   color: #162542;
   border-radius: 28px 28px 0 0;
-  padding: 26px 22px 22px;
+  padding: 24px 22px 20px;
 }
 .role-sheet h2 {
   font-family: var(--font-head);
-  font-size: 1.32rem;
+  font-size: 1.28rem;
   font-weight: 800;
   color: #162542;
   margin: 0;
 }
 .role-sheet-sub {
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   color: #64748b;
-  margin: 4px 0 18px;
+  margin: 4px 0 16px;
 }
 .role-actions {
   display: flex;
@@ -3277,83 +3325,95 @@ fieldset:disabled .btn {
   gap: 12px;
 }
 .role-btn {
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 16px 18px;
+  padding: 15px 18px;
   border-radius: 18px;
-  text-decoration: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.role-btn-buyer {
-  background: #f28c28;
-  color: #162542;
-  box-shadow: 0 6px 18px rgba(242, 140, 40, 0.28);
-}
-.role-btn-buyer .role-btn-ic {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
-  background: #1b2a4a;
-  color: #ffffff;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-.role-btn-buyer .role-btn-txt b {
-  display: block;
-  font-family: var(--font-head);
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: #1b2a4a;
-}
-.role-btn-buyer .role-btn-txt small {
-  display: block;
-  font-size: 0.82rem;
-  color: #3f270d;
-  margin-top: 2px;
-}
-.role-btn-seller {
   background: #ffffff;
   color: #162542;
-  border: 1px solid #e2e8f0;
+  border: 1.5px solid #e2e8f0;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  text-decoration: none;
+  transition:
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease !important;
 }
-.role-btn-seller .role-btn-ic {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
+.role-btn .role-btn-ic {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
   background: #eef2f6;
   color: #1b2a4a;
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  transition: background-color 0.22s ease, color 0.22s ease, transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.role-btn-seller .role-btn-txt b {
-  display: block;
-  font-family: var(--font-head);
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: #1b2a4a;
-}
-.role-btn-seller .role-btn-txt small {
-  display: block;
-  font-size: 0.82rem;
-  color: #64748b;
-  margin-top: 2px;
-}
-.role-btn-txt {
+.role-btn .role-btn-txt {
   flex: 1;
   min-width: 0;
 }
-.role-btn-arr {
+.role-btn .role-btn-txt b {
+  display: block;
+  font-family: var(--font-head);
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: #1b2a4a;
+  transition: color 0.2s ease;
+}
+.role-btn .role-btn-txt small {
+  display: block;
+  font-size: 0.81rem;
+  color: #64748b;
+  margin-top: 2px;
+  transition: color 0.2s ease;
+}
+.role-btn .role-btn-arr {
   color: #1b2a4a;
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
 }
+
+/* Efek Hover & Focus pada kedua tombol peran -> berubah menjadi Oranye seperti di gambar */
+.role-btn:hover,
+.role-btn:focus-visible {
+  background: #f28c28 !important;
+  border-color: #f28c28 !important;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -4px rgba(242, 140, 40, 0.38), 0 4px 10px -2px rgba(15, 23, 42, 0.08) !important;
+}
+.role-btn:hover .role-btn-ic,
+.role-btn:focus-visible .role-btn-ic {
+  background: #1b2a4a !important;
+  color: #ffffff !important;
+  transform: scale(1.05);
+}
+.role-btn:hover .role-btn-txt b,
+.role-btn:focus-visible .role-btn-txt b {
+  color: #1b2a4a;
+}
+.role-btn:hover .role-btn-txt small,
+.role-btn:focus-visible .role-btn-txt small {
+  color: #3f270d;
+}
+.role-btn:hover .role-btn-arr,
+.role-btn:focus-visible .role-btn-arr {
+  transform: translateX(4px);
+}
+.role-btn:active {
+  transform: translateY(0) scale(0.97) !important;
+}
+
 .role-footer {
-  margin-top: 20px;
+  margin-top: 18px;
   text-align: center;
   font-size: 0.78rem;
   color: #64748b;
@@ -3768,7 +3828,7 @@ fieldset:disabled .btn {
   flex-shrink: 0;
 }
 
-/* Indikator garis oranye di atas menu navigasi yang sedang aktif (sesuai gambar mockup) */
+/* Indikator garis oranye di atas menu navigasi yang sedang aktif */
 .nav a {
   position: relative;
   padding-top: 6px;

@@ -17,9 +17,9 @@ function r_root(): void
         <div class="role-circle">
           <svg class="role-bowl-svg" viewBox="0 0 220 200" fill="none" xmlns="http://www.w3.org/2000/svg">
             <!-- Uap makanan hangat -->
-            <path d="M74 52C71 42 79 34 76 24" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
-            <path d="M110 48C107 38 115 30 112 20" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
-            <path d="M146 52C143 42 151 34 148 24" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+            <path class="bowl-steam s1" d="M74 52C71 42 79 34 76 24" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+            <path class="bowl-steam s2" d="M110 48C107 38 115 30 112 20" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+            <path class="bowl-steam s3" d="M146 52C143 42 151 34 148 24" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
             <!-- Isi makanan (mie/nasi hangat + topping) -->
             <path d="M52 108C56 76 82 62 110 62C138 62 164 76 168 108H52Z" fill="#EAA334"/>
             <circle cx="83" cy="91" r="10.5" fill="#17794B"/>
@@ -33,23 +33,20 @@ function r_root(): void
           </svg>
         </div>
 
-        <!-- Kartu Kiri: Menu real-time / Stok selalu update -->
+        <!-- Kartu Kiri: Menu real-time / Stok selalu update (ukuran ringkas) -->
         <div class="role-card-float role-card-left">
           <b class="rcf-title">Menu real-time</b>
           <span class="rcf-sub"><i class="rcf-dot"></i>Stok selalu update</span>
         </div>
 
-        <!-- Kartu Kanan: Notifikasi siap -->
+        <!-- Kartu Kanan: Notifikasi siap (ukuran ringkas sesuai proporsi mockup) -->
         <div class="role-card-float role-card-right">
           <span class="rcf-check">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </span>
-          <div class="rcf-right-txt">
-            <b>Notifikasi siap</b>
-            <small>Info saat pesanan matang</small>
-          </div>
+          <b class="rcf-right-title">Notifikasi siap</b>
         </div>
       </div>
     </div>
@@ -59,9 +56,9 @@ function r_root(): void
       <p class="role-sheet-sub">Pilih sesuai peranmu di Kantin AX</p>
 
       <div class="role-actions">
-        <a class="role-btn role-btn-buyer" href="/login?sebagai=pembeli">
+        <a class="role-btn" href="/login?sebagai=pembeli">
           <span class="role-btn-ic">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M6 7h12l1 13H5L6 7z"/>
               <path d="M9 7V5a3 3 0 0 1 6 0v2"/>
             </svg>
@@ -73,9 +70,9 @@ function r_root(): void
           <span class="role-btn-arr"><?= ic('next', 20) ?></span>
         </a>
 
-        <a class="role-btn role-btn-seller" href="/login?sebagai=penjual">
+        <a class="role-btn" href="/login?sebagai=penjual">
           <span class="role-btn-ic">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 9l1.5-5h15L21 9"/>
               <path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/>
               <path d="M5 12v8h14v-8"/>
