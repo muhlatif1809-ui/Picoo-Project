@@ -294,6 +294,30 @@ function ensure_avatar_columns(): void
  * penguncian akun di Linux). Tidak butuh kolom atau tabel baru, tidak ada data
  * yang hilang, dan bisa dibalik dengan melepas tanda "!".
  */
+
+/**
+ * Memastikan kolom foto stand sudah tersedia di tabel stands.
+ */
+function ensure_stand_foto_columns(): void
+{
+    static $checked = false;
+    if ($checked) {
+        return;
+    }
+    $checked = true;
+
+    try {
+        pdo()->exec(
+            'ALTER TABLE stands
+             ADD COLUMN IF NOT EXISTS foto_data BYTEA,
+             ADD COLUMN IF NOT EXISTS foto_mime TEXT,
+             ADD COLUMN IF NOT EXISTS foto_url TEXT'
+        );
+    } catch (Throwable $x) {
+        // Abaikan jika sudah ada atau tidak memiliki hak DDL
+    }
+}
+
 function profil_nonaktif(array $row): bool
 {
     if (isset($row['password_hash']) && str_starts_with((string) $row['password_hash'], '!')) {
@@ -611,7 +635,7 @@ function pesanan_muat(
     ensure_bukti_columns();
 
     $rows = db_sql(
-        'SELECT p.id, p.kode, p.status, p.layanan, p.total, p.created_at, p.bukti_url,
+        'SELECT p.id, p.kode, p.stand_id, p.status, p.layanan, p.total, p.created_at, p.bukti_url,
                 s.nama AS stand_nama, s.kios AS stand_kios, s.qr_url AS stand_qr,
                 u.nama AS pelanggan_nama
          FROM pesanan p
@@ -646,6 +670,7 @@ function pesanan_muat(
 
     foreach ($rows as &$r) {
         $r['stands'] = [
+            'id' => (int) ($r['stand_id'] ?? 0),
             'nama' => $r['stand_nama'],
             'kios' => $r['stand_kios'],
             'qr_url' => $r['stand_qr'] ?? '',
@@ -1021,8 +1046,11 @@ function foto_simpan(string $tabel, int $id, array $file): void
         throw new SbError('Foto gagal diunggah.');
     }
 
-    if (($file['size'] ?? 0) > 512000) {
-        throw new SbError('Ukuran foto maksimal 500 KB.');
+    if ($tabel === 'stands' && function_exists('ensure_stand_foto_columns')) {
+        ensure_stand_foto_columns();
+    }
+    if (($file['size'] ?? 0) > 2097152) {
+        throw new SbError('Ukuran foto maksimal 2 MB.');
     }
 
     $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);

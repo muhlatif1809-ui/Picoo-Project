@@ -218,11 +218,32 @@
     });
   });
 
+
+  // Delegasi buka/tutup dialog dinamis (termasuk struk & bukti pembayaran di #live)
+  document.addEventListener("click", function (e) {
+    var openBtn = e.target.closest("[data-open-dlg]");
+    if (openBtn) {
+      var dlgId = openBtn.getAttribute("data-open-dlg");
+      var dlg = dlgId ? document.getElementById(dlgId) : null;
+      if (dlg && dlg.showModal) dlg.showModal();
+      return;
+    }
+    var closeBtn = e.target.closest("[data-close-dlg]");
+    if (closeBtn) {
+      var parentDlg = closeBtn.closest("dialog");
+      if (parentDlg && parentDlg.close) parentDlg.close();
+      return;
+    }
+    if (e.target && e.target.tagName === "DIALOG" && e.target.open) {
+      e.target.close();
+    }
+  });
+
   // auto-refresh isi <div id="live"> (status pesanan, daftar pesanan penjual)
   var ms = +document.body.dataset.live;
   if (ms)
     setInterval(function () {
-      if (document.hidden) return;
+      if (document.hidden || document.querySelector("dialog[open]")) return;
       fetch(location.href, {
         credentials: "same-origin",
         headers: { "X-Live": "1" },

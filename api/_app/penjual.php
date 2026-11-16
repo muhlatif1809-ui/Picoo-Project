@@ -101,15 +101,28 @@ function r_pen_home(): void
 
   ob_start(); ?>
   <header class="sx-hero">
-    <div class="sx-id">
-      <?= kios_tile($s['kios']) ?>
-      <div class="sx-name"><span>Beranda penjual</span>
-        <h1><?= e($s['nama']) ?></h1>
+    <div class="sx-top-row">
+      <div class="sx-id">
+        <div class="sx-kios-badge">
+          <small>Kios</small>
+          <b><?= e($s['kios']) ?></b>
+        </div>
+        <div class="sx-name">
+          <span class="sx-eyebrow">Beranda penjual · Kantin AX</span>
+          <h1><?= e($s['nama']) ?></h1>
+        </div>
       </div>
+      <span class="sx-live-pill <?= $s['buka'] ? 'is-open' : 'is-closed' ?>">
+        <i></i><?= $s['buka'] ? 'Aktif' : 'Tutup' ?>
+      </span>
     </div>
-    <form method="post" action="/penjual/buka" class="stand-switch <?= $s['buka'] ? 'is-open' : '' ?>" <?= $s['buka'] ? ' data-confirm="Tutup stand sekarang? Pelanggan tidak bisa memesan sampai kamu membukanya lagi."' : '' ?>>
-      <div class="ss-txt">
-        <b><?= $s['buka'] ? 'Stand sedang buka' : 'Stand sedang tutup' ?></b><small><?= $s['buka'] ? 'Pelanggan bisa memesan' : 'Pelanggan belum bisa memesan' ?></small>
+    <form method="post" action="/penjual/buka" class="stand-switch <?= $s['buka'] ? 'is-open' : 'is-closed' ?>" <?= $s['buka'] ? ' data-confirm="Tutup stand sekarang? Pelanggan tidak bisa memesan sampai kamu membukanya lagi."' : '' ?>>
+      <div class="ss-left">
+        <span class="ss-dot" aria-hidden="true"></span>
+        <div class="ss-txt">
+          <b><?= $s['buka'] ? 'Stand sedang buka' : 'Stand sedang tutup' ?></b>
+          <small><?= $s['buka'] ? 'Pelanggan bisa memesan sekarang' : 'Pelanggan belum bisa memesan' ?></small>
+        </div>
       </div>
       <?= saklar((bool) $s['buka'], 'Buka atau tutup stand') ?>
     </form>
@@ -618,6 +631,11 @@ function r_pen_profil(): void
   $buka = (bool) $s['buka'];
   $qrUrl = (string) ($s['qr_url'] ?? '');
 
+  // Foto profil penjual / stand & inisial fallback (mis. "IK" untuk Ima Kartika)
+  $avatarUrl = trim((string) (($m['foto_url'] ?? '') ?: ($s['foto_url'] ?? '')));
+  $namaBasisInisial = trim((string) (($m['nama'] ?? '') ?: ($s['nama'] ?? 'Penjual')));
+  $inisial = function_exists('profil_inisial') ? profil_inisial($namaBasisInisial) : strtoupper(substr($namaBasisInisial, 0, 2));
+
   $standInfoItems = [
     ['key' => 'stand_nama', 'label' => 'Nama stand', 'val' => (string) $s['nama'], 'raw' => (string) $s['nama'], 'type' => 'text', 'icon' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v8h14v-8"/><path d="M9 14h6v6H9z"/></svg>'],
     ['key' => 'stand_kios', 'label' => 'Kios dan lokasi', 'val' => 'Kios ' . $s['kios'] . ' · Kantin AX', 'raw' => (string) $s['kios'], 'type' => 'text', 'icon' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-5.4-7-11a7 7 0 1 1 14 0c0 5.6-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>'],
@@ -631,27 +649,40 @@ function r_pen_profil(): void
     <header class="sp-hero">
       <h1>Profil</h1>
       <div class="sp-stand-head">
-        <div class="sp-stand-ic">
-          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path d="M3 9l1.5-5h15L21 9" />
-            <path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0" />
-            <path d="M5 12v8h14v-8" />
-            <path d="M9 14h6v6H9z" />
-          </svg>
+        <div class="sp-avatar-wrap">
+          <div class="sp-avatar">
+            <?php if ($avatarUrl !== ''): ?>
+              <img src="<?= e($avatarUrl) ?>" alt="<?= e($s['nama']) ?>">
+            <?php else: ?>
+              <?= e($inisial) ?>
+            <?php endif; ?>
+          </div>
+          <button type="button" class="sp-cam-btn" data-sp-open="dlg-sp-avatar" aria-label="Ubah foto profil stand">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+          </button>
         </div>
+
         <div class="sp-stand-title">
           <b><?= e($s['nama']) ?></b>
           <span>Kios <?= e($s['kios']) ?> · Kantin AX</span>
         </div>
+
+        <span class="sp-active-badge <?= $buka ? '' : 'is-off' ?>"><?= $buka ? 'Aktif' : 'Tutup' ?></span>
       </div>
     </header>
 
     <div class="sp-body">
-      <a class="sp-status-bar" href="/penjual">
-        <span class="sp-status-txt"><b>Status toko</b><small>Buka atau tutup lewat Home</small></span>
-        <span class="status-pill <?= $buka ? 'is-open' : 'is-closed' ?>"><i></i><?= $buka ? 'Buka' : 'Tutup' ?></span>
-        <?= ic('next', 18) ?>
-      </a>
+      <div class="sp-status-bar">
+        <b>Status toko</b>
+        <form method="post" action="/penjual/buka" class="sp-toggle-form" <?= $buka ? 'data-confirm="Tutup stand sekarang? Pelanggan tidak bisa memesan sampai kamu membukanya lagi."' : '' ?>>
+          <input type="hidden" name="redirect" value="/penjual/profil">
+          <span class="sp-toggle-txt <?= $buka ? '' : 'is-off' ?>"><?= $buka ? 'Buka' : 'Tutup' ?></span>
+          <button type="submit" class="sp-switch <?= $buka ? 'on' : '' ?>" role="switch" aria-checked="<?= $buka ? 'true' : 'false' ?>" aria-label="Buka atau tutup toko"></button>
+        </form>
+      </div>
 
       <div class="sp-metrics">
         <div class="sp-metric m-green">
@@ -737,6 +768,18 @@ function r_pen_profil(): void
           <span class="sp-set-label">Ubah kata sandi</span>
           <span class="sp-chev">›</span>
         </button>
+
+        <button type="button" class="sp-set-row" data-sp-open="dlg-sp-bantuan">
+          <span class="sp-ic">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </span>
+          <span class="sp-set-label">Bantuan</span>
+          <span class="sp-chev">›</span>
+        </button>
       </div>
 
       <a href="/keluar" class="sp-logout-btn">Keluar akun</a>
@@ -759,6 +802,31 @@ function r_pen_profil(): void
       </form>
     </dialog>
   <?php endforeach; ?>
+
+  <!-- Dialog Unggah Foto Profil & Stand Penjual -->
+  <dialog id="dlg-sp-avatar" class="sp-dlg">
+    <form method="post" action="/penjual/profil/avatar" enctype="multipart/form-data">
+      <h3>Ubah Foto Profil & Stand</h3>
+      <div class="sp-avatar-preview-box">
+        <div class="sp-avatar sp-avatar-lg" id="sp-avatar-preview">
+          <?php if ($avatarUrl !== ''): ?>
+            <img src="<?= e($avatarUrl) ?>" alt="Preview Foto Profil">
+          <?php else: ?>
+            <?= e($inisial) ?>
+          <?php endif; ?>
+        </div>
+        <small class="mut">Foto ini akan tampil di profil penjual dan kartu stand di beranda pembeli.</small>
+      </div>
+      <div class="fld">
+        <label>Pilih Foto Baru (JPG/PNG/WebP, maks. 2 MB)</label>
+        <input type="file" name="avatar" id="sp-avatar-input" accept="image/jpeg,image/png,image/webp" required>
+      </div>
+      <div class="sp-dlg-btns">
+        <button type="button" class="btn sec" data-sp-close>Batal</button>
+        <button type="submit" class="btn">Unggah Foto</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="dlg-sp-qris" class="sp-dlg">
     <form method="post" action="/penjual/profil/qris" enctype="multipart/form-data">
@@ -831,6 +899,18 @@ function r_pen_profil(): void
     </form>
   </dialog>
 
+  <dialog id="dlg-sp-bantuan" class="sp-dlg">
+    <h3>Pusat Bantuan Penjual</h3>
+    <div style="font-size:.86rem;color:#334155;line-height:1.55;display:flex;flex-direction:column;gap:8px">
+      <p><b>1. Mengelola Pesanan Masuk:</b> Buka tab <b>Pesanan</b>, periksa bukti transfer QRIS pembeli, lalu klik <b>Terima pesanan</b> → <b>Siap diambil</b> → <b>Selesai</b>.</p>
+      <p><b>2. Mengatur Stok Online:</b> Buka tab <b>Menu</b> untuk memperbarui jatah stok online harian atau menonaktifkan menu yang habis.</p>
+      <p><b>3. Kendala Akun / Stand:</b> Hubungi Pengelola / Admin Kantin AX Polinema jika mengalami kendala pembayaran atau pengaturan kios.</p>
+    </div>
+    <div class="sp-dlg-btns">
+      <button type="button" class="btn" data-sp-close>Mengerti</button>
+    </div>
+  </dialog>
+
   <script>
     (function () {
       document.querySelectorAll('[data-sp-open]').forEach(function (btn) {
@@ -850,6 +930,24 @@ function r_pen_profil(): void
           if (e.target === dlg) dlg.close();
         });
       });
+      var avInput = document.getElementById('sp-avatar-input');
+      var avPrev = document.getElementById('sp-avatar-preview');
+      if (avInput && avPrev) {
+        avInput.addEventListener('change', function () {
+          var f = avInput.files && avInput.files[0];
+          if (!f) return;
+          if (f.size > 2097152) {
+            alert('Ukuran foto maksimal 2 MB.');
+            avInput.value = '';
+            return;
+          }
+          var img = document.createElement('img');
+          img.alt = 'Preview';
+          img.src = URL.createObjectURL(f);
+          avPrev.innerHTML = '';
+          avPrev.appendChild(img);
+        });
+      }
     })();
   </script>
   <?= nav_pen('/penjual/profil');
@@ -924,3 +1022,85 @@ function r_pen_profil_notifikasi(): void
   flash('Pengaturan notifikasi diperbarui.');
   redirect('/penjual/profil');
 }
+
+function r_pen_profil_avatar(): void
+{
+  $m = need('penjual');
+  $s = stand_saya($m);
+  $file = $_FILES['avatar'] ?? null;
+  try {
+    if (function_exists('ensure_avatar_columns')) {
+      ensure_avatar_columns();
+    }
+    if (function_exists('ensure_stand_foto_columns')) {
+      ensure_stand_foto_columns();
+    }
+    $err = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+    if (!$file || $err === UPLOAD_ERR_NO_FILE) {
+      throw new SbError('Pilih foto terlebih dahulu.');
+    }
+    if ($err === UPLOAD_ERR_INI_SIZE || $err === UPLOAD_ERR_FORM_SIZE || ($file['size'] ?? 0) > 2097152) {
+      throw new SbError('Ukuran foto profil maksimal 2 MB.');
+    }
+    if ($err !== UPLOAD_ERR_OK) {
+      throw new SbError('Foto profil gagal diunggah.');
+    }
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+    if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+      throw new SbError('Foto harus berformat JPG, PNG, atau WebP.');
+    }
+
+    // Simpan ke tabel profiles (avatar penjual)
+    $fh1 = fopen($file['tmp_name'], 'rb');
+    if ($fh1 === false) {
+      throw new SbError('File foto sementara tidak dapat dibaca.');
+    }
+    $urlAvatar = '/foto?t=avatar&id=' . rawurlencode((string) $m['id']) . '&v=' . time();
+    try {
+      $st = pdo()->prepare(
+        'UPDATE profiles SET foto_data = :d, foto_mime = :m, foto_url = :u WHERE id = :id'
+      );
+      $st->bindValue(':d', $fh1, PDO::PARAM_LOB);
+      $st->bindValue(':m', $mime);
+      $st->bindValue(':u', $urlAvatar);
+      $st->bindValue(':id', $m['id']);
+      $st->execute();
+    } finally {
+      if (is_resource($fh1)) {
+        fclose($fh1);
+      }
+    }
+
+    // Simpan juga ke tabel stands supaya kartu stand di beranda pembeli ikut terbarui
+    $fh2 = fopen($file['tmp_name'], 'rb');
+    if ($fh2 !== false) {
+      $urlStand = '/foto?t=stands&id=' . (int) $s['id'] . '&v=' . time();
+      try {
+        $st2 = pdo()->prepare(
+          'UPDATE stands SET foto_data = :d, foto_mime = :m, foto_url = :u WHERE id = :id'
+        );
+        $st2->bindValue(':d', $fh2, PDO::PARAM_LOB);
+        $st2->bindValue(':m', $mime);
+        $st2->bindValue(':u', $urlStand);
+        $st2->bindValue(':id', (int) $s['id'], PDO::PARAM_INT);
+        $st2->execute();
+      } catch (Throwable $eStand) {
+        // Abaikan bila gagal update foto stand sekunder
+      } finally {
+        if (is_resource($fh2)) {
+          fclose($fh2);
+        }
+      }
+    }
+
+    flash('Foto profil dan stand berhasil diperbarui.');
+  } catch (Throwable $x) {
+    error_log('Simpan avatar penjual gagal: ' . $x->getMessage());
+    $msg = $x instanceof SbError
+      ? $x->getMessage()
+      : (env('APP_DEBUG') === '1' ? 'Gagal menyimpan foto profil: ' . $x->getMessage() : 'Gagal menyimpan foto profil.');
+    flash($msg);
+  }
+  redirect('/penjual/profil');
+}
+

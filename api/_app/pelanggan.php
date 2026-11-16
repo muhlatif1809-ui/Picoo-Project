@@ -6,15 +6,91 @@ function r_root(): void
   if ($m = me())
     redirect(home_for($m['role']));
   ob_start(); ?>
-  <div class="auth">
-    <div class="logo"><img src="/img/pico-logo.png" alt="Logo PICO"></div>
-    <h1>PICO</h1>
-    <p class="mut">Pesan makanan Kantin AX tanpa antre</p>
-    <div class="pilih">
-      <a href="/login?sebagai=pembeli"><span class="ic">🍽️</span><span><b>Saya Pembeli</b><small>Pesan makanan dari stand
-            kantin yahaha hayyuk</small></span></a>
-      <a href="/login?sebagai=penjual"><span class="ic">🏪</span><span><b>Saya Penjual</b><small>Kelola pesanan dan menu
-            stand</small></span></a>
+  <div class="role-screen">
+    <div class="role-hero">
+      <div class="role-brand">
+        <h1>PICO</h1>
+        <p>Pesan makanan Kantin AX tanpa antre</p>
+      </div>
+
+      <div class="role-art" aria-hidden="true">
+        <div class="role-circle">
+          <svg class="role-bowl-svg" viewBox="0 0 220 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Uap makanan hangat -->
+            <path d="M74 52C71 42 79 34 76 24" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+            <path d="M110 48C107 38 115 30 112 20" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+            <path d="M146 52C143 42 151 34 148 24" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+            <!-- Isi makanan (mie/nasi hangat + topping) -->
+            <path d="M52 108C56 76 82 62 110 62C138 62 164 76 168 108H52Z" fill="#EAA334"/>
+            <circle cx="83" cy="91" r="10.5" fill="#17794B"/>
+            <circle cx="122" cy="87" r="9.5" fill="#9E2A25"/>
+            <circle cx="151" cy="96" r="9.5" fill="#17794B"/>
+            <!-- Mangkuk putih -->
+            <rect x="30" y="102" width="160" height="14" rx="7" fill="#FFFFFF"/>
+            <path d="M36 112H184C181 150 153 174 110 174C67 174 39 150 36 112Z" fill="#FFFFFF"/>
+            <path d="M41 132H179C171 159 146 174 110 174C74 174 49 159 41 132Z" fill="#EAECEF"/>
+            <rect x="74" y="170" width="72" height="11" rx="5.5" fill="#FFFFFF"/>
+          </svg>
+        </div>
+
+        <!-- Kartu Kiri: Menu real-time / Stok selalu update -->
+        <div class="role-card-float role-card-left">
+          <b class="rcf-title">Menu real-time</b>
+          <span class="rcf-sub"><i class="rcf-dot"></i>Stok selalu update</span>
+        </div>
+
+        <!-- Kartu Kanan: Notifikasi siap -->
+        <div class="role-card-float role-card-right">
+          <span class="rcf-check">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </span>
+          <div class="rcf-right-txt">
+            <b>Notifikasi siap</b>
+            <small>Info saat pesanan matang</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="role-sheet">
+      <h2>Mau masuk sebagai apa?</h2>
+      <p class="role-sheet-sub">Pilih sesuai peranmu di Kantin AX</p>
+
+      <div class="role-actions">
+        <a class="role-btn role-btn-buyer" href="/login?sebagai=pembeli">
+          <span class="role-btn-ic">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 7h12l1 13H5L6 7z"/>
+              <path d="M9 7V5a3 3 0 0 1 6 0v2"/>
+            </svg>
+          </span>
+          <span class="role-btn-txt">
+            <b>Saya Pembeli</b>
+            <small>Pesan makanan dari stand kantin</small>
+          </span>
+          <span class="role-btn-arr"><?= ic('next', 20) ?></span>
+        </a>
+
+        <a class="role-btn role-btn-seller" href="/login?sebagai=penjual">
+          <span class="role-btn-ic">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l1.5-5h15L21 9"/>
+              <path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/>
+              <path d="M5 12v8h14v-8"/>
+              <path d="M9 14h6v6H9z"/>
+            </svg>
+          </span>
+          <span class="role-btn-txt">
+            <b>Saya Penjual</b>
+            <small>Kelola pesanan dan menu stand</small>
+          </span>
+          <span class="role-btn-arr"><?= ic('next', 20) ?></span>
+        </a>
+      </div>
+
+      <div class="role-footer">Kantin AX · Politeknik Negeri Malang</div>
     </div>
   </div>
   <?php layout('PICO', ob_get_clean());
@@ -445,11 +521,20 @@ function r_cart(): void
     if (!$n)
       echo empty_state('cart', 'Keranjangmu masih kosong', 'Pilih stand di Home, lalu tambahkan menu yang kamu mau.', '/home', 'Lihat stand'); ?>
   </div>
-  <?php if ($n): ?>
-    <div class="foot" style="bottom:64px">
-      <div class="row" style="margin-bottom:10px"><span class="mut"><?= $n ?> menu ·
-          Total</span><b><?= rp($d['total']) ?></b></div>
-      <a class="btn" href="/opsi">Checkout</a>
+  <?php if ($n):
+    $totalPorsi = array_sum(array_map(fn($it) => (int) $it['jml'], $d['items'])); ?>
+    <div class="foot ck-foot" style="bottom:64px">
+      <div class="ck-summary">
+        <div class="ck-menu-top">
+          <b><?= $n ?> Menu</b>
+          <span class="ck-porsi">· <?= $totalPorsi ?> porsi dipilih</span>
+        </div>
+        <div class="ck-total-bottom">
+          <span class="ck-total-lbl">Total pembayaran</span>
+          <strong class="ck-total-val"><?= rp($d['total']) ?></strong>
+        </div>
+      </div>
+      <a class="btn ck-btn" href="/opsi">Checkout</a>
     </div>
   <?php endif; ?>
   <?= nav_pel('/keranjang');
@@ -884,39 +969,285 @@ function r_status(): void
     layout('Status', hd('Status pesanan') . empty_box('Belum ada pesanan.') . nav_pel('/riwayat'));
     return;
   }
-  $map = [
-    'baru' => ['Menunggu penjual menerima pesanan', 1],
-    'diproses' => ['Pesananmu sedang diproses', 1],
-    'siap' => ['Pesananmu siap diambil', 2],
-    'selesai' => ['Pesanan selesai', 4],
-    'batal' => ['Pesanan dibatalkan', -1]
+
+  $st = (string) ($o['status'] ?? 'baru');
+  $done = $st === 'selesai';
+  $batal = $st === 'batal';
+
+  // Pemetaan badge header, estimasi subteks, dan progres bar (1..4)
+  $metaMap = [
+    'baru' => ['Menunggu konfirmasi', 'Menunggu respon stand', 1, 'is-proc'],
+    'diproses' => ['Sedang diproses', 'Perkiraan 8 menit', 2, 'is-proc'],
+    'siap' => ['Siap diambil', 'Silakan ambil di stand', 3, 'is-ready'],
+    'selesai' => ['Selesai', 'Pesanan telah selesai', 4, 'is-done'],
+    'batal' => ['Dibatalkan', 'Stok dikembalikan', 0, 'is-cancel'],
   ];
-  [$head, $at] = $map[$o['status']] ?? ['Menunggu pembayaran', 0];
-  $done = $o['status'] === 'selesai';
-  $S = [['Pembayaran diterima', ''], ['Sedang diproses', $o['status'] === 'diproses' ? 'Perkiraan 8 menit' : ''], ['Siap diambil', ''], ['Selesai', '']];
-  $sub = e($head) . ($done || $at < 0 ? '' : '<br><small style="margin-top:4px">Tunjukkan nomor pesanan ke penjual saat mengambil makanan</small>');
-  ob_start();
-  echo hd('Pesanan #' . e($o['kode']), $sub); ?>
-  <div class="bd" id="live">
-    <div class="box">
-      <b><?= e(implode(', ', array_map(fn($i) => $i['jumlah'] . ' x ' . $i['nama'], $o['pesanan_item']))) ?></b>
-      <div class="mut" style="margin-top:6px"><?= e($o['stands']['nama'] ?? '') ?>   <?= e(LAY[$o['layanan']] ?? '') ?>
-        <?= rp($o['total']) ?>
+  [$pillText, $subEst, $progCount, $pillClass] = $metaMap[$st] ?? ['Menunggu bayar', '', 0, 'is-proc'];
+
+  $jamBayar = !empty($o['created_at']) ? date('H.i', strtotime($o['created_at'])) : date('H.i');
+  $tglLengkap = !empty($o['created_at']) ? date('d M Y, H:i', strtotime($o['created_at'])) . ' WIB' : '-';
+  $refNo = 'PICO-' . (!empty($o['created_at']) ? date('Ymd', strtotime($o['created_at'])) : date('Ymd')) . '-' . str_pad((string) $o['id'], 4, '0', STR_PAD_LEFT);
+  $standNama = (string) ($o['stands']['nama'] ?? '-');
+  $standKios = (string) ($o['stands']['kios'] ?? '-');
+  $standId = (int) ($o['stands']['id'] ?? ($o['stand_id'] ?? 0));
+  $layLabel = LAY[$o['layanan']] ?? ($o['layanan'] === 'take_away' ? 'Take Away' : 'Dine In');
+  $buktiUrl = trim((string) ($o['bukti_url'] ?? ''));
+
+  // Status tiap langkah timeline: done | active | pending
+  $step1 = $batal ? 'pending' : 'done';
+  $step2 = $batal ? 'pending' : (in_array($st, ['siap', 'selesai'], true) ? 'done' : (in_array($st, ['baru', 'diproses'], true) ? 'active' : 'pending'));
+  $step3 = $batal ? 'pending' : ($st === 'selesai' ? 'done' : ($st === 'siap' ? 'active' : 'pending'));
+  $step4 = $st === 'selesai' ? 'done' : 'pending';
+
+  $timelineSteps = [
+    [
+      'title' => 'Pembayaran diterima',
+      'sub' => $jamBayar . ' · QRIS',
+      'state' => $step1,
+    ],
+    [
+      'title' => 'Sedang diproses',
+      'sub' => $st === 'baru' ? 'Menunggu penjual menyiapkan pesananmu' : 'Penjual sedang menyiapkan pesananmu',
+      'state' => $step2,
+    ],
+    [
+      'title' => 'Siap diambil',
+      'sub' => $st === 'siap' ? 'Pesananmu sudah matang! Tunjukkan bukti & nomor ke penjual' : 'Kamu akan diberi tahu di sini',
+      'state' => $step3,
+    ],
+    [
+      'title' => 'Selesai',
+      'sub' => $done ? 'Pesanan telah diambil · Terima kasih!' : '',
+      'state' => $step4,
+    ],
+  ];
+
+  ob_start(); ?>
+  <div class="st-page" id="live">
+    <header class="st-hero">
+      <div class="st-topbar">
+        <a href="/riwayat" class="st-back"><?= ic('back', 20) ?><span>Status Pesanan</span></a>
+      </div>
+
+      <div class="st-hero-main">
+        <div class="st-order-no">
+          <small>Nomor pesanan</small>
+          <strong><?= e($o['kode']) ?></strong>
+        </div>
+        <div class="st-status-right">
+          <span class="st-pill <?= e($pillClass) ?>"><?= e($pillText) ?></span>
+          <?php if ($subEst !== ''): ?>
+            <small class="st-est"><?= e($subEst) ?></small>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <div class="st-progress" role="progressbar" aria-valuenow="<?= (int) $progCount ?>" aria-valuemin="0" aria-valuemax="4">
+        <?php for ($sIdx = 1; $sIdx <= 4; $sIdx++): ?>
+          <span class="st-seg <?= $sIdx <= $progCount ? 'on' : '' ?> <?= $done ? 'is-complete' : '' ?>"></span>
+        <?php endfor; ?>
+      </div>
+    </header>
+
+    <div class="st-body">
+      <!-- Kartu Atas: Bukti Pembayaran (Struk) di kiri + Nomor Pesanan di kanan untuk ditunjukkan ke penjual -->
+      <section class="st-card st-pickup-card">
+        <div class="st-proof-col">
+          <?php if ($buktiUrl !== ''): ?>
+            <button type="button" class="st-proof-thumb" data-open-dlg="dlg-bukti-bayar" aria-label="Perbesar bukti pembayaran">
+              <img src="<?= e($buktiUrl) ?>" alt="Bukti pembayaran #<?= e($o['kode']) ?>">
+              <span class="st-proof-badge">🔍 Bukti Bayar</span>
+            </button>
+          <?php else: ?>
+            <button type="button" class="st-proof-fallback" data-open-dlg="dlg-struk-pesanan" aria-label="Lihat struk pembayaran">
+              <span class="st-pf-ic">🧾</span>
+              <b>QRIS Lunas</b>
+              <small><?= rp($o['total']) ?></small>
+              <span class="st-pf-tap">Lihat Struk</span>
+            </button>
+          <?php endif; ?>
+        </div>
+
+        <div class="st-pickup-info">
+          <small class="st-pickup-hint">Tunjukkan ke penjual saat mengambil</small>
+          <strong class="st-pickup-code"><?= e($o['kode']) ?></strong>
+          <b class="st-pickup-stand"><?= e($standNama) ?></b>
+          <span class="st-pickup-meta">Kios <?= e($standKios) ?> · <?= e($layLabel) ?></span>
+        </div>
+      </section>
+
+      <?php if ($batal): ?>
+        <div class="st-cancel-banner">
+          <?= ic('x', 18) ?>
+          <div>
+            <b>Pesanan Dibatalkan</b>
+            <small>Pesanan ini telah dibatalkan dan stok dikembalikan ke stand.</small>
+          </div>
+        </div>
+      <?php else: ?>
+        <!-- Kartu Perjalanan Pesanan -->
+        <section class="st-card">
+          <h2 class="st-card-title">Perjalanan pesanan</h2>
+          <ul class="st-timeline">
+            <?php foreach ($timelineSteps as $idx => $step): ?>
+              <li class="st-tl-item is-<?= e($step['state']) ?>">
+                <span class="st-tl-node">
+                  <?php if ($step['state'] === 'done'): ?>
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <?php elseif ($step['state'] === 'active'): ?>
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><polyline points="12 8 12 12 14.5 13.5"/></svg>
+                  <?php endif; ?>
+                </span>
+                <div class="st-tl-content">
+                  <b><?= e($step['title']) ?></b>
+                  <?php if ($step['sub'] !== ''): ?>
+                    <small><?= e($step['sub']) ?></small>
+                  <?php endif; ?>
+                </div>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </section>
+      <?php endif; ?>
+
+      <!-- Kartu Ringkasan Pesanan -->
+      <section class="st-card">
+        <h2 class="st-card-title">Ringkasan pesanan</h2>
+        <ul class="st-summary-list">
+          <?php foreach ($o['pesanan_item'] as $item): ?>
+            <li>
+              <div class="st-sum-name">
+                <span><?= (int) $item['jumlah'] ?> × <?= e($item['nama']) ?></span>
+                <?php if (!empty($item['catatan'])): ?>
+                  <small class="st-sum-note">Catatan: <?= e($item['catatan']) ?></small>
+                <?php endif; ?>
+              </div>
+              <b class="st-sum-price"><?= rp($item['harga'] * $item['jumlah']) ?></b>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+        <div class="st-summary-total">
+          <span>Total dibayar</span>
+          <strong><?= rp($o['total']) ?></strong>
+        </div>
+      </section>
+
+      <!-- Tombol Struk & Pesan Lagi (Muncul ketika pesanan sudah selesai) -->
+      <?php if ($done): ?>
+        <section class="st-done-actions">
+          <button type="button" class="btn st-btn-receipt" data-open-dlg="dlg-struk-pesanan">
+            <?= ic('receipt', 19) ?>
+            <span>Lihat Struk & Bukti Pembayaran</span>
+          </button>
+          <?php if ($standId > 0): ?>
+            <a href="/menu?stand=<?= $standId ?>" class="btn sec st-btn-reorder">
+              Pesan Lagi dari <?= e($standNama) ?>
+            </a>
+          <?php endif; ?>
+        </section>
+      <?php endif; ?>
+
+      <!-- Banner Info 30 Hari -->
+      <div class="st-retention-info">
+        <span class="st-ret-ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+        </span>
+        <span>Riwayat pesanan akan dihapus dalam 30 hari.</span>
       </div>
     </div>
-    <?php if ($at >= 0): ?>
-      <ul class="steps" style="margin:18px 6px"><?php foreach ($S as $k => [$t, $sb]): ?>
-          <li class="<?= ($k === 0 || $k < $at || $done) ? 'd' : ($k === $at ? 'a' : '') ?>">
-            <div><b><?= e($t) ?></b><?= $sb ? '<small>' . e($sb) . '</small>' : '' ?></div>
-          </li>
-        <?php endforeach; ?>
-      </ul>
-    <?php else: ?>
-      <div class="note" style="background:#fde1e1;color:#b42318">Pesanan dibatalkan. Stok sudah dikembalikan.</div>
+
+    <?php if ($buktiUrl !== ''): ?>
+      <!-- Dialog Zoom Bukti Pembayaran -->
+      <dialog id="dlg-bukti-bayar" class="rcp-dlg">
+        <div class="rcp-sheet">
+          <div class="rcp-head">
+            <b>Bukti Pembayaran #<?= e($o['kode']) ?></b>
+            <small><?= e($standNama) ?> · Kios <?= e($standKios) ?> · <?= rp($o['total']) ?></small>
+          </div>
+          <div class="rcp-proof-full">
+            <img src="<?= e($buktiUrl) ?>" alt="Bukti Pembayaran #<?= e($o['kode']) ?>">
+          </div>
+          <div class="rcp-actions">
+            <a href="<?= e($buktiUrl) ?>" download="Bukti-PICO-<?= e($o['kode']) ?>.jpg" class="btn sec sm">⬇ Unduh Bukti</a>
+            <button type="button" class="btn sm" data-close-dlg>Tutup</button>
+          </div>
+        </div>
+      </dialog>
     <?php endif; ?>
-    <div class="note">Riwayat pesanan akan dihapus dalam 30 hari</div>
+
+    <!-- Dialog Struk Digital Lengkap (Berisi pesanan, harga, stand, waktu, ID referensi & bukti bayar) -->
+    <dialog id="dlg-struk-pesanan" class="rcp-dlg">
+      <div class="rcp-sheet" id="printable-receipt">
+        <div class="rcp-brand">
+          <span class="rcp-badge-ok">✓ LUNAS · <?= e(strtoupper($pillText)) ?></span>
+          <h3>PICO · Kantin AX</h3>
+          <small>Politeknik Negeri Malang</small>
+        </div>
+
+        <div class="rcp-code-box">
+          <small>Nomor Antrean Pesanan</small>
+          <strong>#<?= e($o['kode']) ?></strong>
+        </div>
+
+        <dl class="rcp-meta">
+          <div><dt>ID Referensi</dt><dd><?= e($refNo) ?></dd></div>
+          <div><dt>Waktu Transaksi</dt><dd><?= e($tglLengkap) ?></dd></div>
+          <div><dt>Stand Pembelian</dt><dd><?= e($standNama) ?> (Kios <?= e($standKios) ?>)</dd></div>
+          <div><dt>Nama Pembeli</dt><dd><?= e($o['pelanggan_nama'] ?? $m['nama']) ?></dd></div>
+          <div><dt>Jenis Layanan</dt><dd><?= e($layLabel) ?></dd></div>
+          <div><dt>Metode Pembayaran</dt><dd>QRIS (Terverifikasi)</dd></div>
+        </dl>
+
+        <div class="rcp-divider"></div>
+
+        <div class="rcp-items-title">Rincian Menu Pesanan</div>
+        <ul class="rcp-items">
+          <?php foreach ($o['pesanan_item'] as $item): ?>
+            <li>
+              <div>
+                <b><?= (int) $item['jumlah'] ?> × <?= e($item['nama']) ?></b>
+                <small>@ <?= rp($item['harga']) ?><?= !empty($item['catatan']) ? ' · "' . e($item['catatan']) . '"' : '' ?></small>
+              </div>
+              <span><?= rp($item['harga'] * $item['jumlah']) ?></span>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+
+        <div class="rcp-divider"></div>
+
+        <div class="rcp-total-row">
+          <span>Total Pembayaran</span>
+          <strong><?= rp($o['total']) ?></strong>
+        </div>
+
+        <div class="rcp-proof-section">
+          <div class="rcp-proof-head">
+            <b>Lampiran Bukti Pembayaran</b>
+            <span>QRIS</span>
+          </div>
+          <?php if ($buktiUrl !== ''): ?>
+            <div class="rcp-proof-img-wrap">
+              <img src="<?= e($buktiUrl) ?>" alt="Bukti Transfer #<?= e($o['kode']) ?>">
+            </div>
+          <?php else: ?>
+            <div class="rcp-proof-verified">
+              <span>✅ Pembayaran QRIS sebesar <b><?= rp($o['total']) ?></b> telah tercatat lunas di sistem PICO.</span>
+            </div>
+          <?php endif; ?>
+        </div>
+
+        <div class="rcp-actions no-print">
+          <button type="button" class="btn sec sm" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
+          <button type="button" class="btn sm" data-close-dlg>Tutup Struk</button>
+        </div>
+      </div>
+    </dialog>
   </div><?= nav_pel('/riwayat');
-  layout('Status pesanan', ob_get_clean(), ['live' => ($done || $at < 0) ? 0 : 4000]);
+  layout('Status pesanan', ob_get_clean(), ['live' => ($done || $batal) ? 0 : 4000]);
 }
 
 function r_riwayat(): void
