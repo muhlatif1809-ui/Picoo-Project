@@ -1047,18 +1047,102 @@ details.adm-add[open] > summary {
   display: none;
 }
 
-/* ---------- Sidebar bertingkat ---------- */
-.adm-side nav a.grp {
+/* ---------- Sidebar bertingkat (accordion) ---------- */
+.adm-grp {
+  display: flex;
+  flex-direction: column;
+}
+.adm-grp-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #c5cde0;
+  font: inherit;
+  font-size: 0.93rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+.adm-grp-btn:hover {
+  background: #ffffff12;
+  color: #fff;
+}
+.adm-grp-btn:focus-visible {
+  outline: 2px solid var(--org);
+  outline-offset: 2px;
+}
+.adm-grp.cur > .adm-grp-btn {
   color: #fff;
   font-weight: 600;
 }
+.adm-chev {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  transform: rotate(-90deg);
+  transition: transform 0.2s ease;
+  opacity: 0.8;
+}
+.adm-grp.open .adm-chev {
+  transform: rotate(0deg);
+}
+/* Animasi tinggi sub-menu tanpa mengukur pakai JS */
+.adm-subnav {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease;
+}
+.adm-grp.open .adm-subnav {
+  grid-template-rows: 1fr;
+}
+.adm-subnav-in {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease, padding 0.2s ease;
+}
+.adm-grp.open .adm-subnav-in {
+  opacity: 1;
+  padding-top: 4px;
+}
 .adm-side nav a.sub {
+  position: relative;
   padding: 8px 14px 8px 46px;
   font-size: 0.86rem;
+}
+.adm-side nav a.sub::before {
+  content: "";
+  position: absolute;
+  left: 23px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.45;
+  transform: translateY(-50%);
 }
 .adm-side nav a.sub.on {
   background: var(--org);
   color: #fff;
+}
+.adm-side nav a.sub.on::before {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .adm-chev,
+  .adm-subnav,
+  .adm-subnav-in {
+    transition: none;
+  }
 }
 
 /* ---------- Judul halaman dengan tombol aksi ---------- */

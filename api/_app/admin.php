@@ -45,11 +45,22 @@ function adm_layout(string $title, string $body, string $on): void
         . '<span class="adm-brand-txt"><b>PICO</b><small>Panel admin</small></span></a><nav>';
 
     foreach ($nav as [$key, $href, $label, $icon, $sub]) {
-        $aktif = ($grup === $key && !$sub) || ($sub && $on === $key);
-        $h .= '<a href="' . $href . '" class="' . ($aktif ? 'on' : ($grup === $key ? 'grp' : '')) . '">' . ic($icon, 18) . '<span>' . $label . '</span></a>';
-        foreach ($sub as [$sk, $sh, $sl]) {
-            $h .= '<a href="' . $sh . '" class="sub ' . ($on === $sk ? 'on' : '') . '"><span>' . $sl . '</span></a>';
+        if (!$sub) {
+            $h .= '<a href="' . $href . '" class="' . ($grup === $key ? 'on' : '') . '">' . ic($icon, 18) . '<span>' . $label . '</span></a>';
+            continue;
         }
+        // Grup bertingkat (accordion): tombol induk membuka/menutup sub-menu.
+        // Terbuka otomatis bila halaman aktif berada di dalam grup ini.
+        $buka = $grup === $key;
+        $subId = 'adm-sub-' . $key;
+        $h .= '<div class="adm-grp' . ($buka ? ' open' : '') . ($buka ? ' cur' : '') . '" data-nav-grp="' . $key . '">'
+            . '<button type="button" class="adm-grp-btn" data-nav-grp-toggle aria-expanded="' . ($buka ? 'true' : 'false') . '" aria-controls="' . $subId . '">'
+            . ic($icon, 18) . '<span>' . $label . '</span><span class="adm-chev">' . ic('chev', 16) . '</span></button>'
+            . '<div class="adm-subnav" id="' . $subId . '"><div class="adm-subnav-in">';
+        foreach ($sub as [$sk, $sh, $sl]) {
+            $h .= '<a href="' . $sh . '" class="sub' . ($on === $sk ? ' on' : '') . '"' . ($on === $sk ? ' aria-current="page"' : '') . ($buka ? '' : ' tabindex="-1"') . '><span>' . $sl . '</span></a>';
+        }
+        $h .= '</div></div></div>';
     }
 
     $h .= '</nav><div class="adm-side-foot"><a href="/keluar" class="adm-logout">' . ic('logout', 18) . '<span>Keluar</span></a></div></aside>'

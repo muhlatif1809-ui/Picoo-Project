@@ -218,6 +218,20 @@
     });
   });
 
+  // Sidebar admin bertingkat: buka/tutup sub-menu (mis. Pengguna → Pelanggan/Penjual/Admin)
+  $$("[data-nav-grp-toggle]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var grp = btn.closest("[data-nav-grp]");
+      if (!grp) return;
+      var open = grp.classList.toggle("open");
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      grp.querySelectorAll(".adm-subnav a").forEach(function (a) {
+        if (open) a.removeAttribute("tabindex");
+        else a.setAttribute("tabindex", "-1");
+      });
+    });
+  });
+
 
   // Delegasi buka/tutup dialog dinamis (termasuk struk & bukti pembayaran di #live)
   document.addEventListener("click", function (e) {
