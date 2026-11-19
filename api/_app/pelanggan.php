@@ -914,7 +914,7 @@ function r_status(): void
     <?php else: ?>
       <div class="note" style="background:#fde1e1;color:#b42318">Pesanan dibatalkan. Stok sudah dikembalikan.</div>
     <?php endif; ?>
-    <div class="note">Riwayat pesanan akan dihapus dalam 30 hari</div>
+    <div class="note">Riwayat pesanan akan hilang dalam 5 menit</div>
   </div><?= nav_pel('/riwayat');
   layout('Status pesanan', ob_get_clean(), ['live' => ($done || $at < 0) ? 0 : 4000]);
 }
@@ -926,9 +926,9 @@ function r_riwayat(): void
     db_rpc('bersihkan_kadaluarsa');
   } catch (SbError $x) {
   }
-  $l = pesanan_muat('p.pelanggan_id = :u', [':u' => $m['id']], 'ORDER BY p.created_at DESC LIMIT 30');
+  $l = pesanan_muat("p.pelanggan_id = :u AND p.created_at >= NOW() - INTERVAL '5 minutes'", [':u' => $m['id']], 'ORDER BY p.created_at DESC LIMIT 30');
   ob_start();
-  echo hdx('Riwayat', 'Pesanan 30 hari terakhir', ['icon' => 'receipt']); ?>
+  echo hdx('Riwayat', 'Pesanan 5 menit terakhir', ['icon' => 'receipt']); ?>
   <div class="bd">
     <?php foreach ($l as $o): ?>
       <a class="item order-item"
