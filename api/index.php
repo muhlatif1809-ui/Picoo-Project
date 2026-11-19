@@ -47,6 +47,7 @@ $routes = [
     'POST /penjual/menu/hapus' => 'r_pen_menu_hapus',
     'GET /penjual/profil' => 'r_pen_profil',
     'POST /penjual/profil/ubah' => 'r_pen_profil_ubah',
+    'POST /penjual/profil/avatar' => 'r_pen_profil_avatar',
     'POST /penjual/profil/qris' => 'r_pen_profil_qris',
     'POST /penjual/profil/notifikasi' => 'r_pen_profil_notifikasi',
     // admin

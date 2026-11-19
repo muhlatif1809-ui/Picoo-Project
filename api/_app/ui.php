@@ -80,6 +80,10 @@ function pico_ui_effects(): string
   .qty button,
   .stepper-in button,
   .pf-cam-btn,
+  .sp-cam-btn,
+  .role-btn,
+  .st-proof-thumb,
+  .st-proof-fallback,
   .pf-edit-btn,
   .pf-nav-row,
   .pf-back-btn,
@@ -146,8 +150,11 @@ function pico_ui_effects(): string
 
     .qty button:hover,
     .stepper-in button:hover,
-    .pf-cam-btn:hover {
-      transform: scale(1.08);
+    .pf-cam-btn:hover,
+    .sp-cam-btn:hover,
+    .st-proof-thumb:hover,
+    .st-proof-fallback:hover {
+      transform: scale(1.06);
     }
 
     .pf-nav-row:hover,
@@ -186,8 +193,11 @@ function pico_ui_effects(): string
   .plus:active,
   .qty button:active,
   .stepper-in button:active,
-  .pf-cam-btn:active {
-    transform: scale(0.9) !important;
+  .pf-cam-btn:active,
+  .sp-cam-btn:active,
+  .st-proof-thumb:active,
+  .st-proof-fallback:active {
+    transform: scale(0.92) !important;
   }
 
   .pf-nav-chev,
@@ -234,6 +244,9 @@ function pico_ui_effects(): string
   .box,
   .opt,
   .pilih a,
+  .role-btn,
+  .st-card,
+  .stand-switch,
   .pf-card,
   .pf-order-card,
   .seller-stat,
@@ -278,6 +291,9 @@ function pico_ui_effects(): string
     .item:hover,
     .order-item:hover,
     .pilih a:hover,
+    .role-btn:hover,
+    .st-pickup-card:hover,
+    .stand-switch:hover,
     .opt:hover,
     .pf-order-card:hover,
     .seller-stat:hover,
@@ -298,6 +314,7 @@ function pico_ui_effects(): string
 
     .pf-card:hover,
     .sp-card:hover,
+    .st-card:hover,
     .pd-card:hover,
     .chart-card:hover,
     .em-card:hover,
@@ -328,6 +345,7 @@ function pico_ui_effects(): string
   a.mres:not(.off):active,
   a.order-item:active,
   .pilih a:active,
+  .role-btn:active,
   a.pf-order-card:active,
   a.seller-stat:active,
   a.so:active,
@@ -474,7 +492,7 @@ function pico_ui_effects(): string
 <script id="pico-ui-effects-js">
 (function () {
   var CARD_SEL = [
-    '.stand', '.mres', '.pc', '.item', '.order-item', '.pilih a',
+    '.stand', '.mres', '.pc', '.item', '.order-item', '.pilih a', '.role-btn', '.st-card', '.stand-switch',
     '.pf-card', '.pf-order-card', '.seller-stat', '.ocard', '.so',
     '.seller-order', '.mrow', '.pd-card', '.chart-card', '.sum',
     '.em-card', '.sp-card', '.sp-metric', '.sp-rep-box', '.sp-status-bar',
@@ -482,7 +500,7 @@ function pico_ui_effects(): string
   ].join(',');
 
   var BTN_SEL = [
-    '.btn', '.plus', '.qty button', '.stepper-in button', '.pilih a',
+    '.btn', '.plus', '.qty button', '.stepper-in button', '.pilih a', '.role-btn', '.sp-cam-btn', '.st-proof-thumb', '.st-proof-fallback',
     '.pf-cam-btn', '.pf-edit-btn', '.pf-nav-row', '.pf-back-btn',
     '.sp-edit-btn', '.sp-set-row', '.sp-logout-btn', '.hx-back',
     '.hx-add', '.back', '.seller-filters a', '.chips a',
@@ -492,7 +510,7 @@ function pico_ui_effects(): string
 
   function initImageSkeletons(root) {
     var imgs = (root || document).querySelectorAll(
-      '.thumb img, .pc .im img, .seller-menu-photo img, .em-photo-img img, .pf-avatar img, #img-qr-stand, .bukti-th'
+      '.thumb img, .pc .im img, .seller-menu-photo img, .em-photo-img img, .pf-avatar img, .sp-avatar img, .st-proof-thumb img, #img-qr-stand, .bukti-th'
     );
     imgs.forEach(function (img) {
       var wrap = img.parentElement;

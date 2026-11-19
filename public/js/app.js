@@ -218,11 +218,46 @@
     });
   });
 
+  // Sidebar admin bertingkat: buka/tutup sub-menu (mis. Pengguna → Pelanggan/Penjual/Admin)
+  $$("[data-nav-grp-toggle]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var grp = btn.closest("[data-nav-grp]");
+      if (!grp) return;
+      var open = grp.classList.toggle("open");
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      grp.querySelectorAll(".adm-subnav a").forEach(function (a) {
+        if (open) a.removeAttribute("tabindex");
+        else a.setAttribute("tabindex", "-1");
+      });
+    });
+  });
+
+
+  // Delegasi buka/tutup dialog dinamis (termasuk struk & bukti pembayaran di #live)
+  document.addEventListener("click", function (e) {
+    var openBtn = e.target.closest("[data-open-dlg]");
+    if (openBtn) {
+      var dlgId = openBtn.getAttribute("data-open-dlg");
+      var dlg = dlgId ? document.getElementById(dlgId) : null;
+      if (dlg && dlg.showModal) dlg.showModal();
+      return;
+    }
+    var closeBtn = e.target.closest("[data-close-dlg]");
+    if (closeBtn) {
+      var parentDlg = closeBtn.closest("dialog");
+      if (parentDlg && parentDlg.close) parentDlg.close();
+      return;
+    }
+    if (e.target && e.target.tagName === "DIALOG" && e.target.open) {
+      e.target.close();
+    }
+  });
+
   // auto-refresh isi <div id="live"> (status pesanan, daftar pesanan penjual)
   var ms = +document.body.dataset.live;
   if (ms)
     setInterval(function () {
-      if (document.hidden) return;
+      if (document.hidden || document.querySelector("dialog[open]")) return;
       fetch(location.href, {
         credentials: "same-origin",
         headers: { "X-Live": "1" },

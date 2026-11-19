@@ -3063,3 +3063,1256 @@ fieldset:disabled .btn {
   justify-content: center;
   padding: 9px 10px;
 }
+
+/* ==================================================================
+   21. MODIFIKASI UI PICO:
+   1) Tampilan Awal (Pilih Peran) tanpa logo atas + kartu fitur ringkas + oranye saat hover
+   2) Status Pesanan baru + Bukti Pembayaran & Nomor Pesanan + Struk Selesai
+   3) Profil Penjual dengan Upload Foto Avatar & Stand + Toggle Status
+   4) Header Flat Solid (Anti AI-Slop / Tanpa Gradasi Glow Berlebihan)
+   5) Bar Checkout Keranjang (Menu Bold di Atas, Total di Bawah)
+   ================================================================== */
+
+/* ---------- 1. TAMPILAN AWAL / PILIH PERAN (.role-screen) ---------- */
+.app:has(.role-screen) {
+  padding-bottom: 0;
+  background: #1b2a4a;
+  display: flex;
+  flex-direction: column;
+}
+.role-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #1b2a4a;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+@media (min-width: 700px) {
+  .role-screen {
+    min-height: calc(100vh - 48px);
+  }
+}
+.role-hero {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 34px 24px 24px;
+  text-align: center;
+  z-index: 1;
+}
+.role-hero::before {
+  content: "";
+  position: absolute;
+  top: -70px;
+  left: -60px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+}
+.role-hero::after {
+  content: "";
+  position: absolute;
+  top: 110px;
+  right: -75px;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+}
+.role-brand {
+  position: relative;
+  z-index: 2;
+  margin-top: 2px;
+}
+.role-brand h1 {
+  font-family: var(--font-head);
+  font-size: 2.45rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1.05;
+  color: #ffffff;
+  margin: 0;
+}
+.role-brand p {
+  margin-top: 8px;
+  font-size: 0.94rem;
+  font-weight: 400;
+  color: #cbd5e1;
+}
+.role-art {
+  position: relative;
+  width: 100%;
+  max-width: 296px;
+  margin: 24px auto 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 212px;
+}
+.role-circle {
+  width: 192px;
+  height: 192px;
+  border-radius: 50%;
+  background: #f28c28;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.role-art:hover .role-circle {
+  transform: scale(1.03);
+}
+.role-bowl-svg {
+  width: 162px;
+  height: 148px;
+  display: block;
+}
+@keyframes picoSteam {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.92;
+  }
+  50% {
+    transform: translateY(-4px);
+    opacity: 0.55;
+  }
+}
+.bowl-steam {
+  animation: picoSteam 2.6s ease-in-out infinite;
+}
+.bowl-steam.s2 {
+  animation-delay: 0.4s;
+}
+.bowl-steam.s3 {
+  animation-delay: 0.8s;
+}
+
+/* Dua kartu melayang: ukuran kecil & proporsional seperti mockup */
+@keyframes picoFloatLeft {
+  0%, 100% {
+    transform: rotate(-6deg) translateY(0);
+  }
+  50% {
+    transform: rotate(-6deg) translateY(-4px);
+  }
+}
+@keyframes picoFloatRight {
+  0%, 100% {
+    transform: rotate(4deg) translateY(0);
+  }
+  50% {
+    transform: rotate(4deg) translateY(-4px);
+  }
+}
+.role-card-float {
+  position: absolute;
+  z-index: 3;
+  background: #ffffff;
+  color: #162542;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(10, 18, 36, 0.22);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+}
+.role-card-left {
+  left: -4px;
+  top: 40px;
+  padding: 7px 11px;
+  text-align: left;
+  transform: rotate(-6deg);
+  animation: picoFloatLeft 3.6s ease-in-out infinite;
+}
+.role-card-left:hover {
+  transform: rotate(-3deg) scale(1.05);
+  box-shadow: 0 12px 24px rgba(10, 18, 36, 0.3);
+}
+.rcf-title {
+  display: block;
+  font-family: var(--font-head);
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #162542;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.rcf-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: #15803d;
+  white-space: nowrap;
+}
+.rcf-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16a34a;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.role-card-right {
+  right: -4px;
+  bottom: 30px;
+  padding: 7px 11px 7px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  text-align: left;
+  transform: rotate(4deg);
+  animation: picoFloatRight 3.8s ease-in-out infinite 0.5s;
+}
+.role-card-right:hover {
+  transform: rotate(2deg) scale(1.05);
+  box-shadow: 0 12px 24px rgba(10, 18, 36, 0.3);
+}
+.rcf-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #dcfce7;
+  color: #15803d;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.rcf-right-title {
+  display: block;
+  font-family: var(--font-head);
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #162542;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+/* Bottom sheet & Kartu Pilih Peran (Putih saat normal, Oranye saat Hover/Focus/Active) */
+.role-sheet {
+  position: relative;
+  z-index: 2;
+  background: #f4f6f9;
+  color: #162542;
+  border-radius: 28px 28px 0 0;
+  padding: 24px 22px 20px;
+}
+.role-sheet h2 {
+  font-family: var(--font-head);
+  font-size: 1.28rem;
+  font-weight: 800;
+  color: #162542;
+  margin: 0;
+}
+.role-sheet-sub {
+  font-size: 0.86rem;
+  color: #64748b;
+  margin: 4px 0 16px;
+}
+.role-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.role-btn {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 18px;
+  border-radius: 18px;
+  background: #ffffff;
+  color: #162542;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  text-decoration: none;
+  transition:
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease !important;
+}
+.role-btn .role-btn-ic {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: #eef2f6;
+  color: #1b2a4a;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: background-color 0.22s ease, color 0.22s ease, transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.role-btn .role-btn-txt {
+  flex: 1;
+  min-width: 0;
+}
+.role-btn .role-btn-txt b {
+  display: block;
+  font-family: var(--font-head);
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: #1b2a4a;
+  transition: color 0.2s ease;
+}
+.role-btn .role-btn-txt small {
+  display: block;
+  font-size: 0.81rem;
+  color: #64748b;
+  margin-top: 2px;
+  transition: color 0.2s ease;
+}
+.role-btn .role-btn-arr {
+  color: #1b2a4a;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
+}
+
+/* Efek Hover & Focus pada kedua tombol peran -> berubah menjadi Oranye seperti di gambar */
+.role-btn:hover,
+.role-btn:focus-visible {
+  background: #f28c28 !important;
+  border-color: #f28c28 !important;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -4px rgba(242, 140, 40, 0.38), 0 4px 10px -2px rgba(15, 23, 42, 0.08) !important;
+}
+.role-btn:hover .role-btn-ic,
+.role-btn:focus-visible .role-btn-ic {
+  background: #1b2a4a !important;
+  color: #ffffff !important;
+  transform: scale(1.05);
+}
+.role-btn:hover .role-btn-txt b,
+.role-btn:focus-visible .role-btn-txt b {
+  color: #1b2a4a;
+}
+.role-btn:hover .role-btn-txt small,
+.role-btn:focus-visible .role-btn-txt small {
+  color: #3f270d;
+}
+.role-btn:hover .role-btn-arr,
+.role-btn:focus-visible .role-btn-arr {
+  transform: translateX(4px);
+}
+.role-btn:active {
+  transform: translateY(0) scale(0.97) !important;
+}
+
+.role-footer {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+/* ---------- 2. STATUS PESANAN & STRUK (.st-page, .rcp-dlg) ---------- */
+.st-page {
+  background: #f4f6f9;
+  min-height: 100vh;
+  padding-bottom: 96px;
+}
+.st-hero {
+  background: #1b2a4a;
+  color: #ffffff;
+  padding: 18px 20px 38px;
+  border-radius: 0 0 24px 24px;
+}
+.st-topbar {
+  margin-bottom: 16px;
+}
+.st-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffffff;
+  font-family: var(--font-head);
+  font-size: 1.02rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.st-hero-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.st-order-no small {
+  display: block;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-bottom: 2px;
+}
+.st-order-no strong {
+  display: block;
+  font-family: var(--font-head);
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  color: #ffffff;
+}
+.st-status-right {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.st-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.st-pill.is-proc {
+  background: #f28c28;
+  color: #1b2a4a;
+}
+.st-pill.is-ready {
+  background: #22c55e;
+  color: #052e16;
+}
+.st-pill.is-done {
+  background: #dcfce7;
+  color: #15803d;
+}
+.st-pill.is-cancel {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.st-est {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+.st-progress {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+}
+.st-seg {
+  height: 5px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.18);
+  transition: background 0.25s ease;
+}
+.st-seg.on {
+  background: #f28c28;
+}
+.st-seg.on.is-complete {
+  background: #22c55e;
+}
+
+.st-body {
+  padding: 0 16px 24px;
+  margin-top: -20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.st-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 16px 18px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+  border: 1px solid #edf1f7;
+}
+.st-pickup-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+.st-proof-col {
+  flex-shrink: 0;
+}
+.st-proof-thumb {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  border-radius: 14px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  padding: 5px;
+  cursor: pointer;
+  overflow: hidden;
+  display: block;
+}
+.st-proof-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 9px;
+  display: block;
+}
+.st-proof-badge {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  background: rgba(27, 42, 74, 0.88);
+  color: #ffffff;
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 6px;
+  text-align: center;
+}
+.st-proof-fallback {
+  width: 112px;
+  height: 112px;
+  border-radius: 14px;
+  border: 1.5px dashed #cbd5e1;
+  background: #f8fafc;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  color: #1b2a4a;
+}
+.st-pf-ic {
+  font-size: 1.45rem;
+  line-height: 1;
+}
+.st-proof-fallback b {
+  font-size: 0.78rem;
+  color: #15803d;
+}
+.st-proof-fallback small {
+  font-size: 0.72rem;
+  color: #475569;
+  font-weight: 600;
+}
+.st-pf-tap {
+  margin-top: 3px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #1e293b;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+.st-pickup-info {
+  flex: 1;
+  min-width: 0;
+}
+.st-pickup-hint {
+  display: block;
+  font-size: 0.76rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+.st-pickup-code {
+  display: block;
+  font-family: var(--font-head);
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #1b2a4a;
+  margin: 4px 0 3px;
+  line-height: 1.1;
+}
+.st-pickup-stand {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+.st-pickup-meta {
+  display: block;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.st-card-title {
+  font-family: var(--font-head);
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: #1b2a4a;
+  margin: 0 0 14px;
+}
+.st-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.st-tl-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding-bottom: 18px;
+}
+.st-tl-item:last-child {
+  padding-bottom: 0;
+}
+.st-tl-item:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 30px;
+  bottom: 0;
+  width: 2px;
+  background: #e2e8f0;
+}
+.st-tl-item.is-done:not(:last-child)::before {
+  background: #1f7a4c;
+}
+.st-tl-node {
+  position: relative;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1.5px solid #d5dce6;
+  background: #ffffff;
+  color: transparent;
+}
+.st-tl-item.is-done .st-tl-node {
+  background: #1f7a4c;
+  border-color: #1f7a4c;
+  color: #ffffff;
+}
+.st-tl-item.is-active .st-tl-node {
+  background: #f28c28;
+  border-color: #f28c28;
+  color: #1b2a4a;
+}
+.st-tl-content {
+  flex: 1;
+  min-width: 0;
+  padding-top: 3px;
+}
+.st-tl-content b {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+.st-tl-item.is-done .st-tl-content b,
+.st-tl-item.is-active .st-tl-content b {
+  color: #1b2a4a;
+}
+.st-tl-content small {
+  display: block;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 2px;
+  line-height: 1.35;
+}
+
+.st-summary-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.st-summary-list li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+.st-sum-name span {
+  display: block;
+  font-weight: 500;
+}
+.st-sum-note {
+  display: block;
+  font-size: 0.76rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+.st-sum-price {
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+}
+.st-summary-total {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.st-summary-total span {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+.st-summary-total strong {
+  font-family: var(--font-head);
+  font-size: 1.16rem;
+  font-weight: 800;
+  color: #1b2a4a;
+}
+
+.st-done-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.st-btn-receipt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #1b2a4a;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(27, 42, 74, 0.2);
+}
+.st-btn-reorder {
+  font-weight: 700;
+}
+.st-cancel-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 14px 16px;
+  border-radius: 16px;
+}
+.st-cancel-banner b {
+  display: block;
+  font-size: 0.92rem;
+}
+.st-cancel-banner small {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+.st-retention-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fdf0df;
+  color: #334155;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 0.82rem;
+}
+.st-ret-ic {
+  color: #1e293b;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+/* Indikator garis oranye di atas menu navigasi yang sedang aktif */
+.nav a {
+  position: relative;
+  padding-top: 6px;
+}
+.nav a.on::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 18%;
+  right: 18%;
+  height: 3px;
+  border-radius: 0 0 4px 4px;
+  background: var(--org);
+}
+
+/* Dialog Struk Digital & Bukti Pembayaran (.rcp-dlg) */
+.rcp-dlg {
+  border: 0;
+  border-radius: 22px;
+  padding: 0;
+  width: min(92vw, 400px);
+  margin: auto;
+  background: #ffffff;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.32);
+}
+.rcp-dlg::backdrop {
+  background: rgba(15, 23, 42, 0.55);
+}
+.rcp-sheet {
+  padding: 20px 18px 18px;
+  color: #1e293b;
+}
+.rcp-brand {
+  text-align: center;
+  margin-bottom: 12px;
+}
+.rcp-badge-ok {
+  display: inline-block;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 99px;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+.rcp-brand h3 {
+  font-family: var(--font-head);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1b2a4a;
+  margin: 0;
+}
+.rcp-brand small {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+.rcp-code-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 10px 14px;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.rcp-code-box small {
+  display: block;
+  font-size: 0.74rem;
+  color: #64748b;
+}
+.rcp-code-box strong {
+  display: block;
+  font-family: var(--font-head);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1b2a4a;
+  margin-top: 2px;
+}
+.rcp-meta {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 0.82rem;
+}
+.rcp-meta > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.rcp-meta dt {
+  color: #64748b;
+}
+.rcp-meta dd {
+  margin: 0;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: right;
+}
+.rcp-divider {
+  margin: 12px 0;
+  border-top: 1.5px dashed #cbd5e1;
+}
+.rcp-items-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+.rcp-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rcp-items li {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.86rem;
+}
+.rcp-items li b {
+  display: block;
+  font-weight: 600;
+  color: #1e293b;
+}
+.rcp-items li small {
+  display: block;
+  font-size: 0.74rem;
+  color: #64748b;
+}
+.rcp-items li > span {
+  font-weight: 700;
+  white-space: nowrap;
+}
+.rcp-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.rcp-total-row span {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+.rcp-total-row strong {
+  font-family: var(--font-head);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #f28c28;
+}
+.rcp-proof-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+.rcp-proof-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  margin-bottom: 8px;
+}
+.rcp-proof-head span {
+  background: #e2e8f0;
+  color: #334155;
+  font-weight: 700;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+.rcp-proof-img-wrap {
+  text-align: center;
+}
+.rcp-proof-img-wrap img {
+  max-width: 100%;
+  max-height: 190px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+}
+.rcp-proof-verified {
+  font-size: 0.78rem;
+  color: #15803d;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+.rcp-head {
+  text-align: center;
+  margin-bottom: 12px;
+}
+.rcp-head b {
+  display: block;
+  font-size: 1rem;
+  color: #1b2a4a;
+}
+.rcp-head small {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+.rcp-proof-full {
+  text-align: center;
+  margin-bottom: 14px;
+}
+.rcp-proof-full img {
+  max-width: 100%;
+  max-height: 65vh;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+.rcp-actions {
+  display: flex;
+  gap: 8px;
+}
+.rcp-actions > * {
+  flex: 1;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-receipt,
+  #printable-receipt * {
+    visibility: visible;
+  }
+  #printable-receipt {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* ---------- 3. PROFIL PENJUAL DENGAN AVATAR & KAMERA (.sp-*) ---------- */
+.sp-avatar-wrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+.sp-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #f28c28;
+  color: #1b2a4a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-head);
+  font-size: 1.25rem;
+  font-weight: 800;
+  overflow: hidden;
+}
+.sp-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sp-avatar-lg {
+  width: 84px;
+  height: 84px;
+  font-size: 1.75rem;
+  margin: 0 auto 8px;
+}
+.sp-avatar-preview-box {
+  text-align: center;
+  margin-bottom: 14px;
+}
+.sp-avatar-preview-box small {
+  display: block;
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+.sp-cam-btn {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #1b2a4a;
+  border: 1.5px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+}
+.sp-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px 14px;
+  margin-bottom: 8px;
+  background: transparent;
+  border: 0;
+}
+.sp-status-bar > b {
+  font-family: var(--font-head);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1b2a4a;
+}
+
+/* ---------- 4. HEADER BERSIH NON-AI-SLOP (TANPA RADIAL GRADIENT GLOW) ---------- */
+.hd,
+.hx,
+.pf-hero,
+.sp-hero,
+.sx-hero {
+  background: #1b2a4a !important;
+}
+.sx-hero {
+  padding: 20px 20px 22px;
+  border-radius: 0 0 26px 26px;
+  color: #ffffff;
+}
+.sx-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sx-kios-badge {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: #f28c28;
+  color: #1b2a4a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1.05;
+}
+.sx-kios-badge small {
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.sx-kios-badge b {
+  font-family: var(--font-head);
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+.sx-eyebrow {
+  display: block;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+.sx-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.sx-live-pill i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.sx-live-pill.is-open {
+  background: #dcfce7;
+  color: #15803d;
+}
+.sx-live-pill.is-open i {
+  background: #16a34a;
+}
+.sx-live-pill.is-closed {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.sx-live-pill.is-closed i {
+  background: #dc2626;
+}
+
+/* Kartu kontrol buka/tutup toko di Beranda Penjual: solid putih bersih, bukan kaca buram */
+.stand-switch {
+  margin-top: 16px;
+  padding: 13px 16px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #1b2a4a;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+}
+.ss-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.ss-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #94a3b8;
+  flex-shrink: 0;
+}
+.stand-switch.is-open .ss-dot {
+  background: #16a34a;
+  box-shadow: 0 0 0 4px #dcfce7;
+}
+.stand-switch .ss-txt b {
+  color: #1b2a4a;
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+.stand-switch .ss-txt small {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+/* ---------- 5. BAR CHECKOUT KERANJANG (.ck-foot) ---------- */
+.ck-foot {
+  padding: 12px 18px 14px;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.05);
+}
+.ck-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 11px;
+}
+.ck-menu-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ck-menu-top b {
+  font-family: var(--font-head);
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: #1b2a4a;
+}
+.ck-porsi {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+}
+.ck-total-bottom {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ck-total-lbl {
+  font-size: 0.84rem;
+  color: #64748b;
+  font-weight: 500;
+}
+.ck-total-val {
+  font-family: var(--font-head);
+  font-size: 1.18rem;
+  font-weight: 800;
+  color: #1b2a4a;
+}
