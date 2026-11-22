@@ -453,7 +453,29 @@ function r_menu(): void
           keranjang</button>
       </form>
     </dialog>
-  <?php endforeach;
+  <?php endforeach; ?>
+  <dialog id="dlg-stand-warn" class="pico-modal" closedby="any" aria-labelledby="dlg-stand-warn-title"
+    aria-describedby="dlg-stand-warn-desc">
+    <div class="pico-modal-card">
+      <div class="pico-modal-ic" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+          <line x1="12" y1="9" x2="12" y2="13" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+      </div>
+      <span class="pico-modal-eyebrow">PICO</span>
+      <h2 id="dlg-stand-warn-title" class="pico-modal-title">Pico Support System</h2>
+      <p id="dlg-stand-warn-desc" class="pico-modal-msg">Mohon maaf, PICO hanya dapat melayani satu stand kantin untuk
+        setiap transaksi. Selesaikan pesanan sebelumnya terlebih dahulu, lalu lanjutkan dengan pesanan baru.</p>
+      <form method="dialog" class="pico-modal-actions">
+        <button type="submit" value="cancel" class="btn sec pico-modal-btn" autofocus>Batal</button>
+        <button type="submit" value="confirm" class="btn pico-modal-btn">Ganti Pesanan</button>
+      </form>
+    </div>
+  </dialog>
+  <?php
   echo nav_pel('/home');
   layout($s['nama'], ob_get_clean());
 }
@@ -474,7 +496,7 @@ function r_cart_add(): void
   $c = cart();
   if ($c['i'] && (int) $c['s'] !== $sid) {
     if (($_POST['ganti'] ?? '') !== '1') {
-      flash('Keranjang berisi menu dari stand lain. Kosongkan dulu.');
+      flash('Mohon maaf, PICO hanya dapat melayani satu stand kantin untuk setiap transaksi. Selesaikan pesanan sebelumnya terlebih dahulu.');
       redirect('/keranjang');
     }
     $c = ['s' => 0, 'i' => []];

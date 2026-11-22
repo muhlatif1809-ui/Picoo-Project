@@ -15,7 +15,7 @@ Browser  ──►  Aplikasi PHP (api/index.php)  ──►  PostgreSQL (PDO)
 ## 1. Fitur per peran
 
 | Peran | Fitur |
-|---|---|
+| --- | --- |
 | **Pelanggan** | Daftar (mahasiswa Polinema mengunggah foto KTM, pengunjung umum tanpa KTM), login, lupa password, lihat stand dan menu, keranjang, pilih Dine in / Take Away, bayar QRIS (dengan hitung mundur 15 menit dan unggah bukti bayar), pantau status pesanan, riwayat, profil (ubah data, foto, password) |
 | **Penjual** | Beranda ringkasan stand, daftar dan detail pesanan, ubah status pesanan (baru, diproses, siap, selesai, batal), kelola menu (tambah, ubah, hapus, foto, stok, tersedia/tidak), riwayat penjualan, buka/tutup stand, profil (ubah data, foto, unggah QRIS stand, notifikasi) |
 | **Admin** | Login admin terpisah, dashboard penjualan, kelola pengguna (tambah, aktif/nonaktif, verifikasi KTM), kelola stand (tambah, buka/tutup, buat akun penjual, reset password), kategori, daftar menu, semua pesanan, laporan dengan ekspor |
@@ -25,7 +25,7 @@ Browser  ──►  Aplikasi PHP (api/index.php)  ──►  PostgreSQL (PDO)
 ## 2. Struktur folder
 
 | Lokasi | Isi | Dikerjakan oleh |
-|---|---|---|
+| --- | --- | --- |
 | `index.php` | Pintu masuk root, meneruskan ke `api/index.php` | – |
 | `api/index.php` | Daftar rute (alamat URL ke nama fungsi) | Bersama |
 | `api/_app/boot.php` | Koneksi PostgreSQL (PDO), sesi login, keranjang, fungsi bantu, upload foto/KTM, rute otomatis `/foto`, `/ktm`, `/admin/ktm`, `/lupa-password` | **Back-end** |
@@ -54,10 +54,12 @@ Aturan kerja: front-end hanya mengubah tampilan (HTML, CSS, JS, dan bagian tampi
 2. Siapkan database PostgreSQL (lihat bagian 5). Host `nivor-postgres` kemungkinan hanya bisa dijangkau dari server Nivor sendiri, jadi untuk komputer lokal gunakan PostgreSQL lokal.
 3. Buat file `.env` di folder utama (isinya lihat bagian 4).
 4. Jalankan di terminal:
+
    ```
    php -S localhost:8000 router.php
    ```
-5. Buka http://localhost:8000
+
+5. Buka <http://localhost:8000>
 
 ---
 
@@ -66,7 +68,7 @@ Aturan kerja: front-end hanya mengubah tampilan (HTML, CSS, JS, dan bagian tampi
 Semua nilai dibaca oleh `boot.php` dari variabel lingkungan (environment):
 
 | Variabel | Arti |
-|---|---|
+| --- | --- |
 | `DB_CONNECTION` | Jenis database, isi `pgsql` |
 | `DB_HOST` | Alamat server database |
 | `DB_PORT` | Port (biasanya `5432`) |
@@ -96,21 +98,26 @@ Urutan pembacaan di `boot.php`: file `.env` dibaca lebih dulu, lalu `api/_app/co
 ## 5. Database
 
 ### Tabel yang dipakai aplikasi
+
 `profiles` (semua akun), `stands`, `kategori`, `menu`, `pesanan`, `pesanan_item`, dan `login_log`. Beberapa kolom tambahan (misalnya `bukti_*` pada `pesanan` dan `foto_*` pada `profiles`/`stands`) dibuat otomatis oleh `boot.php` saat pertama dipakai.
 
 ### Fungsi database yang dipanggil PHP
+
 `buat_pesanan`, `saya_sudah_bayar`, `bersihkan_kadaluarsa`, `ubah_status`, dan `login_lookup`. Fungsi ini menjalankan aturan penting di sisi database: membuat pesanan, mengurangi stok, membatalkan pesanan yang tidak dibayar dalam 15 menit, dan menjaga urutan status pesanan.
 
 ### Isi `sql/schema.sql`
+
 Berkas ini hanya **tambahan** di atas tabel yang sudah ada: kolom baru, tabel `login_log`, fungsi `daftar_pelanggan`, `login_user`, `ubah_qr_stand`, `buat_pesanan_multi`, lima view laporan, dan akun contoh (penjual dan admin).
 
 ### Yang belum ada di repository (perlu dilengkapi back-end)
+
 - Perintah pembuatan tabel dasar (`profiles`, `stands`, `kategori`, `menu`, `pesanan`, `pesanan_item`) **tidak ada** di repo.
 - Definisi lima fungsi di atas (`buat_pesanan`, `saya_sudah_bayar`, `bersihkan_kadaluarsa`, `ubah_status`, `login_lookup`) juga **tidak ada** di repo.
 
 Akibatnya database baru tidak bisa dibangun hanya dari isi repo; strukturnya hanya ada di database yang sedang berjalan. Saran: back-end mengekspor strukturnya (`pg_dump --schema-only`) dan menyimpannya di `sql/`.
 
 ### Akun contoh
+
 `schema.sql` bagian 6 membuat akun contoh (penjual `bu_ima`, `naqyka`, `perintis`, dan `admin`). **Ganti password semua akun itu sebelum dipakai sungguhan**, dan jangan menyimpan password asli di berkas SQL.
 
 ---
@@ -119,10 +126,12 @@ Akibatnya database baru tidak bisa dibangun hanya dari isi repo; strukturnya han
 
 - **Server Nivor** (`pico-app.nivor.id`): bisa memakai `Dockerfile` (menjalankan `php -S 0.0.0.0:$PORT router.php`) atau Apache dengan `.htaccess`. Sesuaikan dengan pengaturan di panel Nivor.
 - **Docker lokal:**
+
   ```
   docker build -t pico .
   docker run -p 8080:8080 --env-file .env pico
   ```
+
 - Folder `sql/` dan `api/_app/` diblokir dari akses browser oleh `.htaccess`.
 
 ---
@@ -139,7 +148,7 @@ Akibatnya database baru tidak bisa dibangun hanya dari isi repo; strukturnya han
 **Umum dan pelanggan**
 
 | Alamat | Fungsi |
-|---|---|
+| --- | --- |
 | `GET /` | Halaman awal (pilih Pembeli / Penjual) |
 | `GET, POST /login` | Login |
 | `GET, POST /daftar` | Daftar akun |
@@ -155,7 +164,7 @@ Akibatnya database baru tidak bisa dibangun hanya dari isi repo; strukturnya han
 **Penjual**
 
 | Alamat | Fungsi |
-|---|---|
+| --- | --- |
 | `GET /penjual` | Beranda |
 | `GET /penjual/pesanan`, `GET /penjual/pesanan/detail`, `GET /penjual/riwayat` | Pesanan dan riwayat |
 | `POST /penjual/status`, `POST /penjual/buka` | Ubah status pesanan, buka/tutup stand |
@@ -166,7 +175,7 @@ Akibatnya database baru tidak bisa dibangun hanya dari isi repo; strukturnya han
 **Admin**
 
 | Alamat | Fungsi |
-|---|---|
+| --- | --- |
 | `GET, POST /admin/masuk` | Login admin |
 | `GET /admin` | Dashboard |
 | `GET /admin/pengguna`, `GET /admin/pengguna/tambah`, `POST /admin/pengguna/simpan`, `POST /admin/pengguna/status` | Pengguna |
@@ -192,7 +201,7 @@ Akibatnya database baru tidak bisa dibangun hanya dari isi repo; strukturnya han
 ## 9. Pemecahan masalah
 
 | Gejala | Kemungkinan penyebab dan solusi |
-|---|---|
+| --- | --- |
 | Halaman error soal koneksi database | Variabel `DB_*` belum benar atau database tidak bisa dijangkau. Periksa `.env` / `config.server.php`; ekstensi `pdo_pgsql` harus aktif |
 | Tampilan polos tanpa warna | File CSS tidak terlayani. Pastikan `public/` ikut ter-deploy dan `.htaccess` aktif (atau jalankan lewat `router.php`) |
 | Foto tidak tampil | Foto disajikan dari database lewat `/foto`. Periksa kolom `foto_data` dan `foto_mime`, dan pastikan file di bawah 2 MB |

@@ -107,10 +107,51 @@
     };
   });
   $$("dialog").forEach(function (d) {
+    if (d.hasAttribute("closedby")) return;
     d.addEventListener("click", function (e) {
       if (e.target === d) d.close();
     });
   });
+
+  // Fallback light-dismiss untuk browser yang belum mendukung <dialog closedby="any">
+  if (!("closedBy" in HTMLDialogElement.prototype)) {
+    var isOutsideDialog = function (e, dlg) {
+      var r = dlg.getBoundingClientRect();
+      return (
+        e.clientX < r.left ||
+        e.clientX > r.right ||
+        e.clientY < r.top ||
+        e.clientY > r.bottom
+      );
+    };
+    $$('dialog[closedby="any"]').forEach(function (dlg) {
+      var pressedOutside = false;
+      dlg.addEventListener("pointerdown", function (e) {
+        pressedOutside = isOutsideDialog(e, dlg);
+      });
+      dlg.addEventListener("pointerup", function (e) {
+        if (pressedOutside && isOutsideDialog(e, dlg)) dlg.close();
+      });
+    });
+  }
+
+  // Popup peringatan beda stand kantin
+  var standWarnDlg = $("#dlg-stand-warn");
+  var pendingStandForm = null;
+  if (standWarnDlg) {
+    standWarnDlg.addEventListener("close", function () {
+      var choice = standWarnDlg.returnValue;
+      standWarnDlg.returnValue = "";
+      var targetForm = pendingStandForm;
+      pendingStandForm = null;
+      if (choice === "confirm" && targetForm) {
+        var gantiInp = $("[name=ganti]", targetForm);
+        if (gantiInp) gantiInp.value = "1";
+        targetForm.submit();
+      }
+    });
+  }
+
   $$("form.add").forEach(function (f) {
     var n = 1,
       max = +f.dataset.max,
@@ -138,9 +179,15 @@
         f.dataset.cs !== "0" &&
         f.dataset.cs !== f.dataset.st
       ) {
+        if (standWarnDlg && standWarnDlg.showModal) {
+          e.preventDefault();
+          pendingStandForm = f;
+          standWarnDlg.showModal();
+          return;
+        }
         if (
           !confirm(
-            "Keranjang berisi menu dari stand lain. Kosongkan dulu dan mulai pesanan baru?",
+            "Mohon maaf, PICO hanya dapat melayani satu stand kantin untuk setiap transaksi. Selesaikan pesanan sebelumnya terlebih dahulu, lalu lanjutkan dengan pesanan baru.",
           )
         )
           return e.preventDefault();
@@ -248,7 +295,12 @@
       if (parentDlg && parentDlg.close) parentDlg.close();
       return;
     }
-    if (e.target && e.target.tagName === "DIALOG" && e.target.open) {
+    if (
+      e.target &&
+      e.target.tagName === "DIALOG" &&
+      e.target.open &&
+      !e.target.hasAttribute("closedby")
+    ) {
       e.target.close();
     }
   });
